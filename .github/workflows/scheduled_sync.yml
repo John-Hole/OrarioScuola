@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
     inputs:
       force_refresh:
-        description: 'Forza la rielaborazione anche se l\'immagine è immutata'
+        description: "Forza la rielaborazione anche se l'immagine è immutata"
         required: false
         default: false
         type: boolean
@@ -28,6 +28,8 @@ on:
 jobs:
   sync:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
