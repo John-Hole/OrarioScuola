@@ -1,4 +1,4 @@
-const CACHE_NAME = 'smart-timetable-v31';
+const CACHE_NAME = 'smart-timetable-v34';
 const STATIC_ASSETS = [
   '/',
   '/index.html',

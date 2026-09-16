@@ -16,7 +16,8 @@ import {
 } from './timeline.js';
 
 import {
-  computeClientWidgetState
+  computeClientWidgetState,
+  generateScriptableCode
 } from './widget_helper.js';
 
 import {
@@ -96,7 +97,8 @@ const elements = {
   syncIcon: document.getElementById('sync-icon'),
   syncBtnLabel: document.getElementById('sync-btn-label'),
 
-  // Banner Notifica Sincronizzazione
+  // Banner / Pop-up Notifica Sincronizzazione al Centro
+  syncBannerOverlay: document.getElementById('sync-banner-overlay'),
   syncBanner: document.getElementById('sync-banner'),
   syncBannerIconBox: document.getElementById('sync-banner-icon-box'),
   syncBannerSpinner: document.getElementById('sync-banner-spinner'),
@@ -108,22 +110,26 @@ const elements = {
   // Modali
   modalWidget: document.getElementById('modal-widget'),
   btnCloseModalWidget: document.getElementById('btn-close-modal-widget'),
-  widgetUrlDisplay: document.getElementById('widget-url-display'),
-  btnCopyWidgetUrl: document.getElementById('btn-copy-widget-url'),
-
-  // Elementi del Tutorial Widget
-  tutorialStepper: document.getElementById('tutorial-stepper'),
-  stepIndicators: document.querySelectorAll('.step-indicator'),
-  tutorialSteps: document.querySelectorAll('.tutorial-step'),
-  tutorialDots: document.querySelectorAll('#tutorial-dots .dot'),
+  widgetModalTitle: document.getElementById('widget-modal-title'),
+  widgetPlatformTabs: document.getElementById('widget-platform-tabs'),
+  platformTabButtons: document.querySelectorAll('.platform-tab-btn'),
+  stepperAndroid: document.getElementById('tutorial-stepper-android'),
+  stepperIos: document.getElementById('tutorial-stepper-ios'),
+  containerAndroid: document.getElementById('tutorial-android-container'),
+  containerIos: document.getElementById('tutorial-ios-container'),
+  tutorialDotsContainer: document.getElementById('tutorial-dots'),
   btnTutorialPrev: document.getElementById('btn-tutorial-prev'),
   btnTutorialNext: document.getElementById('btn-tutorial-next'),
+  widgetUrlDisplay: document.getElementById('widget-url-display'),
+  btnCopyWidgetUrl: document.getElementById('btn-copy-widget-url'),
   widgetFormulaFull: document.getElementById('widget-formula-full'),
   btnCopyFormulaFull: document.getElementById('btn-copy-formula-full'),
   mfCodeSub: document.getElementById('mf-code-sub'),
   mfCodeTime: document.getElementById('mf-code-time'),
   mfCodeNext: document.getElementById('mf-code-next'),
   btnMiniCopies: document.querySelectorAll('.btn-mini-copy'),
+  btnCopyScriptableCode: document.getElementById('btn-copy-scriptable-code'),
+  iosCodeSnippetPreview: document.getElementById('ios-code-snippet-preview'),
 
   modalSettings: document.getElementById('modal-settings'),
   btnCloseModalSettings: document.getElementById('btn-close-modal-settings'),
@@ -191,41 +197,156 @@ const elements = {
   extractionErrorMsg: document.getElementById('extraction-error-msg')
 };
 
+const TUTORIAL_PLATFORMS = {
+  android: {
+    name: 'Android (Samsung)',
+    title: 'Tutorial Widget Android (Samsung S24)',
+    totalSteps: 4,
+    stepperId: 'tutorial-stepper-android',
+    containerId: 'tutorial-android-container'
+  },
+  ios: {
+    name: 'iOS Apple (iPhone)',
+    title: 'Tutorial Widget Apple iOS (iPhone)',
+    totalSteps: 5,
+    stepperId: 'tutorial-stepper-ios',
+    containerId: 'tutorial-ios-container'
+  }
+};
+
+let currentWidgetPlatform = 'android';
 let currentTutorialStep = 0;
-const TOTAL_TUTORIAL_STEPS = 4;
+
+/**
+ * Rileva la piattaforma iniziale dell'utente (iOS vs Android)
+ */
+function detectDefaultPlatform() {
+  const saved = localStorage.getItem('orario_widget_platform');
+  if (saved === 'android' || saved === 'ios') return saved;
+  const isApple = /iPhone|iPad|iPod/i.test(navigator.userAgent) ||
+                  (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  return isApple ? 'ios' : 'android';
+}
+
+/**
+ * Cambia settore/piattaforma del tutorial: Android (4 step) vs iOS Apple (5 step)
+ */
+function switchWidgetPlatform(platform) {
+  if (!TUTORIAL_PLATFORMS[platform]) platform = 'android';
+  currentWidgetPlatform = platform;
+  localStorage.setItem('orario_widget_platform', platform);
+
+  // Aggiorna tab selettore
+  if (elements.platformTabButtons) {
+    elements.platformTabButtons.forEach(btn => {
+      btn.classList.toggle('active', btn.getAttribute('data-platform') === platform);
+    });
+  }
+
+  // Aggiorna titolo modale
+  if (elements.widgetModalTitle) {
+    elements.widgetModalTitle.textContent = TUTORIAL_PLATFORMS[platform].title;
+  }
+
+  // Mostra/Nascondi Stepper corrispondente
+  if (elements.stepperAndroid) {
+    elements.stepperAndroid.classList.toggle('hidden', platform !== 'android');
+  }
+  if (elements.stepperIos) {
+    elements.stepperIos.classList.toggle('hidden', platform !== 'ios');
+  }
+
+  // Mostra/Nascondi Container corrispondente
+  if (elements.containerAndroid) {
+    elements.containerAndroid.classList.toggle('hidden', platform !== 'android');
+  }
+  if (elements.containerIos) {
+    elements.containerIos.classList.toggle('hidden', platform !== 'ios');
+  }
+
+  // Ricostruisci i pallini di navigazione
+  renderTutorialDots();
+
+  // Reset allo step 0 per la nuova piattaforma
+  setTutorialStep(0);
+}
+
+/**
+ * Renderizza i pallini dots in base al numero di passi della piattaforma attiva
+ */
+function renderTutorialDots() {
+  if (!elements.tutorialDotsContainer) return;
+  elements.tutorialDotsContainer.innerHTML = '';
+  const total = TUTORIAL_PLATFORMS[currentWidgetPlatform].totalSteps;
+
+  for (let i = 0; i < total; i++) {
+    const dot = document.createElement('span');
+    dot.className = 'dot' + (i === currentTutorialStep ? ' active' : '');
+    dot.setAttribute('data-step', String(i));
+    dot.addEventListener('click', () => setTutorialStep(i));
+    elements.tutorialDotsContainer.appendChild(dot);
+  }
+}
 
 /**
  * Gestione dello stato del tutorial guidato Widget
  */
 function setTutorialStep(stepIndex) {
-  if (stepIndex < 0 || stepIndex >= TOTAL_TUTORIAL_STEPS) return;
+  const totalSteps = TUTORIAL_PLATFORMS[currentWidgetPlatform].totalSteps;
+  if (stepIndex < 0) stepIndex = 0;
+  if (stepIndex >= totalSteps) stepIndex = totalSteps - 1;
   currentTutorialStep = stepIndex;
 
-  // Mostra lo step corretto
-  elements.tutorialSteps.forEach((step, idx) => {
-    step.classList.toggle('active', idx === currentTutorialStep);
-  });
+  // Mostra lo step corretto nel container attivo
+  const activeContainer = currentWidgetPlatform === 'android' ? elements.containerAndroid : elements.containerIos;
+  if (activeContainer) {
+    const steps = activeContainer.querySelectorAll('.tutorial-step');
+    steps.forEach((step, idx) => {
+      step.classList.toggle('active', idx === currentTutorialStep);
+    });
+  }
 
   // Aggiorna stepper tabs
-  elements.stepIndicators.forEach((ind, idx) => {
-    ind.classList.toggle('active', idx === currentTutorialStep);
-  });
+  const activeStepper = currentWidgetPlatform === 'android' ? elements.stepperAndroid : elements.stepperIos;
+  if (activeStepper) {
+    const indicators = activeStepper.querySelectorAll('.step-indicator');
+    indicators.forEach((ind, idx) => {
+      ind.classList.toggle('active', idx === currentTutorialStep);
+    });
+  }
 
   // Aggiorna dots
-  elements.tutorialDots.forEach((dot, idx) => {
-    dot.classList.toggle('active', idx === currentTutorialStep);
-  });
+  if (elements.tutorialDotsContainer) {
+    const dots = elements.tutorialDotsContainer.querySelectorAll('.dot');
+    dots.forEach((dot, idx) => {
+      dot.classList.toggle('active', idx === currentTutorialStep);
+    });
+  }
 
   // Aggiorna bottoni nav
   if (elements.btnTutorialPrev) {
-    elements.btnTutorialPrev.disabled = currentTutorialStep === 0;
+    elements.btnTutorialPrev.disabled = (currentTutorialStep === 0);
   }
   if (elements.btnTutorialNext) {
-    if (currentTutorialStep === TOTAL_TUTORIAL_STEPS - 1) {
+    if (currentTutorialStep === totalSteps - 1) {
       elements.btnTutorialNext.textContent = 'Fatto ✓';
     } else {
       elements.btnTutorialNext.textContent = 'Avanti ›';
     }
+  }
+}
+
+function openWidgetTutorialModal(preferredPlatform) {
+  const targetPlatform = preferredPlatform || currentWidgetPlatform || detectDefaultPlatform();
+  switchWidgetPlatform(targetPlatform);
+  if (elements.modalWidget) {
+    elements.modalWidget.classList.add('open');
+  }
+}
+
+function closeWidgetTutorialModal() {
+  if (elements.modalWidget) {
+    elements.modalWidget.classList.remove('open');
   }
 }
 
@@ -259,6 +380,12 @@ async function init() {
   }
   if (elements.mfCodeNext) {
     elements.mfCodeNext.textContent = `$wg("${widgetFullPath}", json, .next_title)$ ($wg("${widgetFullPath}", json, .next_room)$)`;
+  }
+  if (elements.iosCodeSnippetPreview) {
+    elements.iosCodeSnippetPreview.textContent = `// OrarioScuola - Scriptable Widget iPhone
+const BASE_URL = "${window.location.origin}";
+const TIMETABLE_URL = \`\${BASE_URL}/data/timetable.json\`;
+// Premi "Copia Script iOS" per copiare il codice completo già pronto!`;
   }
 
   renderSavedTimetablesList();
@@ -720,8 +847,8 @@ function openOriginalScheduleView() {
   }
 
   if (elements.iframeOriginalSchedule) {
-    const targetUrl = 'orario-originale/?classe=4%20BINF';
-    if (!elements.iframeOriginalSchedule.src || elements.iframeOriginalSchedule.src === 'about:blank' || !elements.iframeOriginalSchedule.src.includes('orario-originale')) {
+    const targetUrl = '/orario-originale/?classe=4%20BINF';
+    if (!elements.iframeOriginalSchedule.src || elements.iframeOriginalSchedule.src === 'about:blank' || !elements.iframeOriginalSchedule.src.includes('/orario-originale/?classe=')) {
       elements.iframeOriginalSchedule.src = targetUrl;
     }
   }
@@ -1955,7 +2082,89 @@ function setupEventListeners() {
     });
   }
 
-  // Navigazione Wizard Tutorial Widget
+  // Apertura Modale Tutorial Widget dal Drawer
+  if (elements.navItemWidget) {
+    elements.navItemWidget.addEventListener('click', () => {
+      toggleDrawer(false);
+      openWidgetTutorialModal();
+    });
+  }
+
+  // Chiusura Modale Tutorial Widget
+  if (elements.btnCloseModalWidget) {
+    elements.btnCloseModalWidget.addEventListener('click', () => {
+      closeWidgetTutorialModal();
+    });
+  }
+
+  if (elements.modalWidget) {
+    elements.modalWidget.addEventListener('click', (e) => {
+      if (e.target === elements.modalWidget) {
+        closeWidgetTutorialModal();
+      }
+    });
+  }
+
+  // Modale Impostazioni & Simulatore dal Drawer
+  if (elements.navItemSettings) {
+    elements.navItemSettings.addEventListener('click', () => {
+      toggleDrawer(false);
+      if (elements.modalSettings) elements.modalSettings.classList.add('open');
+    });
+  }
+
+  if (elements.btnCloseModalSettings) {
+    elements.btnCloseModalSettings.addEventListener('click', () => {
+      if (elements.modalSettings) elements.modalSettings.classList.remove('open');
+    });
+  }
+
+  if (elements.modalSettings) {
+    elements.modalSettings.addEventListener('click', (e) => {
+      if (e.target === elements.modalSettings) {
+        elements.modalSettings.classList.remove('open');
+      }
+    });
+  }
+
+  // Chiusura modali con tasto ESC
+  window.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      closeWidgetTutorialModal();
+      if (elements.modalSettings) elements.modalSettings.classList.remove('open');
+    }
+  });
+
+  // Switch Piattaforma: Android vs iOS Apple
+  if (elements.platformTabButtons) {
+    elements.platformTabButtons.forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const platform = btn.getAttribute('data-platform');
+        switchWidgetPlatform(platform);
+      });
+    });
+  }
+
+  // Navigazione Wizard Stepper con Click diretto
+  if (elements.stepperAndroid) {
+    elements.stepperAndroid.querySelectorAll('.step-indicator').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const step = parseInt(btn.getAttribute('data-step'), 10);
+        if (!isNaN(step)) setTutorialStep(step);
+      });
+    });
+  }
+
+  if (elements.stepperIos) {
+    elements.stepperIos.querySelectorAll('.step-indicator').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const step = parseInt(btn.getAttribute('data-step'), 10);
+        if (!isNaN(step)) setTutorialStep(step);
+      });
+    });
+  }
+
+  // Navigazione Wizard Tutorial Widget (Prev / Next)
   if (elements.btnTutorialPrev) {
     elements.btnTutorialPrev.addEventListener('click', () => {
       if (currentTutorialStep > 0) setTutorialStep(currentTutorialStep - 1);
@@ -1964,29 +2173,16 @@ function setupEventListeners() {
 
   if (elements.btnTutorialNext) {
     elements.btnTutorialNext.addEventListener('click', () => {
-      if (currentTutorialStep < TOTAL_TUTORIAL_STEPS - 1) {
+      const total = TUTORIAL_PLATFORMS[currentWidgetPlatform].totalSteps;
+      if (currentTutorialStep < total - 1) {
         setTutorialStep(currentTutorialStep + 1);
       } else {
-        elements.modalWidget.classList.remove('open');
+        closeWidgetTutorialModal();
       }
     });
   }
 
-  elements.stepIndicators.forEach((btn) => {
-    btn.addEventListener('click', () => {
-      const step = parseInt(btn.getAttribute('data-step'), 10);
-      if (!isNaN(step)) setTutorialStep(step);
-    });
-  });
-
-  elements.tutorialDots.forEach((dot) => {
-    dot.addEventListener('click', () => {
-      const step = parseInt(dot.getAttribute('data-step'), 10);
-      if (!isNaN(step)) setTutorialStep(step);
-    });
-  });
-
-  // Copia Formula Completa KWGT
+  // Copia Formula Completa KWGT (Android)
   if (elements.btnCopyFormulaFull && elements.widgetFormulaFull) {
     elements.btnCopyFormulaFull.addEventListener('click', () => {
       const formulaText = elements.widgetFormulaFull.textContent;
@@ -1999,7 +2195,7 @@ function setupEventListeners() {
     });
   }
 
-  // Copia Formule Singole KWGT
+  // Copia Formule Singole KWGT (Android)
   elements.btnMiniCopies.forEach((btn) => {
     btn.addEventListener('click', () => {
       const targetId = btn.getAttribute('data-target');
@@ -2016,6 +2212,21 @@ function setupEventListeners() {
     });
   });
 
+  // Copia Script Completo Scriptable (iOS Apple)
+  if (elements.btnCopyScriptableCode) {
+    elements.btnCopyScriptableCode.addEventListener('click', () => {
+      const scriptCode = generateScriptableCode(window.location.origin);
+      navigator.clipboard.writeText(scriptCode).then(() => {
+        const orig = elements.btnCopyScriptableCode.textContent;
+        elements.btnCopyScriptableCode.textContent = 'Copiato negli Appunti! ✓';
+        setTimeout(() => {
+          elements.btnCopyScriptableCode.textContent = orig;
+        }, 2200);
+      }).catch(err => {
+        console.error('Clipboard copy error:', err);
+      });
+    });
+  }
 
   // Pulsante Sincronizza nel Footer del Drawer
   if (elements.btnSyncNow) {
@@ -2030,16 +2241,18 @@ function setupEventListeners() {
     });
   }
 
-  // Copia link Widget S24
-  elements.btnCopyWidgetUrl.addEventListener('click', () => {
-    const textToCopy = elements.widgetUrlDisplay.textContent;
-    navigator.clipboard.writeText(textToCopy).then(() => {
-      elements.btnCopyWidgetUrl.textContent = 'Copiato!';
-      setTimeout(() => {
-        elements.btnCopyWidgetUrl.textContent = 'Copia Link';
-      }, 2000);
+  // Copia link Widget JSON
+  if (elements.btnCopyWidgetUrl && elements.widgetUrlDisplay) {
+    elements.btnCopyWidgetUrl.addEventListener('click', () => {
+      const textToCopy = elements.widgetUrlDisplay.textContent;
+      navigator.clipboard.writeText(textToCopy).then(() => {
+        elements.btnCopyWidgetUrl.textContent = 'Copiato!';
+        setTimeout(() => {
+          elements.btnCopyWidgetUrl.textContent = 'Copia Link';
+        }, 2000);
+      });
     });
-  });
+  }
 
   // Pulsanti Simulatore Orario
   elements.simButtons.forEach((btn) => {
@@ -2139,25 +2352,72 @@ function updateDrawerSyncStatus() {
 }
 
 /**
- * Gestione Banner / Pop-up animato di Sincronizzazione
+ * Assicura che l'overlay e la card del banner siano sempre presenti nel DOM
+ */
+function ensureSyncBannerInDom() {
+  let overlay = document.getElementById('sync-banner-overlay');
+  if (!overlay) {
+    overlay = document.createElement('div');
+    overlay.id = 'sync-banner-overlay';
+    overlay.className = 'sync-banner-overlay hidden';
+    overlay.setAttribute('role', 'dialog');
+    overlay.setAttribute('aria-modal', 'true');
+    overlay.setAttribute('aria-live', 'polite');
+    overlay.innerHTML = `
+      <div id="sync-banner" class="sync-banner is-loading">
+        <div class="sync-banner-icon-container" id="sync-banner-icon-box">
+          <svg class="sync-spinner-icon" id="sync-banner-spinner" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <circle class="sync-spinner-track" cx="12" cy="12" r="9" stroke-opacity="0.25"></circle>
+            <path class="sync-spinner-head" d="M12 3a9 9 0 0 1 9 9" stroke-linecap="round"></path>
+          </svg>
+          <svg class="sync-success-icon" id="sync-banner-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="20 6 9 17 4 12"></polyline>
+          </svg>
+          <svg class="sync-error-icon" id="sync-banner-error" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="8" x2="12" y2="12"></line>
+            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+          </svg>
+        </div>
+        <div class="sync-banner-text">
+          <div class="sync-banner-title" id="sync-banner-title">Sincronizzazione in corso...</div>
+          <div class="sync-banner-subtitle" id="sync-banner-subtitle">Verifica orario scolastico</div>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(overlay);
+  }
+
+  elements.syncBannerOverlay = overlay;
+  elements.syncBanner = overlay.querySelector('#sync-banner');
+  elements.syncBannerTitle = overlay.querySelector('#sync-banner-title');
+  elements.syncBannerSubtitle = overlay.querySelector('#sync-banner-subtitle');
+  return overlay;
+}
+
+/**
+ * Gestione Banner / Pop-up animato di Sincronizzazione con Backdrop Sfumato
  */
 let syncBannerTimeout = null;
 
 function showSyncBanner(status, customTitle, customSubtitle) {
-  if (!elements.syncBanner) return;
+  ensureSyncBannerInDom();
+  if (!elements.syncBannerOverlay || !elements.syncBanner) return;
 
   if (syncBannerTimeout) {
     clearTimeout(syncBannerTimeout);
     syncBannerTimeout = null;
   }
 
-  elements.syncBanner.classList.remove('hidden', 'anim-exit', 'is-success', 'is-error');
-  elements.syncBanner.classList.add('anim-enter');
+  // Mostra l'overlay sfumato e attiva l'animazione di ingresso
+  elements.syncBannerOverlay.classList.remove('hidden', 'anim-exit');
+  elements.syncBannerOverlay.classList.add('anim-enter');
+
+  // Resetta gli stati precedenti
+  elements.syncBanner.classList.remove('is-loading', 'is-success', 'is-error');
 
   if (status === 'loading') {
-    elements.syncBannerSpinner?.classList.remove('hidden');
-    elements.syncBannerCheck?.classList.add('hidden');
-    elements.syncBannerError?.classList.add('hidden');
+    elements.syncBanner.classList.add('is-loading');
     if (elements.syncBannerTitle) {
       elements.syncBannerTitle.textContent = customTitle || 'Sincronizzazione in corso...';
     }
@@ -2166,9 +2426,6 @@ function showSyncBanner(status, customTitle, customSubtitle) {
     }
   } else if (status === 'success') {
     elements.syncBanner.classList.add('is-success');
-    elements.syncBannerSpinner?.classList.add('hidden');
-    elements.syncBannerCheck?.classList.remove('hidden');
-    elements.syncBannerError?.classList.add('hidden');
     if (elements.syncBannerTitle) {
       elements.syncBannerTitle.textContent = customTitle || 'Sincronizzazione completata!';
     }
@@ -2181,9 +2438,6 @@ function showSyncBanner(status, customTitle, customSubtitle) {
     }, 2400);
   } else if (status === 'error') {
     elements.syncBanner.classList.add('is-error');
-    elements.syncBannerSpinner?.classList.add('hidden');
-    elements.syncBannerCheck?.classList.add('hidden');
-    elements.syncBannerError?.classList.remove('hidden');
     if (elements.syncBannerTitle) {
       elements.syncBannerTitle.textContent = customTitle || 'Sincronizzazione non riuscita';
     }
@@ -2198,13 +2452,14 @@ function showSyncBanner(status, customTitle, customSubtitle) {
 }
 
 function dismissSyncBanner() {
-  if (!elements.syncBanner || elements.syncBanner.classList.contains('hidden')) return;
-  elements.syncBanner.classList.remove('anim-enter');
-  elements.syncBanner.classList.add('anim-exit');
+  if (!elements.syncBannerOverlay || elements.syncBannerOverlay.classList.contains('hidden')) return;
+  elements.syncBannerOverlay.classList.remove('anim-enter');
+  elements.syncBannerOverlay.classList.add('anim-exit');
   setTimeout(() => {
-    elements.syncBanner.classList.add('hidden');
-    elements.syncBanner.classList.remove('anim-exit', 'is-success', 'is-error');
-  }, 280);
+    elements.syncBannerOverlay.classList.add('hidden');
+    elements.syncBannerOverlay.classList.remove('anim-exit');
+    elements.syncBanner?.classList.remove('is-loading', 'is-success', 'is-error');
+  }, 240);
 }
 
 /**
@@ -2233,7 +2488,7 @@ async function triggerSync() {
   let errorMsg = 'Impossibile aggiornare l\'orario';
 
   try {
-    const response = await fetch('api/sync', {
+    const response = await fetch('/api/sync', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -2245,7 +2500,7 @@ async function triggerSync() {
 
     if (response.ok) {
       const data = await response.json();
-      if (data.timetable) {
+      if (data && data.timetable) {
         state.timetable = normalizeTimetableMultiHourSlots(data.timetable);
         localStorage.setItem('cached_timetable', JSON.stringify(state.timetable));
         render();
@@ -2259,7 +2514,7 @@ async function triggerSync() {
       success = true;
     }
   } catch (err) {
-    console.log('[SYNC] Server /api/sync non attivo, fallback locale:', err.message);
+    console.log('[SYNC] Endpoint /api/sync non attivo o offline, fallback locale:', err.message);
     try {
       await loadTimetableData();
       success = true;
@@ -2307,6 +2562,9 @@ function toggleDrawer(open) {
     elements.drawerOverlay.classList.add('open');
     elements.sidebarDrawer.setAttribute('aria-hidden', 'false');
   } else {
+    if (document.activeElement && elements.sidebarDrawer.contains(document.activeElement)) {
+      document.activeElement.blur();
+    }
     elements.sidebarDrawer.classList.remove('open');
     elements.drawerOverlay.classList.remove('open');
     elements.sidebarDrawer.setAttribute('aria-hidden', 'true');

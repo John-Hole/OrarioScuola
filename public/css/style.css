@@ -1515,6 +1515,96 @@ body {
   color: var(--text-main);
 }
 
+/* Selettore Piattaforma: Android vs iOS Apple */
+.widget-platform-tabs {
+  display: flex;
+  gap: 6px;
+  background: #090D14;
+  padding: 4px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--border-subtle);
+  margin-bottom: 12px;
+}
+
+.platform-tab-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 8px 10px;
+  border-radius: var(--radius-pill);
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  user-select: none;
+}
+
+.platform-tab-btn:hover {
+  color: var(--text-main);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.platform-tab-btn.active {
+  color: #FFFFFF;
+  font-weight: 700;
+}
+
+.platform-tab-btn[data-platform="android"].active {
+  background: rgba(16, 185, 129, 0.15);
+  border-color: rgba(16, 185, 129, 0.4);
+  color: #6EE7B7;
+}
+
+.platform-tab-btn[data-platform="ios"].active {
+  background: rgba(59, 130, 246, 0.15);
+  border-color: rgba(59, 130, 246, 0.4);
+  color: #93C5FD;
+}
+
+.tab-os-icon {
+  flex-shrink: 0;
+}
+
+.btn-appstore-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #007AFF;
+  color: #FFFFFF;
+  padding: 9px 16px;
+  border-radius: var(--radius-pill);
+  text-decoration: none;
+  font-size: 0.82rem;
+  font-weight: 700;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(0, 122, 255, 0.25);
+  margin-top: 6px;
+}
+
+.btn-appstore-link:hover {
+  background: #0062CC;
+  transform: translateY(-1px);
+}
+
+.btn-copy-prominent {
+  background: var(--live-blue);
+  color: #FFFFFF;
+  font-weight: 700;
+}
+
+.btn-copy-prominent:hover {
+  background: #1D4ED8;
+}
+
+.hidden {
+  display: none !important;
+}
+
 .tutorial-stepper {
   display: flex;
   align-items: center;

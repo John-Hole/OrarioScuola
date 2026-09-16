@@ -542,7 +542,7 @@
 
     </aside>
 
-    <!-- Modale Widget & Tutorial Guida S24 / Android -->
+    <!-- Modale Widget & Tutorial Guida Android & iOS Apple -->
     <div id="modal-widget" class="modal-backdrop">
       <div class="modal-card modal-card-tutorial">
         <div class="modal-header">
@@ -553,146 +553,313 @@
               <rect x="14" y="14" width="7" height="7"></rect>
               <rect x="3" y="14" width="7" height="7"></rect>
             </svg>
-            <h3>Tutorial Widget S24 / Android</h3>
+            <h3 id="widget-modal-title">Tutorial Widget</h3>
           </div>
           <button class="modal-close-btn" id="btn-close-modal-widget" aria-label="Chiudi tutorial">✕</button>
         </div>
 
-        <!-- Indicatore Passaggi (Stepper) -->
-        <div class="tutorial-stepper" id="tutorial-stepper">
-          <button class="step-indicator active" data-step="0" aria-label="Passo 1: Feed JSON">
+        <!-- Selettore Piattaforma: Android vs iOS Apple -->
+        <div class="widget-platform-tabs" id="widget-platform-tabs">
+          <button class="platform-tab-btn active" data-platform="android" id="tab-platform-android">
+            <svg class="tab-os-icon" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M17.523 15.3414c-.5511 0-.9993-.4486-.9993-.9997s.4482-.9993.9993-.9993c.551 0 .9993.4482.9993.9993.0001.5511-.4483.9997-.9993.9997m-11.046 0c-.5511 0-.9993-.4486-.9993-.9997s.4482-.9993.9993-.9993c.5511 0 .9993.4482.9993.9993 0 .5511-.4482.9997-.9993.9997m11.4045-6.02l1.9973-3.4592a.416.416 0 00-.1521-.5676.416.416 0 00-.5676.1521l-2.0223 3.503C15.5896 8.4116 13.8544 8.125 12 8.125s-3.5896.2866-5.1368.8247L4.8409 5.4467a.4161.4161 0 00-.5677-.1521.4157.4157 0 00-.1521.5676l1.9973 3.4592C2.6889 11.1867.3432 14.6589 0 18.761h24c-.3432-4.1021-2.6889-7.5743-6.1185-9.4396"/>
+            </svg>
+            <span>Android (Samsung)</span>
+          </button>
+          <button class="platform-tab-btn" data-platform="ios" id="tab-platform-ios">
+            <svg class="tab-os-icon" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 6.37c.65-.8 1.09-1.92.97-3.04-.94.04-2.07.63-2.74 1.41-.59.67-1.11 1.77-.97 2.87 1.05.08 2.11-.47 2.74-1.24z"/>
+            </svg>
+            <span>iOS Apple (iPhone)</span>
+          </button>
+        </div>
+
+        <!-- Stepper Android (4 Passaggi) -->
+        <div class="tutorial-stepper" id="tutorial-stepper-android">
+          <button class="step-indicator active" data-platform="android" data-step="0" aria-label="Passo 1: Feed JSON">
             <span class="step-num">1</span>
             <span class="step-text">Feed JSON</span>
           </button>
-          <button class="step-indicator" data-step="1" aria-label="Passo 2: App KWGT">
+          <button class="step-indicator" data-platform="android" data-step="1" aria-label="Passo 2: App KWGT">
             <span class="step-num">2</span>
             <span class="step-text">KWGT</span>
           </button>
-          <button class="step-indicator" data-step="2" aria-label="Passo 3: Formula">
+          <button class="step-indicator" data-platform="android" data-step="2" aria-label="Passo 3: Formula">
             <span class="step-num">3</span>
             <span class="step-text">Formula</span>
           </button>
-          <button class="step-indicator" data-step="3" aria-label="Passo 4: AOD / Blocco">
+          <button class="step-indicator" data-platform="android" data-step="3" aria-label="Passo 4: AOD / Blocco">
             <span class="step-num">4</span>
             <span class="step-text">AOD / Blocco</span>
           </button>
         </div>
 
+        <!-- Stepper iOS Apple (5 Passaggi) -->
+        <div class="tutorial-stepper hidden" id="tutorial-stepper-ios">
+          <button class="step-indicator active" data-platform="ios" data-step="0" aria-label="Passo 1: App Store">
+            <span class="step-num">1</span>
+            <span class="step-text">App</span>
+          </button>
+          <button class="step-indicator" data-platform="ios" data-step="1" aria-label="Passo 2: Nuovo Script">
+            <span class="step-num">2</span>
+            <span class="step-text">Script</span>
+          </button>
+          <button class="step-indicator" data-platform="ios" data-step="2" aria-label="Passo 3: Codice">
+            <span class="step-num">3</span>
+            <span class="step-text">Codice</span>
+          </button>
+          <button class="step-indicator" data-platform="ios" data-step="3" aria-label="Passo 4: Home">
+            <span class="step-num">4</span>
+            <span class="step-text">Home</span>
+          </button>
+          <button class="step-indicator" data-platform="ios" data-step="4" aria-label="Passo 5: Blocco">
+            <span class="step-num">5</span>
+            <span class="step-text">Blocco</span>
+          </button>
+        </div>
+
         <div class="modal-body tutorial-body">
           
-          <!-- Passo 1: Feed JSON -->
-          <div class="tutorial-step active" id="tutorial-step-0">
-            <div class="step-badge">PASSO 1 DI 4</div>
-            <h4 class="step-heading">Il tuo Feed in Tempo Reale</h4>
-            <p class="step-desc">L'applicazione genera un feed JSON leggero (&lt;1 KB) che risponde in tempo reale a <em>"Dove devo andare adesso?"</em> aggiornando materia, aula, countdown e cambio ora.</p>
-            
-            <div class="tutorial-box">
-              <span class="box-label">Indirizzo del feed JSON:</span>
-              <div class="code-copy-row">
-                <code id="widget-url-display">data/widget_data.json</code>
-                <button id="btn-copy-widget-url" class="btn-modal-action">Copia Link</button>
+          <!-- SEZIONE ANDROID (4 PASSAGGI) -->
+          <div id="tutorial-android-container">
+            <!-- Passo 1: Feed JSON -->
+            <div class="tutorial-step active" id="step-android-0">
+              <div class="step-badge">PASSO 1 DI 4 • ANDROID</div>
+              <h4 class="step-heading">Il tuo Feed in Tempo Reale</h4>
+              <p class="step-desc">L'applicazione genera un feed JSON ultra-leggero che risponde a <em>"Dove devo andare adesso?"</em> aggiornando materia, aula, countdown e cambio ora.</p>
+              
+              <div class="tutorial-box">
+                <span class="box-label">Indirizzo del feed JSON:</span>
+                <div class="code-copy-row">
+                  <code id="widget-url-display">data/widget_data.json</code>
+                  <button id="btn-copy-widget-url" class="btn-modal-action">Copia Link</button>
+                </div>
+              </div>
+
+              <div class="step-tip">
+                <span class="tip-icon">💡</span>
+                <p>Questo link è l'origine dati da cui il widget One UI riceve gli aggiornamenti in tempo reale.</p>
               </div>
             </div>
 
-            <div class="step-tip">
-              <span class="tip-icon">💡</span>
-              <p>Questo link è l'origine dati da cui il widget riceve gli aggiornamenti ogni minuto.</p>
+            <!-- Passo 2: KWGT Setup -->
+            <div class="tutorial-step" id="step-android-1">
+              <div class="step-badge">PASSO 2 DI 4 • ANDROID</div>
+              <h4 class="step-heading">Installa KWGT e crea il Widget</h4>
+              <p class="step-desc">KWGT (Kustom Widget Maker) è l'app più potente su Android per creare widget perfettamente integrati nello stile One UI di Samsung.</p>
+              
+              <div class="steps-instruction-list">
+                <div class="instr-item">
+                  <span class="instr-num">1</span>
+                  <div>Scarica <strong>KWGT Kustom Widget Maker</strong> dal Google Play Store.</div>
+                </div>
+                <div class="instr-item">
+                  <span class="instr-num">2</span>
+                  <div>Sulla Home del Galaxy S24, tieni premuto su uno spazio vuoto e tocca <strong>Widget</strong>.</div>
+                </div>
+                <div class="instr-item">
+                  <span class="instr-num">3</span>
+                  <div>Scegli <strong>KWGT</strong> e seleziona il formato <strong>4x2</strong> (oppure <strong>2x2</strong>).</div>
+                </div>
+                <div class="instr-item">
+                  <span class="instr-num">4</span>
+                  <div>Tocca il riquadro del widget vuoto per aprire l'editor.</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Passo 3: Inserisci la Formula -->
+            <div class="tutorial-step" id="step-android-2">
+              <div class="step-badge">PASSO 3 DI 4 • ANDROID</div>
+              <h4 class="step-heading">Incolla la Formula One UI</h4>
+              <p class="step-desc">Nell'editor KWGT, tocca <strong>`+`</strong> in alto &rarr; aggiungi un blocco <strong>Testo</strong> &rarr; tocca il testo inserito e incolla questa formula già configurata con il tuo link:</p>
+              
+              <div class="tutorial-box">
+                <div class="box-header-row">
+                  <span class="box-label">Formula Dinamica Completa:</span>
+                  <button id="btn-copy-formula-full" class="btn-modal-action">Copia Formula</button>
+                </div>
+                <div class="formula-code-wrapper">
+                  <pre><code id="widget-formula-full">$if(wg("...", json, .status) = "IN_CLASS", "🟢 " + wg("...", json, .title) + " (" + wg("...", json, .room) + ") - " + wg("...", json, .time_left), "🔔 " + wg("...", json, .title) + " - " + wg("...", json, .subtitle))$</code></pre>
+                </div>
+              </div>
+
+              <!-- Accordion Formule Alternative -->
+              <details class="tutorial-details">
+                <summary>Mostra formule per singoli valori</summary>
+                <div class="mini-formulas-grid">
+                  <div class="mini-formula-item">
+                    <span class="mf-title">Materia + Aula:</span>
+                    <code id="mf-code-sub">...</code>
+                    <button class="btn-mini-copy" data-target="mf-code-sub">Copia</button>
+                  </div>
+                  <div class="mini-formula-item">
+                    <span class="mf-title">Tempo rimanente:</span>
+                    <code id="mf-code-time">...</code>
+                    <button class="btn-mini-copy" data-target="mf-code-time">Copia</button>
+                  </div>
+                  <div class="mini-formula-item">
+                    <span class="mf-title">Prossima lezione:</span>
+                    <code id="mf-code-next">...</code>
+                    <button class="btn-mini-copy" data-target="mf-code-next">Copia</button>
+                  </div>
+                </div>
+              </details>
+            </div>
+
+            <!-- Passo 4: Schermata Blocco e AOD -->
+            <div class="tutorial-step" id="step-android-3">
+              <div class="step-badge">PASSO 4 DI 4 • ANDROID</div>
+              <h4 class="step-heading">Schermata di Blocco & Always On Display</h4>
+              <p class="step-desc">Su Samsung Galaxy S24 (One UI 6.1+) puoi visualizzare aula e countdown anche a schermo bloccato o spento.</p>
+              
+              <div class="steps-instruction-list">
+                <div class="instr-item">
+                  <span class="instr-num">1</span>
+                  <div>Vai in <strong>Impostazioni</strong> &rarr; <strong>Schermata di blocco e AOD</strong>.</div>
+                </div>
+                <div class="instr-item">
+                  <span class="instr-num">2</span>
+                  <div>Tocca <strong>Modifica schermata di blocco</strong>.</div>
+                </div>
+                <div class="instr-item">
+                  <span class="instr-num">3</span>
+                  <div>Sotto l'orologio, tocca l'area <strong>+ Widget</strong> e scegli il widget compatto KWGT.</div>
+                </div>
+                <div class="instr-item">
+                  <span class="instr-num">4</span>
+                  <div>Abilita l'opzione <strong>"Mostra widget su Always On Display"</strong> nelle impostazioni AOD.</div>
+                </div>
+              </div>
+
+              <div class="step-tip step-tip-success">
+                <span class="tip-icon">✅</span>
+                <p>Configurazione completata! Nelle impostazioni di KWGT imposta la modalità di aggiornamento su <strong>"Intelligente"</strong> per azzerare i consumi della batteria.</p>
+              </div>
             </div>
           </div>
 
-          <!-- Passo 2: KWGT Setup -->
-          <div class="tutorial-step" id="tutorial-step-1">
-            <div class="step-badge">PASSO 2 DI 4</div>
-            <h4 class="step-heading">Installa KWGT e crea il Widget</h4>
-            <p class="step-desc">KWGT (Kustom Widget Maker) è l'app più potente su Android per creare widget perfettamente integrati nello stile One UI di Samsung.</p>
-            
-            <div class="steps-instruction-list">
-              <div class="instr-item">
-                <span class="instr-num">1</span>
-                <div>Scarica <strong>KWGT Kustom Widget Maker</strong> dal Google Play Store.</div>
+          <!-- SEZIONE IOS APPLE (5 PASSAGGI) -->
+          <div id="tutorial-ios-container" class="hidden">
+            <!-- Passo 1: App Store -->
+            <div class="tutorial-step active" id="step-ios-0">
+              <div class="step-badge">PASSO 1 DI 5 • APPLE IOS</div>
+              <h4 class="step-heading">Scarica Scriptable dall'App Store</h4>
+              <p class="step-desc"><strong>Scriptable</strong> è l'applicazione gratuita per iPhone e iPad più usata per creare widget nativi ad altissima velocità e con supporto offline (nessun acquisto in-app richiesto).</p>
+              
+              <div class="tutorial-box" style="text-align: center;">
+                <span class="box-label">App Store Ufficiale:</span>
+                <a href="https://apps.apple.com/app/scriptable/id1405459188" target="_blank" rel="noopener" class="btn-appstore-link">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 6.37c.65-.8 1.09-1.92.97-3.04-.94.04-2.07.63-2.74 1.41-.59.67-1.11 1.77-.97 2.87 1.05.08 2.11-.47 2.74-1.24z"/>
+                  </svg>
+                  Scarica Scriptable su App Store ↗
+                </a>
               </div>
-              <div class="instr-item">
-                <span class="instr-num">2</span>
-                <div>Sulla Home del Galaxy S24, tieni premuto su uno spazio vuoto e tocca <strong>Widget</strong>.</div>
-              </div>
-              <div class="instr-item">
-                <span class="instr-num">3</span>
-                <div>Scegli <strong>KWGT</strong> e seleziona il formato <strong>4x2</strong> (oppure <strong>2x2</strong>).</div>
-              </div>
-              <div class="instr-item">
-                <span class="instr-num">4</span>
-                <div>Tocca il riquadro del widget vuoto per aprire l'editor.</div>
-              </div>
-            </div>
-          </div>
 
-          <!-- Passo 3: Inserisci la Formula -->
-          <div class="tutorial-step" id="tutorial-step-2">
-            <div class="step-badge">PASSO 3 DI 4</div>
-            <h4 class="step-heading">Incolla la Formula One UI</h4>
-            <p class="step-desc">Nell'editor KWGT, tocca <strong>`+`</strong> in alto &rarr; aggiungi un blocco <strong>Testo</strong> &rarr; tocca il testo inserito e incolla questa formula già configurata con il tuo link:</p>
-            
-            <div class="tutorial-box">
-              <div class="box-header-row">
-                <span class="box-label">Formula Dinamica Completa:</span>
-                <button id="btn-copy-formula-full" class="btn-modal-action">Copia Formula</button>
-              </div>
-              <div class="formula-code-wrapper">
-                <pre><code id="widget-formula-full">$if(wg("...", json, .status) = "IN_CLASS", "🟢 " + wg("...", json, .title) + " (" + wg("...", json, .room) + ") - " + wg("...", json, .time_left), "🔔 " + wg("...", json, .title) + " - " + wg("...", json, .subtitle))$</code></pre>
+              <div class="step-tip">
+                <span class="tip-icon">💡</span>
+                <p><em>Alternativa visuale</em>: se preferisci un editor grafico drag-and-drop simile a KWGT, puoi anche usare l'app <strong>Widgy Widgets</strong> dall'App Store collegandola al nostro feed JSON.</p>
               </div>
             </div>
 
-            <!-- Accordion Formule Alternative -->
-            <details class="tutorial-details">
-              <summary>Mostra formule per singoli valori</summary>
-              <div class="mini-formulas-grid">
-                <div class="mini-formula-item">
-                  <span class="mf-title">Materia + Aula:</span>
-                  <code id="mf-code-sub">...</code>
-                  <button class="btn-mini-copy" data-target="mf-code-sub">Copia</button>
+            <!-- Passo 2: Nuovo Script -->
+            <div class="tutorial-step" id="step-ios-1">
+              <div class="step-badge">PASSO 2 DI 5 • APPLE IOS</div>
+              <h4 class="step-heading">Crea un nuovo Script</h4>
+              <p class="step-desc">Configura lo script nell'app Scriptable in pochi secondi:</p>
+              
+              <div class="steps-instruction-list">
+                <div class="instr-item">
+                  <span class="instr-num">1</span>
+                  <div>Apri l'applicazione <strong>Scriptable</strong> sul tuo iPhone.</div>
                 </div>
-                <div class="mini-formula-item">
-                  <span class="mf-title">Tempo rimanente:</span>
-                  <code id="mf-code-time">...</code>
-                  <button class="btn-mini-copy" data-target="mf-code-time">Copia</button>
+                <div class="instr-item">
+                  <span class="instr-num">2</span>
+                  <div>Tocca l'icona <strong>`+`</strong> in alto a destra per creare un nuovo script.</div>
                 </div>
-                <div class="mini-formula-item">
-                  <span class="mf-title">Prossima lezione:</span>
-                  <code id="mf-code-next">...</code>
-                  <button class="btn-mini-copy" data-target="mf-code-next">Copia</button>
+                <div class="instr-item">
+                  <span class="instr-num">3</span>
+                  <div>Tocca il titolo in alto (di default <em>Untitled Script</em>) e rinominalo in <strong><code>OrarioScuola</code></strong>.</div>
                 </div>
-              </div>
-            </details>
-          </div>
-
-          <!-- Passo 4: Schermata Blocco e AOD -->
-          <div class="tutorial-step" id="tutorial-step-3">
-            <div class="step-badge">PASSO 4 DI 4</div>
-            <h4 class="step-heading">Schermata di Blocco & Always On Display</h4>
-            <p class="step-desc">Su Samsung Galaxy S24 (One UI 6.1+) puoi visualizzare aula e countdown anche a schermo bloccato o spento.</p>
-            
-            <div class="steps-instruction-list">
-              <div class="instr-item">
-                <span class="instr-num">1</span>
-                <div>Vai in <strong>Impostazioni</strong> &rarr; <strong>Schermata di blocco e AOD</strong>.</div>
-              </div>
-              <div class="instr-item">
-                <span class="instr-num">2</span>
-                <div>Tocca <strong>Modifica schermata di blocco</strong>.</div>
-              </div>
-              <div class="instr-item">
-                <span class="instr-num">3</span>
-                <div>Sotto l'orologio, tocca l'area <strong>+ Widget</strong> e scegli il widget compatto KWGT.</div>
-              </div>
-              <div class="instr-item">
-                <span class="instr-num">4</span>
-                <div>Abilita l'opzione <strong>"Mostra widget su Always On Display"</strong> nelle impostazioni AOD.</div>
               </div>
             </div>
 
-            <div class="step-tip step-tip-success">
-              <span class="tip-icon">✅</span>
-              <p>Configurazione completata! Nelle impostazioni di KWGT imposta la modalità di aggiornamento su <strong>"Intelligente"</strong> per azzerare i consumi della batteria.</p>
+            <!-- Passo 3: Incolla Codice Scriptable -->
+            <div class="tutorial-step" id="step-ios-2">
+              <div class="step-badge">PASSO 3 DI 5 • APPLE IOS</div>
+              <h4 class="step-heading">Incolla il Codice & Cache Offline</h4>
+              <p class="step-desc">Abbiamo preparato il codice JavaScript configurato con il tuo link. Lo script salva l'orario in locale e <strong>continua a funzionare anche se a scuola non c'è campo</strong>!</p>
+              
+              <div class="tutorial-box">
+                <div class="box-header-row">
+                  <span class="box-label">Codice JavaScript Pronto:</span>
+                  <button id="btn-copy-scriptable-code" class="btn-modal-action btn-copy-prominent">Copia Script iOS</button>
+                </div>
+                <div class="formula-code-wrapper">
+                  <pre><code id="ios-code-snippet-preview">// Scriptable Widget - OrarioScuola iPhone
+const BASE_URL = "..."; // Configurato automaticamente
+// Tocca "Copia Script iOS" sopra per incollarlo per intero in Scriptable</code></pre>
+                </div>
+              </div>
+
+              <div class="step-tip">
+                <span class="tip-icon">📋</span>
+                <p>Tocca <strong>Copia Script iOS</strong>, poi torna in Scriptable, cancella il testo preesistente e incolla lo script.</p>
+              </div>
+            </div>
+
+            <!-- Passo 4: Aggiungi Widget Home -->
+            <div class="tutorial-step" id="step-ios-3">
+              <div class="step-badge">PASSO 4 DI 5 • APPLE IOS</div>
+              <h4 class="step-heading">Posiziona il Widget sulla Home</h4>
+              <p class="step-desc">Aggiungi il widget direttamente alla Schermata Home di iOS:</p>
+              
+              <div class="steps-instruction-list">
+                <div class="instr-item">
+                  <span class="instr-num">1</span>
+                  <div>Sulla Home di iPhone, tieni premuto su uno spazio vuoto finché le icone non tremano.</div>
+                </div>
+                <div class="instr-item">
+                  <span class="instr-num">2</span>
+                  <div>Tocca l'icona <strong>`+`</strong> in alto a sinistra.</div>
+                </div>
+                <div class="instr-item">
+                  <span class="instr-num">3</span>
+                  <div>Cerca <strong>Scriptable</strong> e seleziona la dimensione <strong>Medio</strong> (2x2 orizzontale raccomandato).</div>
+                </div>
+                <div class="instr-item">
+                  <span class="instr-num">4</span>
+                  <div>Tocca il widget appena aggiunto, imposta <em>Script</em> su <strong><code>OrarioScuola</code></strong> e <em>When Interacting</em> su <strong><code>Open URL</code></strong>.</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Passo 5: Blocco & AOD -->
+            <div class="tutorial-step" id="step-ios-4">
+              <div class="step-badge">PASSO 5 DI 5 • APPLE IOS</div>
+              <h4 class="step-heading">Schermata di Blocco (iOS 16+) & AOD</h4>
+              <p class="step-desc">Tieni d'occhio l'orario e la prossima lezione anche a schermo bloccato:</p>
+              
+              <div class="steps-instruction-list">
+                <div class="instr-item">
+                  <span class="instr-num">1</span>
+                  <div>Nella Schermata di Blocco, tieni premuto e tocca <strong>Personalizza</strong> &rarr; <strong>Schermata di blocco</strong>.</div>
+                </div>
+                <div class="instr-item">
+                  <span class="instr-num">2</span>
+                  <div>Sotto l'orologio, tocca l'area <strong>+ Aggiungi widget</strong> e scegli <strong>Scriptable</strong>.</div>
+                </div>
+                <div class="instr-item">
+                  <span class="instr-num">3</span>
+                  <div>Seleziona il formato <strong>Rettangolare</strong> e assegna lo script <strong><code>OrarioScuola</code></strong>.</div>
+                </div>
+              </div>
+
+              <div class="step-tip step-tip-success">
+                <span class="tip-icon">✅</span>
+                <p>Fatto! Su iPhone 14 Pro, 15 Pro e 16 Pro l'orario, l'aula e il countdown restano visibili anche con l'Always-On Display!</p>
+              </div>
             </div>
           </div>
 
@@ -702,10 +869,7 @@
         <div class="tutorial-footer">
           <button id="btn-tutorial-prev" class="btn-tutorial-nav" disabled>‹ Indietro</button>
           <div class="tutorial-dots" id="tutorial-dots">
-            <span class="dot active" data-step="0"></span>
-            <span class="dot" data-step="1"></span>
-            <span class="dot" data-step="2"></span>
-            <span class="dot" data-step="3"></span>
+            <!-- I pallini vengono sincronizzati dinamicamente (4 per Android, 5 per iOS) -->
           </div>
           <button id="btn-tutorial-next" class="btn-tutorial-nav btn-primary-nav">Avanti ›</button>
         </div>
