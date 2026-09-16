@@ -116,7 +116,11 @@ const elements = {
   btnCloseModalSettings: document.getElementById('btn-close-modal-settings'),
   simButtons: document.querySelectorAll('.sim-btn'),
 
-  // Modale Gestione Orari (4 Modalità)
+  // Pagina Dedicata Cambia Orario (4 Modalità)
+  appHeader: document.querySelector('.app-header'),
+  viewChangeSchedule: document.getElementById('view-change-schedule'),
+  btnBackToSchedule: document.getElementById('btn-back-to-schedule'),
+  changeModePills: document.querySelectorAll('.change-mode-pill'),
   modalManageTimetables: document.getElementById('modal-manage-timetables'),
   btnCloseModalTimetable: document.getElementById('btn-close-modal-timetable'),
   btnOpenAddTimetable: document.getElementById('btn-open-add-timetable'),
@@ -347,7 +351,12 @@ async function loadTimetableById(id) {
 
   renderSavedTimetablesList();
   renderVoltaClassesGrid();
-  render();
+
+  if (state.currentView === 'change-schedule') {
+    returnToScheduleView();
+  } else {
+    render();
+  }
 
   setTimeout(() => {
     autoScrollToActiveLesson(elements.timelineContainer);
@@ -585,24 +594,55 @@ function createTimetableCardElement(item, activeId, onSelect) {
 }
 
 /**
- * Gestione Modale Seleziona / Aggiungi Orario
+ * Gestione Pagina Dedicata Cambia Orario (Schermata Intera)
  */
-function openTimetableModal(initialTab = 'preset') {
-  if (!elements.modalManageTimetables) return;
-  setTimetableModalTab(initialTab);
+function openChangeScheduleView(tab = 'image') {
+  state.currentView = 'change-schedule';
+  if (elements.viewDaily) {
+    elements.viewDaily.classList.add('hidden-view');
+    elements.viewDaily.classList.remove('active-view');
+  }
+  if (elements.viewWeekly) {
+    elements.viewWeekly.classList.add('hidden-view');
+    elements.viewWeekly.classList.remove('active-view');
+  }
+  if (elements.viewChangeSchedule) {
+    elements.viewChangeSchedule.classList.remove('hidden-view');
+    elements.viewChangeSchedule.classList.add('active-view');
+  }
+  if (elements.appHeader) {
+    elements.appHeader.style.display = 'none';
+  }
+  setChangeScheduleTab(tab);
   if (elements.extractionLoading) elements.extractionLoading.classList.add('hidden');
   if (elements.extractionError) elements.extractionError.classList.add('hidden');
-  elements.modalManageTimetables.classList.add('open');
 }
 
-function closeTimetableModal() {
-  if (!elements.modalManageTimetables) return;
-  elements.modalManageTimetables.classList.remove('open');
+function returnToScheduleView() {
+  state.currentView = 'daily';
+  if (elements.viewChangeSchedule) {
+    elements.viewChangeSchedule.classList.add('hidden-view');
+    elements.viewChangeSchedule.classList.remove('active-view');
+  }
+  if (elements.viewWeekly) {
+    elements.viewWeekly.classList.add('hidden-view');
+    elements.viewWeekly.classList.remove('active-view');
+  }
+  if (elements.viewDaily) {
+    elements.viewDaily.classList.remove('hidden-view');
+    elements.viewDaily.classList.add('active-view');
+  }
+  if (elements.btnViewDaily) elements.btnViewDaily.classList.add('active');
+  if (elements.btnViewWeekly) elements.btnViewWeekly.classList.remove('active');
+  if (elements.appHeader) {
+    elements.appHeader.style.display = '';
+  }
+  render();
 }
 
-function setTimetableModalTab(tabName) {
-  if (elements.ttTabButtons) {
-    elements.ttTabButtons.forEach(btn => {
+function setChangeScheduleTab(tabName) {
+  if (elements.changeModePills) {
+    elements.changeModePills.forEach(btn => {
       const isSel = btn.getAttribute('data-tab') === tabName;
       btn.classList.toggle('active', isSel);
       btn.setAttribute('aria-selected', isSel ? 'true' : 'false');
@@ -613,6 +653,19 @@ function setTimetableModalTab(tabName) {
       content.classList.toggle('active', content.id === `tab-content-${tabName}`);
     });
   }
+}
+
+// Retrocompatibilità per chiamate legacy
+function openTimetableModal(initialTab = 'preset') {
+  openChangeScheduleView(initialTab);
+}
+
+function closeTimetableModal() {
+  returnToScheduleView();
+}
+
+function setTimetableModalTab(tabName) {
+  setChangeScheduleTab(tabName);
 }
 
 
@@ -1249,59 +1302,29 @@ function setupEventListeners() {
   elements.drawerOverlay.addEventListener('click', () => toggleDrawer(false));
 
   // Voci Drawer
-  elements.navItemSchedule.addEventListener('click', () => toggleDrawer(false));
+  elements.navItemSchedule.addEventListener('click', () => {
+    toggleDrawer(false);
+    returnToScheduleView();
+  });
   elements.navItemChangeClass.addEventListener('click', () => {
     toggleDrawer(false);
-    openTimetableModal('preset');
-  });
-  if (elements.btnOpenAddTimetable) {
-    elements.btnOpenAddTimetable.addEventListener('click', () => {
-      toggleDrawer(false);
-      openTimetableModal('preset');
-    });
-  }
-  elements.navItemSync.addEventListener('click', () => triggerSync());
-  elements.navItemWidget.addEventListener('click', () => {
-    toggleDrawer(false);
-    setTutorialStep(0);
-    elements.modalWidget.classList.add('open');
-  });
-  elements.navItemNotifications.addEventListener('click', () => {
-    alert('Notifiche attive: riceverai un avviso al cambio dell\'ora e al suono della campanella.');
-  });
-  elements.navItemSettings.addEventListener('click', () => {
-    toggleDrawer(false);
-    elements.modalSettings.classList.add('open');
+    openChangeScheduleView('image');
   });
 
-  // Chiusura Modali
-  elements.btnCloseModalWidget.addEventListener('click', () => elements.modalWidget.classList.remove('open'));
-  elements.btnCloseModalSettings.addEventListener('click', () => elements.modalSettings.classList.remove('open'));
-
-  // Gestione Modale Orari & Onboarding
-  if (elements.btnCloseModalTimetable) {
-    elements.btnCloseModalTimetable.addEventListener('click', closeTimetableModal);
-  }
-  if (elements.modalManageTimetables) {
-    elements.modalManageTimetables.addEventListener('click', (e) => {
-      if (e.target === elements.modalManageTimetables) closeTimetableModal();
+  // Tasto Torna all'orario dalla schermata Cambia Orario
+  if (elements.btnBackToSchedule) {
+    elements.btnBackToSchedule.addEventListener('click', () => {
+      returnToScheduleView();
     });
   }
 
-  // Switch Tab Modale Orari
-  if (elements.ttTabButtons) {
-    elements.ttTabButtons.forEach(btn => {
-      btn.addEventListener('click', () => {
-        const tab = btn.getAttribute('data-tab');
-        setTimetableModalTab(tab);
+  // Switch modalità Cambia Orario (4 Bottoni)
+  if (elements.changeModePills) {
+    elements.changeModePills.forEach(pill => {
+      pill.addEventListener('click', () => {
+        const tab = pill.getAttribute('data-tab');
+        setChangeScheduleTab(tab);
       });
-    });
-  }
-
-  // Header Cambio Classe rapido
-  if (elements.btnHeaderChangeClass) {
-    elements.btnHeaderChangeClass.addEventListener('click', () => {
-      openTimetableModal('preset');
     });
   }
 

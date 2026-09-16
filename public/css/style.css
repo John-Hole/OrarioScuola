@@ -2419,3 +2419,130 @@ body {
   display: none;
 }
 
+/* ==========================================================================
+   VISTA 3: DEDICATA CAMBIA ORARIO (PAGINA COMPLETA)
+   ========================================================================== */
+.change-schedule-view {
+  min-height: 100vh;
+  padding: calc(14px + var(--safe-top)) 16px 40px 16px;
+  background: var(--bg-app);
+  position: relative;
+}
+
+.change-page-top-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.btn-back-nav {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #141A24;
+  border: 1px solid var(--border-subtle);
+  color: var(--text-main);
+  padding: 8px 14px;
+  border-radius: var(--radius-pill);
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+
+.btn-back-nav:hover {
+  background: #1E2636;
+  border-color: var(--live-line-color);
+  color: #FFFFFF;
+}
+
+.change-page-title {
+  font-size: 1.15rem;
+  font-weight: 900;
+  color: #FFFFFF;
+  letter-spacing: 0.5px;
+  text-align: center;
+}
+
+.top-bar-spacer {
+  width: 100px;
+}
+
+.change-mode-buttons {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  margin-bottom: 22px;
+}
+
+.change-mode-pill {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #121822;
+  border: 1px solid var(--border-subtle);
+  color: var(--text-muted);
+  padding: 14px 14px;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.change-mode-pill:hover {
+  background: #1A2230;
+  border-color: rgba(255, 255, 255, 0.16);
+  color: #FFFFFF;
+}
+
+.change-mode-pill.active {
+  background: linear-gradient(135deg, rgba(37, 99, 235, 0.26), rgba(15, 23, 42, 0.85));
+  border-color: var(--live-line-color);
+  color: #FFFFFF;
+  box-shadow: 0 0 16px rgba(56, 189, 248, 0.22);
+}
+
+.mode-pill-icon {
+  font-size: 1.5rem;
+  flex-shrink: 0;
+}
+
+.mode-pill-texts {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.mode-pill-title {
+  font-size: 0.86rem;
+  font-weight: 800;
+  color: #FFFFFF;
+}
+
+.mode-pill-sub {
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: var(--text-dim);
+}
+
+.change-mode-pill.active .mode-pill-sub {
+  color: var(--live-line-color);
+}
+
+.change-section-card {
+  background: #0E131C;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-card);
+  padding: 20px;
+}
+
+.section-card-title {
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: #FFFFFF;
+  margin-bottom: 8px;
+}
+
