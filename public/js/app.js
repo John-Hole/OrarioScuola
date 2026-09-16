@@ -720,7 +720,7 @@ function openOriginalScheduleView() {
   }
 
   if (elements.iframeOriginalSchedule) {
-    const targetUrl = 'orario-originale/index.html?classe=4%20BINF';
+    const targetUrl = 'orario-originale/?classe=4%20BINF';
     if (!elements.iframeOriginalSchedule.src || elements.iframeOriginalSchedule.src === 'about:blank' || !elements.iframeOriginalSchedule.src.includes('orario-originale')) {
       elements.iframeOriginalSchedule.src = targetUrl;
     }
@@ -1465,7 +1465,7 @@ function setupEventListeners() {
   // Pulsante Ricarica Iframe Orario Originale
   if (elements.btnReloadOriginalIframe && elements.iframeOriginalSchedule) {
     elements.btnReloadOriginalIframe.addEventListener('click', () => {
-      elements.iframeOriginalSchedule.src = `orario-originale/index.html?classe=4%20BINF&_t=${Date.now()}`;
+      elements.iframeOriginalSchedule.src = `orario-originale/?classe=4%20BINF&_t=${Date.now()}`;
     });
   }
 

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'smart-timetable-v30';
+const CACHE_NAME = 'smart-timetable-v31';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
@@ -11,6 +11,7 @@ const STATIC_ASSETS = [
   '/data/timetable.json',
   '/manifest.json',
   '/icons/icon.svg',
+  '/orario-originale/',
   '/orario-originale/index.html',
   '/orario-originale/_style.css',
   '/orario-originale/_impression.css',
