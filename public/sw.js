@@ -1,10 +1,11 @@
-const CACHE_NAME = 'smart-timetable-v18';
+const CACHE_NAME = 'smart-timetable-v19';
 const STATIC_ASSETS = [
   './',
   './index.html',
   './css/style.css',
   './js/app.js',
   './js/timeline.js',
+  './js/timetable_store.js',
   './js/widget_helper.js',
   './manifest.json',
   './icons/icon.svg'
@@ -37,8 +38,8 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
 
-  // Per i dati JSON dell'orario: Network First con fallback su Cache
-  if (url.pathname.includes('/data/')) {
+  // Per i dati JSON dell'orario e per la navigazione HTML: Network First con fallback su Cache
+  if (url.pathname.includes('/data/') || event.request.mode === 'navigate' || url.pathname.endsWith('.html') || url.pathname === '/') {
     event.respondWith(
       fetch(event.request)
         .then((response) => {
@@ -53,19 +54,16 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Per le risorse statiche: Cache First con fallback su Network
+  // Per le altre risorse statiche (CSS/JS/icone): Network First con fallback su Cache per aggiornamenti immediati
   event.respondWith(
-    caches.match(event.request).then((cachedResponse) => {
-      if (cachedResponse) {
-        return cachedResponse;
-      }
-      return fetch(event.request).then((networkResponse) => {
+    fetch(event.request)
+      .then((networkResponse) => {
         if (networkResponse.ok && event.request.method === 'GET') {
           const clone = networkResponse.clone();
           caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
         }
         return networkResponse;
-      });
-    })
+      })
+      .catch(() => caches.match(event.request))
   );
 });
