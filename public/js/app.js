@@ -190,7 +190,9 @@ const elements = {
   dropzoneText: document.getElementById('dropzone-text'),
   extractionLoading: document.getElementById('extraction-loading'),
   extractionError: document.getElementById('extraction-error'),
-  extractionErrorMsg: document.getElementById('extraction-error-msg')
+  extractionErrorMsg: document.getElementById('extraction-error-msg'),
+  modalSavedTimetablesList: document.getElementById('modal-saved-timetables-list'),
+  modalCustomTimetablesSection: document.getElementById('modal-custom-timetables-section')
 };
 
 let currentTutorialStep = 0;
@@ -277,8 +279,9 @@ async function init() {
     if (fav) {
       await loadTimetableById(fav.id);
     } else {
-      // PRIMO AVVIO O NESSUN ORARIO: l'app non mostra un orario a caso ma apre il selettore
-      openTimetableModal('preset');
+      // All'avvio carica direttamente il preset Volta 4 BINF senza bloccare l'utente con popup
+      const preset = await loadPresetVolta4Binf();
+      await loadTimetableById(preset.id);
     }
   }
 
@@ -386,93 +389,122 @@ async function loadTimetableData() {
 }
 
 /**
- * Renderizza l'elenco degli orari salvati nel Drawer laterale
+ * Renderizza l'elenco degli orari salvati nel Drawer laterale e nel Modale
  */
 function renderSavedTimetablesList() {
-  if (!elements.savedTimetablesList) return;
-  elements.savedTimetablesList.innerHTML = '';
-
   const list = getAllSavedTimetables();
   const activeId = getActiveTimetableId();
 
-  if (list.length === 0) {
-    const emptyNotice = document.createElement('div');
-    emptyNotice.style.fontSize = '0.74rem';
-    emptyNotice.style.color = 'var(--text-dim)';
-    emptyNotice.style.padding = '6px 4px';
-    emptyNotice.textContent = 'Nessun orario salvato. Tocca + Aggiungi.';
-    elements.savedTimetablesList.appendChild(emptyNotice);
-    return;
+  // 1. Popolamento Lista nel Drawer
+  if (elements.savedTimetablesList) {
+    elements.savedTimetablesList.innerHTML = '';
+
+    if (list.length === 0) {
+      const emptyNotice = document.createElement('div');
+      emptyNotice.style.fontSize = '0.74rem';
+      emptyNotice.style.color = 'var(--text-dim)';
+      emptyNotice.style.padding = '6px 4px';
+      emptyNotice.textContent = 'Nessun orario salvato. Tocca + Aggiungi.';
+      elements.savedTimetablesList.appendChild(emptyNotice);
+    } else {
+      list.forEach((item) => {
+        const card = createTimetableCardElement(item, activeId, () => {
+          toggleDrawer(false);
+          loadTimetableById(item.id);
+        });
+        elements.savedTimetablesList.appendChild(card);
+      });
+    }
   }
 
-  list.forEach((item) => {
-    const card = document.createElement('div');
-    const isActive = item.id === activeId;
-    card.className = `saved-tt-item ${isActive ? 'is-active' : ''}`;
+  // 2. Popolamento Lista nel Modale "Cambia Orario" (Tab 1: Orari Salvati)
+  if (elements.modalSavedTimetablesList && elements.modalCustomTimetablesSection) {
+    elements.modalSavedTimetablesList.innerHTML = '';
+    const customList = list.filter(item => item.type !== 'preset');
 
-    const infoDiv = document.createElement('div');
-    infoDiv.className = 'saved-tt-info';
-
-    const nameSpan = document.createElement('div');
-    nameSpan.className = 'saved-tt-name';
-    nameSpan.innerHTML = `<span>${item.name}</span> ${isActive ? '<span class="active-tag">ATTIVO</span>' : ''}`;
-
-    const schoolSpan = document.createElement('div');
-    schoolSpan.className = 'saved-tt-school';
-    schoolSpan.textContent = item.school || (item.type === 'preset' ? 'Istituto A. Volta' : 'Orario Personale');
-
-    infoDiv.appendChild(nameSpan);
-    infoDiv.appendChild(schoolSpan);
-
-    const actionsDiv = document.createElement('div');
-    actionsDiv.className = 'saved-tt-actions';
-
-    // Bottone Stellina Preferito ⭐
-    const starBtn = document.createElement('button');
-    starBtn.className = `btn-tt-star ${item.isFavorite ? 'active' : ''}`;
-    starBtn.title = item.isFavorite ? 'Rimuovi dai preferiti' : 'Imposta come preferito';
-    starBtn.innerHTML = '★';
-    starBtn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      toggleFavoriteTimetable(item.id);
-      renderSavedTimetablesList();
-    });
-    actionsDiv.appendChild(starBtn);
-
-    // Bottone Cestino se personalizzato
-    if (item.type !== 'preset') {
-      const delBtn = document.createElement('button');
-      delBtn.className = 'btn-tt-delete';
-      delBtn.title = 'Elimina questo orario';
-      delBtn.innerHTML = '🗑️';
-      delBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        if (confirm(`Vuoi rimuovere l'orario "${item.name}"?`)) {
-          deleteTimetable(item.id);
-          renderSavedTimetablesList();
-          const newActive = getActiveTimetableId();
-          if (newActive) {
-            loadTimetableById(newActive);
-          } else {
-            state.timetable = null;
-            openTimetableModal('preset');
-          }
-        }
+    if (customList.length === 0) {
+      elements.modalCustomTimetablesSection.style.display = 'none';
+    } else {
+      elements.modalCustomTimetablesSection.style.display = 'block';
+      customList.forEach((item) => {
+        const card = createTimetableCardElement(item, activeId, () => {
+          closeTimetableModal();
+          loadTimetableById(item.id);
+        });
+        elements.modalSavedTimetablesList.appendChild(card);
       });
-      actionsDiv.appendChild(delBtn);
     }
+  }
+}
 
-    card.appendChild(infoDiv);
-    card.appendChild(actionsDiv);
+/**
+ * Crea un elemento DOM per una card di orario salvato
+ */
+function createTimetableCardElement(item, activeId, onSelect) {
+  const card = document.createElement('div');
+  const isActive = item.id === activeId;
+  card.className = `saved-tt-item ${isActive ? 'is-active' : ''}`;
 
-    // Click per selezionare e attivare l'orario
-    card.addEventListener('click', async () => {
-      toggleDrawer(false);
-      await loadTimetableById(item.id);
-    });
+  const infoDiv = document.createElement('div');
+  infoDiv.className = 'saved-tt-info';
 
-    elements.savedTimetablesList.appendChild(card);
+  const nameSpan = document.createElement('div');
+  nameSpan.className = 'saved-tt-name';
+  nameSpan.innerHTML = `<span>${item.name}</span> ${isActive ? '<span class="active-tag">ATTIVO</span>' : ''}`;
+
+  const schoolSpan = document.createElement('div');
+  schoolSpan.className = 'saved-tt-school';
+  schoolSpan.textContent = item.school || (item.type === 'preset' ? 'Istituto A. Volta' : 'Orario Personale');
+
+  infoDiv.appendChild(nameSpan);
+  infoDiv.appendChild(schoolSpan);
+
+  const actionsDiv = document.createElement('div');
+  actionsDiv.className = 'saved-tt-actions';
+
+  // Bottone Stellina Preferito ⭐
+  const starBtn = document.createElement('button');
+  starBtn.className = `btn-tt-star ${item.isFavorite ? 'active' : ''}`;
+  starBtn.title = item.isFavorite ? 'Rimuovi dai preferiti' : 'Imposta come preferito';
+  starBtn.innerHTML = '★';
+  starBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    toggleFavoriteTimetable(item.id);
+    renderSavedTimetablesList();
   });
+  actionsDiv.appendChild(starBtn);
+
+  // Bottone Cestino se personalizzato
+  if (item.type !== 'preset') {
+    const delBtn = document.createElement('button');
+    delBtn.className = 'btn-tt-delete';
+    delBtn.title = 'Elimina questo orario';
+    delBtn.innerHTML = '🗑️';
+    delBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (confirm(`Vuoi rimuovere l'orario "${item.name}"?`)) {
+        deleteTimetable(item.id);
+        renderSavedTimetablesList();
+        const newActive = getActiveTimetableId();
+        if (newActive) {
+          loadTimetableById(newActive);
+        } else {
+          loadPresetVolta4Binf().then(preset => loadTimetableById(preset.id));
+        }
+      }
+    });
+    actionsDiv.appendChild(delBtn);
+  }
+
+  card.appendChild(infoDiv);
+  card.appendChild(actionsDiv);
+
+  // Click per selezionare e attivare l'orario
+  card.addEventListener('click', () => {
+    if (onSelect) onSelect();
+  });
+
+  return card;
 }
 
 /**

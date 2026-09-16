@@ -323,12 +323,10 @@
         <button class="drawer-item" id="nav-item-change-class">
           <div class="item-left">
             <svg class="item-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-              <circle cx="9" cy="7" r="4"></circle>
-              <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-              <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+              <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+              <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
             </svg>
-            <span class="item-label">Cambia classe</span>
+            <span class="item-label">Cambia orario</span>
           </div>
           <span class="item-arrow">›</span>
         </button>
@@ -617,21 +615,21 @@
               <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
               <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
             </svg>
-            <h3 id="modal-timetable-title">Scegli o Aggiungi Orario</h3>
+            <h3 id="modal-timetable-title">Cambia Orario</h3>
           </div>
           <button class="modal-close-btn" id="btn-close-modal-timetable" aria-label="Chiudi finestra">✕</button>
         </div>
 
-        <!-- Selettore Tab: 1. Archivio Scuola | 2. Carica da URL | 3. Carica File Foto/PDF -->
+        <!-- Selettore Tab: 1. Orari Salvati & Scuola | 2. Carica File Foto/PDF | 3. Carica da URL -->
         <div class="timetable-tab-pills" role="tablist">
           <button class="tt-tab-btn active" data-tab="preset" role="tab" aria-selected="true">
-            <span>🏛️ Scuola Volta</span>
-          </button>
-          <button class="tt-tab-btn" data-tab="url" role="tab" aria-selected="false">
-            <span>🔗 Da URL</span>
+            <span>📁 Orari Salvati</span>
           </button>
           <button class="tt-tab-btn" data-tab="file" role="tab" aria-selected="false">
             <span>📷 Foto / PDF</span>
+          </button>
+          <button class="tt-tab-btn" data-tab="url" role="tab" aria-selected="false">
+            <span>🔗 Da URL</span>
           </button>
         </div>
 
@@ -657,6 +655,14 @@
               <div class="featured-footer">
                 <span class="status-pill-green">● Pronto</span>
                 <button class="btn-select-preset" id="btn-select-4binf">Seleziona e Apri</button>
+              </div>
+            </div>
+
+            <!-- Sezione Orari Salvati Personalizzati -->
+            <div class="modal-user-timetables-section" id="modal-custom-timetables-section">
+              <div class="other-classes-title" style="margin-top: 14px;">I tuoi orari salvati:</div>
+              <div class="saved-timetables-list" id="modal-saved-timetables-list">
+                <!-- Popolato da JS -->
               </div>
             </div>
 
