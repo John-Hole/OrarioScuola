@@ -270,18 +270,34 @@ async function init() {
 
   renderSavedTimetablesList();
 
-  const activeId = getActiveTimetableId();
-  if (activeId) {
-    await loadTimetableById(activeId);
-  } else {
-    // Se non c'è un ID attivo esplicito, verifichiamo se c'è un preferito salvato
-    const fav = getFavoriteTimetable();
-    if (fav) {
-      await loadTimetableById(fav.id);
+  try {
+    const activeId = getActiveTimetableId();
+    if (activeId) {
+      await loadTimetableById(activeId);
     } else {
-      // All'avvio carica direttamente il preset Volta 4 BINF senza bloccare l'utente con popup
-      const preset = await loadPresetVolta4Binf();
-      await loadTimetableById(preset.id);
+      // Se non c'è un ID attivo esplicito, verifichiamo se c'è un preferito salvato
+      const fav = getFavoriteTimetable();
+      if (fav) {
+        await loadTimetableById(fav.id);
+      } else {
+        // All'avvio carica direttamente il preset Volta 4 BINF senza bloccare l'utente con popup
+        const preset = await loadPresetVolta4Binf();
+        await loadTimetableById(preset.id);
+      }
+    }
+  } catch (err) {
+    console.error('[INIT LOAD TIMETABLE ERROR]', err);
+    try {
+      const resp = await fetch('data/timetable.json?t=' + Date.now());
+      if (resp.ok) {
+        state.timetable = await resp.json();
+        const now = getCurrentDate();
+        state.lastCalendarDay = now.toDateString();
+        state.selectedDay = getSmartDefaultDay(state.timetable.giorni, now);
+        render();
+      }
+    } catch (e2) {
+      console.error('[CRITICAL FALLBACK ERROR]', e2);
     }
   }
 
@@ -1961,4 +1977,10 @@ function escapeHtml(str) {
     .replace(/'/g, '&#039;');
 }
 
-document.addEventListener('DOMContentLoaded', init);
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', () => {
+    init().catch(err => console.error('[INIT FATAL]', err));
+  });
+} else {
+  init().catch(err => console.error('[INIT FATAL]', err));
+}
