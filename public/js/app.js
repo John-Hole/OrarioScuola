@@ -143,8 +143,17 @@ const elements = {
   pdfDropzone: document.getElementById('pdf-dropzone'),
   inputTimetablePdf: document.getElementById('input-timetable-pdf'),
   pdfDropzoneText: document.getElementById('pdf-dropzone-text'),
-  inputPdfClassname: document.getElementById('input-pdf-classname'),
-  btnExtractFromPdf: document.getElementById('btn-extract-from-pdf'),
+  btnScanPdfClasses: document.getElementById('btn-scan-pdf-classes'),
+  pdfClassesDiscoveryContainer: document.getElementById('pdf-classes-discovery-container'),
+  pdfClassesCount: document.getElementById('pdf-classes-count'),
+  btnSelectAllPdfClasses: document.getElementById('btn-select-all-pdf-classes'),
+  btnDeselectAllPdfClasses: document.getElementById('btn-deselect-all-pdf-classes'),
+  inputFilterPdfClasses: document.getElementById('input-filter-pdf-classes'),
+  pdfClassesGrid: document.getElementById('pdf-classes-grid'),
+  pdfBatchProgressBox: document.getElementById('pdf-batch-progress-box'),
+  pdfBatchProgressText: document.getElementById('pdf-batch-progress-text'),
+  pdfBatchProgressBar: document.getElementById('pdf-batch-progress-bar'),
+  btnExtractSelectedPdfClasses: document.getElementById('btn-extract-selected-pdf-classes'),
 
   // Tab 3: Immagine
   imageDropzone: document.getElementById('image-dropzone'),
@@ -1485,8 +1494,77 @@ function setupEventListeners() {
     }
   }
 
-  // Tab 2: Carica da PDF
+  // Tab 2: Carica da PDF con Scansione e Selezione Classi
   let selectedPdfBase64 = null;
+  let discoveredPdfClasses = [];
+  let selectedPdfClassesSet = new Set();
+  let pdfSchoolName = '';
+
+  function renderDiscoveredPdfClasses(filterQuery = '') {
+    if (!elements.pdfClassesGrid) return;
+    elements.pdfClassesGrid.innerHTML = '';
+
+    const query = filterQuery.toLowerCase().trim();
+    const filtered = discoveredPdfClasses.filter(c => !query || c.toLowerCase().includes(query));
+
+    if (elements.pdfClassesCount) {
+      elements.pdfClassesCount.textContent = `${discoveredPdfClasses.length} ${discoveredPdfClasses.length === 1 ? 'classe' : 'classi'}`;
+    }
+
+    if (filtered.length === 0) {
+      const emptyNotice = document.createElement('div');
+      emptyNotice.style.cssText = 'color: var(--text-dim); font-size: 0.8rem; padding: 14px; grid-column: 1 / -1; text-align: center;';
+      emptyNotice.textContent = query ? 'Nessuna classe corrispondente alla ricerca' : 'Nessuna classe rilevata nel documento';
+      elements.pdfClassesGrid.appendChild(emptyNotice);
+      updatePdfExtractButtonState();
+      return;
+    }
+
+    filtered.forEach(className => {
+      const chip = document.createElement('div');
+      const isSelected = selectedPdfClassesSet.has(className);
+      chip.className = `pdf-class-chip ${isSelected ? 'selected' : ''}`;
+      
+      const nameSpan = document.createElement('span');
+      nameSpan.className = 'pdf-class-name';
+      nameSpan.textContent = className;
+
+      const checkSpan = document.createElement('span');
+      checkSpan.className = 'pdf-class-check';
+      checkSpan.textContent = isSelected ? '✓' : '';
+
+      chip.appendChild(nameSpan);
+      chip.appendChild(checkSpan);
+
+      chip.addEventListener('click', () => {
+        if (selectedPdfClassesSet.has(className)) {
+          selectedPdfClassesSet.delete(className);
+        } else {
+          selectedPdfClassesSet.add(className);
+        }
+        renderDiscoveredPdfClasses(elements.inputFilterPdfClasses ? elements.inputFilterPdfClasses.value : '');
+      });
+
+      elements.pdfClassesGrid.appendChild(chip);
+    });
+
+    updatePdfExtractButtonState();
+  }
+
+  function updatePdfExtractButtonState() {
+    if (!elements.btnExtractSelectedPdfClasses) return;
+    const count = selectedPdfClassesSet.size;
+    elements.btnExtractSelectedPdfClasses.disabled = count === 0;
+    if (count === 0) {
+      elements.btnExtractSelectedPdfClasses.innerHTML = '<span>Seleziona almeno una classe</span>';
+    } else if (count === 1) {
+      const singleClass = Array.from(selectedPdfClassesSet)[0];
+      elements.btnExtractSelectedPdfClasses.innerHTML = `<span>Estrai Orario per <strong>${escapeHtml(singleClass)}</strong></span>`;
+    } else {
+      elements.btnExtractSelectedPdfClasses.innerHTML = `<span>Estrai Orario per <strong>${count} Classi Selezionate</strong></span>`;
+    }
+  }
+
   if (elements.inputTimetablePdf) {
     elements.inputTimetablePdf.addEventListener('change', (e) => {
       const file = e.target.files[0];
@@ -1495,8 +1573,16 @@ function setupEventListeners() {
       if (elements.pdfDropzoneText) {
         elements.pdfDropzoneText.textContent = `PDF selezionato: ${file.name} (${(file.size / 1024).toFixed(0)} KB)`;
       }
-      if (elements.btnExtractFromPdf) {
-        elements.btnExtractFromPdf.disabled = false;
+      if (elements.btnScanPdfClasses) {
+        elements.btnScanPdfClasses.disabled = false;
+        elements.btnScanPdfClasses.classList.remove('hidden');
+      }
+
+      // Reset eventuale scansione precedente su cambio file
+      discoveredPdfClasses = [];
+      selectedPdfClassesSet.clear();
+      if (elements.pdfClassesDiscoveryContainer) {
+        elements.pdfClassesDiscoveryContainer.classList.add('hidden');
       }
 
       const reader = new FileReader();
@@ -1529,19 +1615,186 @@ function setupEventListeners() {
     });
   }
 
-  if (elements.btnExtractFromPdf) {
-    elements.btnExtractFromPdf.addEventListener('click', async () => {
+  // Scansione e Rilevamento Classi nel PDF tramite Gemini
+  if (elements.btnScanPdfClasses) {
+    elements.btnScanPdfClasses.addEventListener('click', async () => {
       if (!selectedPdfBase64) {
         alert('Seleziona prima un documento PDF.');
         return;
       }
-      const className = elements.inputPdfClassname?.value.trim() || 'Orario PDF';
-      await performExtraction({
-        imageBase64: selectedPdfBase64,
-        mimeType: 'application/pdf',
-        targetClass: className,
-        type: 'custom_pdf'
-      });
+
+      try {
+        if (elements.extractionLoading) {
+          elements.extractionLoading.classList.remove('hidden');
+          const title = elements.extractionLoading.querySelector('.loading-title');
+          const sub = elements.extractionLoading.querySelector('.loading-sub');
+          if (title) title.textContent = 'Scansione PDF in corso...';
+          if (sub) sub.textContent = 'Gemini sta rilevando tutte le classi presenti nel documento';
+        }
+
+        const res = await fetch('/api/extract', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            imageBase64: selectedPdfBase64,
+            mimeType: 'application/pdf',
+            mode: 'list_classes'
+          })
+        });
+
+        const json = await res.json();
+        if (!res.ok || !json.success) {
+          throw new Error(json.error || json.details || 'Impossibile rilevare le classi dal PDF');
+        }
+
+        discoveredPdfClasses = Array.isArray(json.classes) ? json.classes : [];
+        pdfSchoolName = json.school || 'Istituto Scolastico';
+        selectedPdfClassesSet.clear();
+
+        if (discoveredPdfClasses.length === 0) {
+          alert('Nessuna classe rilevata automaticamente. Inserire una classe generica.');
+          discoveredPdfClasses = ['Classe'];
+        }
+
+        // Seleziona la prima classe per agevolare l'utente
+        selectedPdfClassesSet.add(discoveredPdfClasses[0]);
+
+        if (elements.pdfClassesDiscoveryContainer) {
+          elements.pdfClassesDiscoveryContainer.classList.remove('hidden');
+        }
+
+        renderDiscoveredPdfClasses();
+
+        // Scroll morbido verso la sezione delle classi trovate
+        if (elements.pdfClassesDiscoveryContainer) {
+          elements.pdfClassesDiscoveryContainer.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+
+      } catch (err) {
+        console.error('[PDF DISCOVERY ERROR]', err);
+        alert('Errore durante la scansione delle classi: ' + err.message);
+      } finally {
+        if (elements.extractionLoading) elements.extractionLoading.classList.add('hidden');
+      }
+    });
+  }
+
+  // Filtro ricerca classi
+  if (elements.inputFilterPdfClasses) {
+    elements.inputFilterPdfClasses.addEventListener('input', (e) => {
+      renderDiscoveredPdfClasses(e.target.value);
+    });
+  }
+
+  // Seleziona tutte le classi
+  if (elements.btnSelectAllPdfClasses) {
+    elements.btnSelectAllPdfClasses.addEventListener('click', () => {
+      discoveredPdfClasses.forEach(c => selectedPdfClassesSet.add(c));
+      renderDiscoveredPdfClasses(elements.inputFilterPdfClasses ? elements.inputFilterPdfClasses.value : '');
+    });
+  }
+
+  // Deseleziona tutte le classi
+  if (elements.btnDeselectAllPdfClasses) {
+    elements.btnDeselectAllPdfClasses.addEventListener('click', () => {
+      selectedPdfClassesSet.clear();
+      renderDiscoveredPdfClasses(elements.inputFilterPdfClasses ? elements.inputFilterPdfClasses.value : '');
+    });
+  }
+
+  // Estrazione mirata per ciascuna classe selezionata
+  if (elements.btnExtractSelectedPdfClasses) {
+    elements.btnExtractSelectedPdfClasses.addEventListener('click', async () => {
+      const selectedClasses = Array.from(selectedPdfClassesSet);
+      if (selectedClasses.length === 0) {
+        alert('Seleziona almeno una classe da estrarre.');
+        return;
+      }
+
+      if (!selectedPdfBase64) {
+        alert('Documento PDF non disponibile. Ricarica il file.');
+        return;
+      }
+
+      elements.btnExtractSelectedPdfClasses.disabled = true;
+      if (elements.pdfBatchProgressBox) {
+        elements.pdfBatchProgressBox.classList.remove('hidden');
+      }
+
+      let lastImportedId = null;
+      const total = selectedClasses.length;
+
+      try {
+        for (let i = 0; i < total; i++) {
+          const targetClass = selectedClasses[i];
+          const progressPercent = Math.round(((i) / total) * 100);
+
+          if (elements.pdfBatchProgressBar) {
+            elements.pdfBatchProgressBar.style.width = `${progressPercent}%`;
+          }
+          if (elements.pdfBatchProgressText) {
+            elements.pdfBatchProgressText.textContent = `Estrazione classe ${i + 1} di ${total}: ${targetClass}...`;
+          }
+
+          const res = await fetch('/api/extract', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              imageBase64: selectedPdfBase64,
+              mimeType: 'application/pdf',
+              targetClass: targetClass
+            })
+          });
+
+          const json = await res.json();
+          if (!res.ok || !json.success) {
+            console.warn(`[BATCH EXTRACT WARN] Estrazione fallita per ${targetClass}:`, json.error);
+            continue;
+          }
+
+          const extracted = json.timetable;
+          const customItem = {
+            id: 'pdf_' + targetClass.replace(/[^a-zA-Z0-9]/g, '_').toLowerCase() + '_' + Date.now(),
+            name: extracted.classe || targetClass,
+            school: extracted.istituto || pdfSchoolName || 'Orario PDF',
+            type: 'custom_pdf',
+            isFavorite: false,
+            sourceUrl: null,
+            lastUpdated: extracted.data_aggiornamento || new Date().toLocaleDateString('it-IT'),
+            data: extracted
+          };
+
+          saveOrUpdateTimetable(customItem, true);
+          lastImportedId = customItem.id;
+        }
+
+        if (elements.pdfBatchProgressBar) {
+          elements.pdfBatchProgressBar.style.width = '100%';
+        }
+        if (elements.pdfBatchProgressText) {
+          elements.pdfBatchProgressText.textContent = `Completato! ${total} ${total === 1 ? 'classe importata' : 'classi importate'}.`;
+        }
+
+        renderSavedTimetablesList();
+
+        if (lastImportedId) {
+          closeTimetableModal();
+          await loadTimetableById(lastImportedId);
+        } else {
+          alert('Impossibile estrarre gli orari delle classi selezionate.');
+        }
+
+      } catch (err) {
+        console.error('[BATCH EXTRACT ERROR]', err);
+        alert('Errore durante l\'estrazione: ' + err.message);
+      } finally {
+        elements.btnExtractSelectedPdfClasses.disabled = false;
+        if (elements.pdfBatchProgressBox) {
+          setTimeout(() => {
+            elements.pdfBatchProgressBox.classList.add('hidden');
+          }, 2000);
+        }
+      }
     });
   }
 

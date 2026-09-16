@@ -111,9 +111,9 @@ python scripts/sync_timetable.py --mock
 
 ---
 
-## 📱 Configurazione Widget su Galaxy S24
-Consulta la guida completa in:
-👉 **[docs/WIDGET_S24_SETUP.md](docs/WIDGET_S24_SETUP.md)**
+## 📱 Configurazione Widget (Android & iPhone)
+- **Samsung Galaxy S24 (KWGT / One UI):** 👉 **[docs/WIDGET_S24_SETUP.md](docs/WIDGET_S24_SETUP.md)**
+- **iPhone / iOS (Scriptable & Widgy):** 👉 **[docs/WIDGET_IPHONE_SETUP.md](docs/WIDGET_IPHONE_SETUP.md)**
 
 ---
 

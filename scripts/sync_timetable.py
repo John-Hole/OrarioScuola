@@ -87,6 +87,10 @@ if BaseModel:
         classi_disponibili: Optional[List[str]] = Field(default=None, description="Eventuali altre classi presenti nel foglio")
         giorni: List[DaySchedule] = Field(default_factory=list, description="Tutti i giorni della settimana con relative lezioni")
 
+    class DiscoverClassesSchema(BaseModel):
+        school: Optional[str] = Field(default="", description="Nome dell'istituto scolastico")
+        classes: List[str] = Field(default_factory=list, description="Elenco di tutte le classi trovate")
+
 
 # --- GENERATORE DATI MOCK (OFFLINE / TEST) ---
 def get_sample_mock_data(classe: str = "4 BINF") -> Dict[str, Any]:
@@ -847,6 +851,44 @@ def extract_timetable_with_gemini(
             "verified_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         }
         return normalize_timetable_multihour_slots(data)
+
+
+def discover_classes_from_document(file_path: str, api_key: str) -> Dict[str, Any]:
+    """Scansiona un PDF o immagine ed individua tutte le classi presenti nel documento."""
+    from google import genai
+    from google.genai import types
+
+    with open(file_path, "rb") as f:
+        file_bytes = f.read()
+
+    mime_type = "application/pdf" if file_path.lower().endswith(".pdf") else "image/png"
+    prompt = """
+    Analizza questo documento di orario scolastico (anche se composto da più pagine o fogli).
+    Individua e restituisci l'elenco esatto di tutte le classi scolastiche presenti (es. '1 AINF', '2 BINF', '3 ALS', '4 BINF', ecc.).
+    Escludi orari intestati a singoli docenti o nominativi di aule. Rispondi in JSON.
+    """
+
+    client = genai.Client(api_key=api_key)
+    for model in ["gemini-3.8-flash", "gemini-3.5-flash-lite", "gemini-3.6-flash"]:
+        try:
+            resp = client.models.generate_content(
+                model=model,
+                contents=[
+                    types.Part.from_bytes(data=file_bytes, mime_type=mime_type),
+                    prompt
+                ],
+                config=types.GenerateContentConfig(
+                    response_mime_type="application/json",
+                    response_schema=DiscoverClassesSchema,
+                    temperature=0.1
+                )
+            )
+            if resp.text:
+                return json.loads(resp.text)
+        except Exception as e:
+            print(f"[DISCOVER WARN] {model} failed: {e}")
+
+    return {"school": "", "classes": []}
 
 
 # --- GESTIONE CACHE & DOWNLOAD ---

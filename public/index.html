@@ -230,14 +230,56 @@
               </div>
             </div>
 
-            <div class="input-group" style="margin-top: 14px;">
-              <label for="input-pdf-classname">Nome Classe (opzionale)</label>
-              <input type="text" id="input-pdf-classname" placeholder="Es. 4 BINF, 3 ALS, 2 A..." />
+            <!-- Pulsante per avviare la scansione delle classi nel PDF -->
+            <button id="btn-scan-pdf-classes" class="btn-primary-action" disabled>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+              </svg>
+              <span>Scansiona Classi nel PDF</span>
+            </button>
+
+            <!-- Sezione Rilevamento Classi (Mostrata dopo la scansione) -->
+            <div id="pdf-classes-discovery-container" class="pdf-classes-discovery-container hidden">
+              <div class="pdf-discovery-header">
+                <div class="pdf-discovery-title-row">
+                  <h4 class="pdf-discovery-title">Classi trovate nel documento</h4>
+                  <span class="catalog-counter" id="pdf-classes-count">0 classi</span>
+                </div>
+                <div class="pdf-discovery-tools">
+                  <button type="button" id="btn-select-all-pdf-classes" class="btn-tool-subtle">Seleziona tutte</button>
+                  <button type="button" id="btn-deselect-all-pdf-classes" class="btn-tool-subtle">Deseleziona</button>
+                </div>
+              </div>
+
+              <!-- Filtro rapido classi se molte -->
+              <div class="catalog-search-wrapper" id="pdf-classes-search-wrapper" style="margin-bottom: 12px;">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                  <circle cx="11" cy="11" r="8"></circle>
+                  <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                </svg>
+                <input type="text" id="input-filter-pdf-classes" placeholder="Filtra classi (es. 4 BINF)..." />
+              </div>
+
+              <!-- Griglia/Elenco di Chip Selezionabili -->
+              <div class="pdf-classes-grid" id="pdf-classes-grid">
+                <!-- Generato da JS -->
+              </div>
+
+              <!-- Avanzamento Estrazione Multi-classe -->
+              <div class="batch-progress-box hidden" id="pdf-batch-progress-box">
+                <div class="batch-progress-text" id="pdf-batch-progress-text">Estrazione in corso...</div>
+                <div class="batch-progress-bar-track">
+                  <div class="batch-progress-bar-fill" id="pdf-batch-progress-bar"></div>
+                </div>
+              </div>
+
+              <!-- Pulsante Estrazione Mirata delle Classi Selezionate -->
+              <button id="btn-extract-selected-pdf-classes" class="btn-primary-action" disabled>
+                <span>Estrai Orario per le Classi Selezionate</span>
+              </button>
             </div>
 
-            <button id="btn-extract-from-pdf" class="btn-primary-action" disabled>
-              <span>Estrai Orario</span>
-            </button>
           </div>
         </div>
 
@@ -633,6 +675,29 @@
             <button class="sim-btn" data-sim-time="12:15" data-sim-day="Lunedì">12:15 (Finito)</button>
             <button class="sim-btn active" data-sim-time="real">Ora Reale</button>
           </div>
+    <!-- Banner / Pop-up Notifica Sincronizzazione -->
+    <div id="sync-banner" class="sync-banner hidden" role="status" aria-live="polite">
+      <div class="sync-banner-content">
+        <div class="sync-banner-icon-container" id="sync-banner-icon-box">
+          <!-- Spinner rotella in corso -->
+          <svg class="sync-spinner-icon" id="sync-banner-spinner" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <circle class="sync-spinner-track" cx="12" cy="12" r="9" stroke-opacity="0.25"></circle>
+            <path class="sync-spinner-head" d="M12 3a9 9 0 0 1 9 9" stroke-linecap="round"></path>
+          </svg>
+          <!-- Spunta verde completata -->
+          <svg class="sync-success-icon hidden" id="sync-banner-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="20 6 9 17 4 12"></polyline>
+          </svg>
+          <!-- Icona Errore/Attenzione -->
+          <svg class="sync-error-icon hidden" id="sync-banner-error" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="8" x2="12" y2="12"></line>
+            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+          </svg>
+        </div>
+        <div class="sync-banner-text">
+          <div class="sync-banner-title" id="sync-banner-title">Sincronizzazione in corso...</div>
+          <div class="sync-banner-subtitle" id="sync-banner-subtitle">Verifica orario scolastico</div>
         </div>
       </div>
     </div>

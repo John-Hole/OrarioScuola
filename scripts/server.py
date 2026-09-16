@@ -118,7 +118,7 @@ class TimetableRequestHandler(SimpleHTTPRequestHandler):
         import urllib.request
         try:
             sys.path.insert(0, str(SCRIPTS_DIR))
-            from sync_timetable import load_env, extract_timetable_with_gemini, get_sample_mock_data, normalize_timetable_multihour_slots
+            from sync_timetable import load_env, extract_timetable_with_gemini, get_sample_mock_data, normalize_timetable_multihour_slots, discover_classes_from_document
             load_env()
 
             content_length = int(self.headers.get("Content-Length", 0))
@@ -132,6 +132,7 @@ class TimetableRequestHandler(SimpleHTTPRequestHandler):
             image_url = payload.get("imageUrl")
             target_class = payload.get("targetClass") or payload.get("className") or "4 BINF"
             mime_type = payload.get("mimeType") or "image/png"
+            mode = payload.get("mode")
 
             cache_dir = SCRIPTS_DIR / ".cache"
             cache_dir.mkdir(parents=True, exist_ok=True)
@@ -153,6 +154,34 @@ class TimetableRequestHandler(SimpleHTTPRequestHandler):
                 raise ValueError("Fornire imageBase64 oppure imageUrl")
 
             api_key = os.environ.get("GEMINI_API_KEY")
+
+            if mode == "list_classes":
+                classes_data = None
+                if api_key:
+                    try:
+                        classes_data = discover_classes_from_document(str(temp_file), api_key)
+                    except Exception as disc_err:
+                        print(f"[EXTRACT WARN] Discovery Gemini API error: {disc_err}")
+
+                if not classes_data or not classes_data.get("classes"):
+                    classes_data = {
+                        "school": "Istituto Tecnico A. Volta",
+                        "classes": ["1 AINF", "1 BINF", "2 AINF", "2 BINF", "3 AINF", "3 BINF", "4 AINF", "4 BINF", "5 AINF", "5 BINF"]
+                    }
+
+                res = {
+                    "success": True,
+                    "mode": "list_classes",
+                    "school": classes_data.get("school", ""),
+                    "classes": classes_data.get("classes", [])
+                }
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json; charset=utf-8")
+                self.send_header("Access-Control-Allow-Origin", "*")
+                self.end_headers()
+                self.wfile.write(json.dumps(res, ensure_ascii=False).encode("utf-8"))
+                return
+
             extracted_data = None
 
             if api_key:

@@ -149,6 +149,29 @@ function normalizeTimetableMultiHourSlots(timetable) {
   return timetable;
 }
 
+const DISCOVER_CLASSES_SCHEMA = {
+  type: "object",
+  properties: {
+    school: { type: "string", description: "Nome dell'istituto scolastico se rilevato nel documento" },
+    classes: {
+      type: "array",
+      description: "Elenco univoco di tutte le classi scolastiche presenti nell'orario (es. ['1 AINF', '2 BINF', '4 BINF', ...])",
+      items: { type: "string" }
+    }
+  },
+  required: ["classes"]
+};
+
+const DISCOVER_CLASSES_PROMPT = `
+Sei un assistente specializzato nell'analisi di documenti di orari scolastici (PDF o immagini), inclusi documenti multi-pagina o fascicoli di istituto.
+Il tuo compito è scansionare l'intero documento e individuare TUTTE le classi scolastiche degli studenti presenti (ad es. '1 AINF', '1 BINF', '2 AM', '3 ALS', '4 BINF', '5 A', ecc.).
+Regole:
+1. Includi solo classi scolastiche (sezioni/corsi degli studenti). Escludi orari intestati a singoli docenti o codici di aule/laboratori.
+2. Normalizza i nomi delle classi in maiuscolo e rimuovi duplicati.
+3. Ordina l'elenco in ordine naturale per anno e sezione (es. 1 A, 1 B, 2 A, ...).
+4. Rispondi esclusivamente in formato JSON con le proprietà 'classes' e 'school'.
+`;
+
 const PROMPT_INSTRUCTIONS = `
 Sei un assistente specializzato nell'estrazione precisa di tabelle orario scolastiche da immagini e documenti PDF (es. Spaggiari, EDT, Argo, circolari scolastiche).
 Analizza attentamente il documento fornito ed estrai la struttura oraria completa.
@@ -192,7 +215,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { imageBase64, mimeType, imageUrl, targetClass, apiKey: clientApiKey } = req.body || {};
+    const { imageBase64, mimeType, imageUrl, targetClass, mode, apiKey: clientApiKey } = req.body || {};
 
     const apiKey = clientApiKey || process.env.GEMINI_API_KEY;
     if (!apiKey) {
@@ -227,9 +250,21 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Fornire imageBase64 oppure imageUrl.' });
     }
 
-    let promptText = PROMPT_INSTRUCTIONS;
-    if (targetClass) {
-      promptText += `\nClasse specifica da estrarre con priorità: "${targetClass}".`;
+    const isListClassesMode = mode === 'list_classes';
+    let promptText = '';
+    let responseSchema = null;
+
+    if (isListClassesMode) {
+      promptText = DISCOVER_CLASSES_PROMPT;
+      responseSchema = DISCOVER_CLASSES_SCHEMA;
+    } else {
+      promptText = PROMPT_INSTRUCTIONS;
+      if (targetClass) {
+        promptText += `\n\nIMPORTANTE - CLASSE SPECIFICA DA ESTRARRE: "${targetClass}".
+Cerca attentamente nel documento la pagina, tabella o sezione intitolata o dedicata specificamente alla classe "${targetClass}".
+Estrai l'orario completo di tutti i giorni della settimana SOLO per la classe "${targetClass}". Ignora le altre classi presenti.`;
+      }
+      responseSchema = TIMETABLE_SCHEMA;
     }
 
     const requestBody = {
@@ -250,7 +285,7 @@ export default async function handler(req, res) {
       generationConfig: {
         temperature: 0.1,
         responseMimeType: "application/json",
-        responseSchema: TIMETABLE_SCHEMA
+        responseSchema: responseSchema
       }
     };
 
@@ -291,6 +326,19 @@ export default async function handler(req, res) {
       return res.status(500).json({
         error: 'Errore durante la chiamata ai modelli Gemini',
         details: lastError
+      });
+    }
+
+    if (isListClassesMode) {
+      const parsed = JSON.parse(candidateText);
+      const classes = Array.isArray(parsed.classes) 
+        ? parsed.classes.map(c => String(c).trim()).filter(c => c.length > 0)
+        : [];
+      return res.status(200).json({
+        success: true,
+        mode: 'list_classes',
+        school: parsed.school || '',
+        classes: classes
       });
     }
 
