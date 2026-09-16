@@ -114,3 +114,14 @@ python scripts/sync_timetable.py --mock
 ## 📱 Configurazione Widget su Galaxy S24
 Consulta la guida completa in:
 👉 **[docs/WIDGET_S24_SETUP.md](docs/WIDGET_S24_SETUP.md)**
+
+---
+
+## 🌐 Pubblicazione e Deploy (GitHub + Vercel)
+
+L'architettura ideale prevede:
+1. **GitHub Repository**: Custodisce il codice ed esegue il cron job **GitHub Actions** (`.github/workflows/scheduled_sync.yml`) ogni lunedì mattina per estrarre l'orario con Gemini Vision ed eseguire il push automatico di `public/data/timetable.json`.
+2. **Vercel**: Collegato alla repository GitHub, distribuisce l'applicazione PWA su CDN globale ultraveloce con HTTPS automatico ad ogni push.
+   - I file statici vengono serviti direttamente da `public/` grazie a `vercel.json`.
+   - L'applicazione PWA è installabile istantaneamente da qualsiasi browser mobile digitando l'URL del progetto Vercel.
+
