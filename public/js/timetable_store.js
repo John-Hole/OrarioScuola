@@ -4,9 +4,111 @@
  * e tiene traccia dell'orario preferito (⭐) e di quello attualmente attivo.
  */
 
+import { timeToMinutes } from './timeline.js';
+
 const STORAGE_KEY = 'smart_timetable_registry_v1';
 
 export const VOLTA_PRESET_ID = 'volta_4_binf';
+
+export const DEFAULT_SCHOOL_HOURS = [
+  { ora: 1, start: '08:00', end: '08:54', startMin: 480, endMin: 534 },
+  { ora: 2, start: '08:58', end: '09:48', startMin: 538, endMin: 588 },
+  { ora: 3, start: '09:58', end: '10:48', startMin: 598, endMin: 648 },
+  { ora: 4, start: '10:52', end: '11:42', startMin: 652, endMin: 702 },
+  { ora: 5, start: '11:52', end: '12:42', startMin: 712, endMin: 762 },
+  { ora: 6, start: '12:46', end: '13:36', startMin: 766, endMin: 816 }
+];
+
+/**
+ * Rileva lezioni che coprono blocchi di più ore (es. 09:58 - 11:42)
+ * e le sdoppia automaticamente in singole ore consecutive (es. ora 3 e ora 4)
+ * con stessa materia, aula e docenti, abilitando la visualizzazione corretta del blocco continuo.
+ */
+export function normalizeTimetableMultiHourSlots(timetable) {
+  if (!timetable || !Array.isArray(timetable.giorni)) {
+    return timetable;
+  }
+
+  // 1. Raccoglie la griglia oraria dalle ore singole già presenti
+  const knownHours = new Map();
+  timetable.giorni.forEach(day => {
+    (day.lezioni || []).forEach(l => {
+      const ora = l.ora;
+      const start = l.inizio;
+      const end = l.fine;
+      if (ora && start && end) {
+        const sMin = timeToMinutes(start);
+        const eMin = timeToMinutes(end);
+        const dur = eMin - sMin;
+        if (dur >= 30 && dur <= 65 && !knownHours.has(ora)) {
+          knownHours.set(ora, { ora, start, end, startMin: sMin, endMin: eMin });
+        }
+      }
+    });
+  });
+
+  // Fallback su orari standard dell'istituto
+  DEFAULT_SCHOOL_HOURS.forEach(std => {
+    if (!knownHours.has(std.ora)) {
+      knownHours.set(std.ora, { ...std });
+    }
+  });
+
+  const sortedSlots = Array.from(knownHours.values()).sort((a, b) => a.ora - b.ora);
+
+  // 2. Normalizza ciascun giorno
+  timetable.giorni.forEach(day => {
+    const originalLessons = day.lezioni || [];
+    const newLessons = [];
+    const occupiedHours = new Set();
+
+    originalLessons.forEach(l => {
+      const sMin = timeToMinutes(l.inizio);
+      const eMin = timeToMinutes(l.fine);
+      const dur = eMin - sMin;
+
+      // Se dura più di 65 minuti (es. ora doppia da ~104 min come TPSIT 09:58-11:42)
+      if (dur > 65) {
+        const matched = [];
+        sortedSlots.forEach(slot => {
+          const overlapStart = Math.max(sMin, slot.startMin);
+          const overlapEnd = Math.min(eMin, slot.endMin);
+          const overlap = overlapEnd - overlapStart;
+          if (overlap >= 25) {
+            matched.push(slot);
+          }
+        });
+
+        if (matched.length > 1) {
+          matched.forEach(slot => {
+            if (!occupiedHours.has(slot.ora)) {
+              newLessons.push({
+                ...l,
+                ora: slot.ora,
+                inizio: slot.start,
+                fine: slot.end
+              });
+              occupiedHours.add(slot.ora);
+            }
+          });
+          return;
+        }
+      }
+
+      if (l.ora && !occupiedHours.has(l.ora)) {
+        newLessons.push({ ...l });
+        occupiedHours.add(l.ora);
+      } else if (!l.ora) {
+        newLessons.push({ ...l });
+      }
+    });
+
+    newLessons.sort((a, b) => (a.ora || 0) - (b.ora || 0));
+    day.lezioni = newLessons;
+  });
+
+  return timetable;
+}
 
 /**
  * Struttura di default per l'orario 4 BINF dell'Istituto Volta
@@ -32,6 +134,11 @@ export function getTimetableRegistry() {
     if (raw) {
       const parsed = JSON.parse(raw);
       if (parsed && Array.isArray(parsed.items)) {
+        parsed.items.forEach(item => {
+          if (item && item.data) {
+            item.data = normalizeTimetableMultiHourSlots(item.data);
+          }
+        });
         if (!parsed.activeId) {
           parsed.activeId = VOLTA_PRESET_ID;
         }
@@ -110,6 +217,9 @@ export function getFavoriteTimetable() {
  * Salva o aggiorna un orario nel registro
  */
 export function saveOrUpdateTimetable(item, setAsActive = true) {
+  if (item && item.data) {
+    item.data = normalizeTimetableMultiHourSlots(item.data);
+  }
   const registry = getTimetableRegistry();
   const existingIndex = registry.items.findIndex(i => i.id === item.id);
 

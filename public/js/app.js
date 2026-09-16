@@ -30,6 +30,7 @@ import {
   getFavoriteTimetable,
   fetchVoltaClassesList,
   loadVoltaClassTimetable,
+  normalizeTimetableMultiHourSlots,
   VOLTA_PRESET_ID
 } from './timetable_store.js';
 
@@ -137,7 +138,6 @@ const elements = {
   voltaAllClassesGrid: document.getElementById('volta-all-classes-grid'),
   voltaClassesCount: document.getElementById('volta-classes-count'),
   modalSavedTimetablesList: document.getElementById('modal-saved-timetables-list'),
-  loadedTimetablesCount: document.getElementById('loaded-timetables-count'),
 
   // Tab 2: PDF
   pdfDropzone: document.getElementById('pdf-dropzone'),
@@ -328,6 +328,8 @@ async function loadTimetableById(id) {
     openTimetableModal('preset');
     return;
   }
+
+  state.timetable = normalizeTimetableMultiHourSlots(state.timetable);
 
   setActiveTimetableId(id || VOLTA_PRESET_ID);
   state.currentClass = (item && item.name) || state.timetable.classe || '4 BINF';
@@ -530,10 +532,6 @@ function renderSavedTimetablesList() {
   // Popolamento Lista nella Pagina Dedicata "Cambia Orario" (In alto: Orari già caricati)
   if (elements.modalSavedTimetablesList) {
     elements.modalSavedTimetablesList.innerHTML = '';
-    
-    if (elements.loadedTimetablesCount) {
-      elements.loadedTimetablesCount.textContent = `${list.length} ${list.length === 1 ? 'orario' : 'orari'}`;
-    }
 
     list.forEach((item) => {
       const card = createTimetableCardElement(item, activeId, () => {
@@ -600,21 +598,21 @@ function createTimetableCardElement(item, activeId, onSelect) {
   const actionsDiv = document.createElement('div');
   actionsDiv.className = 'saved-tt-actions';
 
-  // Bottone Elimina (disponibile per tutti tranne il preset principale 4 BINF)
+  // Bottone Elimina solo icona (disponibile per tutti tranne il preset principale 4 BINF)
   if (item.id !== VOLTA_PRESET_ID) {
     const delBtn = document.createElement('button');
-    delBtn.className = 'btn-tt-delete-label';
+    delBtn.className = 'btn-tt-delete-icon';
     delBtn.title = 'Elimina questo orario';
+    delBtn.setAttribute('aria-label', 'Elimina orario');
     delBtn.innerHTML = `
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <polyline points="3 6 5 6 21 6"></polyline>
         <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
       </svg>
-      <span>Elimina</span>
     `;
     delBtn.addEventListener('click', (e) => {
       e.stopPropagation();
-      if (confirm(`Vuoi rimuovere l'orario "${item.name}" dalla lista?`)) {
+      if (confirm(`Vuoi rimuovere l'orario "${item.name}"?`)) {
         deleteTimetable(item.id);
         renderSavedTimetablesList();
         const newActive = getActiveTimetableId();
@@ -1764,7 +1762,7 @@ async function triggerSync() {
     if (response.ok) {
       const data = await response.json();
       if (data.timetable) {
-        state.timetable = data.timetable;
+        state.timetable = normalizeTimetableMultiHourSlots(data.timetable);
         localStorage.setItem('cached_timetable', JSON.stringify(state.timetable));
         if (elements.drawerStatusText) {
           const vStatus = (state.timetable.verification && state.timetable.verification.scan_mode) 

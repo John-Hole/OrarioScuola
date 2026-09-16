@@ -512,6 +512,104 @@ def compute_widget_payload(timetable: Dict[str, Any], ref_dt: Optional[datetime]
     }
 
 
+STANDARD_SCHOOL_HOURS = [
+    {"ora": 1, "start": "08:00", "end": "08:54", "startMin": 480, "endMin": 534},
+    {"ora": 2, "start": "08:58", "end": "09:48", "startMin": 538, "endMin": 588},
+    {"ora": 3, "start": "09:58", "end": "10:48", "startMin": 598, "endMin": 648},
+    {"ora": 4, "start": "10:52", "end": "11:42", "startMin": 652, "endMin": 702},
+    {"ora": 5, "start": "11:52", "end": "12:42", "startMin": 712, "endMin": 762},
+    {"ora": 6, "start": "12:46", "end": "13:36", "startMin": 766, "endMin": 816}
+]
+
+
+def time_to_minutes(t_str: str) -> int:
+    if not t_str:
+        return 0
+    clean = t_str.replace("h", ":").strip()
+    parts = clean.split(":")
+    return int(parts[0]) * 60 + int(parts[1])
+
+
+def normalize_timetable_multihour_slots(timetable: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Rileva lezioni che occupano blocchi di più ore (es. 3ª e 4ª ora unite: 09:58-11:42)
+    e le sdoppia in singole voci per ciascuna ora standard, garantendo la visualizzazione corretta.
+    """
+    if not timetable or not isinstance(timetable, dict) or not timetable.get("giorni"):
+        return timetable
+
+    # 1. Ricava la griglia oraria dalle ore singole già presenti
+    known_hours = {}
+    for day in timetable.get("giorni", []):
+        for l in day.get("lezioni", []):
+            ora = l.get("ora")
+            start = l.get("inizio")
+            end = l.get("fine")
+            if ora and start and end:
+                dur = time_to_minutes(end) - time_to_minutes(start)
+                if 30 <= dur <= 65 and ora not in known_hours:
+                    known_hours[ora] = {
+                        "ora": ora,
+                        "start": start,
+                        "end": end,
+                        "startMin": time_to_minutes(start),
+                        "endMin": time_to_minutes(end)
+                    }
+
+    for std in STANDARD_SCHOOL_HOURS:
+        h = std["ora"]
+        if h not in known_hours:
+            known_hours[h] = {
+                "ora": h,
+                "start": std["start"],
+                "end": std["end"],
+                "startMin": std["startMin"],
+                "endMin": std["endMin"]
+            }
+
+    sorted_slots = sorted(known_hours.values(), key=lambda x: x["ora"])
+
+    for day in timetable.get("giorni", []):
+        new_lezioni = []
+        existing_hours = set()
+        for l in day.get("lezioni", []):
+            start_min = time_to_minutes(l.get("inizio", ""))
+            end_min = time_to_minutes(l.get("fine", ""))
+            dur = end_min - start_min
+
+            if dur > 65:
+                matched_hours = []
+                for slot in sorted_slots:
+                    overlap_start = max(start_min, slot["startMin"])
+                    overlap_end = min(end_min, slot["endMin"])
+                    overlap = overlap_end - overlap_start
+                    if overlap >= 25:
+                        matched_hours.append(slot)
+
+                if len(matched_hours) > 1:
+                    for slot in matched_hours:
+                        if slot["ora"] not in existing_hours:
+                            split_l = dict(l)
+                            split_l["ora"] = slot["ora"]
+                            split_l["inizio"] = slot["start"]
+                            split_l["fine"] = slot["end"]
+                            new_lezioni.append(split_l)
+                            existing_hours.add(slot["ora"])
+                    continue
+
+            ora = l.get("ora")
+            if ora and ora not in existing_hours:
+                new_lezioni.append(l)
+                existing_hours.add(ora)
+            elif not ora:
+                new_lezioni.append(l)
+
+        new_lezioni.sort(key=lambda x: x.get("ora", 0))
+        day["lezioni"] = new_lezioni
+
+    return timetable
+
+
 # --- PIPELINE DI ESTRAZIONE CON GEMINI VISION (MULTI-MODELLO & DOPPIA SCANSIONE) ---
 
 def call_gemini_vision_single(
@@ -712,10 +810,17 @@ def extract_timetable_with_gemini(
     Estrai l'orario completo per ogni giorno della settimana visibile (tipicamente da Lunedì a Venerdì o Sabato).
     
     Regole fondamentali:
-    1. Identifica ciascuna ora di lezione con inizio e fine precisi (es. 08:00 - 08:54, 08:58 - 09:48, ecc.).
-    2. Per le materie svolte in laboratorio con compresenza docenti (es. Sistemi e Reti, Informatica, TPSIT, Telecomunicazioni con insegnante teorico + ITP), estrai entrambi i docenti e imposta is_lab = true.
-    3. Estrai con la massima precisione il nome o codice dell'aula/laboratorio (es. 'B 010', 'C 170', 'Aula B 115', 'Palestra ITTS').
-    4. Cerca la data di decorrenza (es. 'In vigore dal...') o stato ('Orario Provvisorio' o 'Orario Definitivo') se indicati nell'intestazione o nel piè di pagina.
+    1. Griglia oraria: Osserva attentamente gli orari a sinistra della tabella (es. 1ª ora 08:00 - 08:54, 2ª ora 08:58 - 09:48, 3ª ora 09:58 - 10:48, 4ª ora 10:52 - 11:42, ecc.).
+    2. CELLE UNITE VERTICALMENTE / ORE DOPPIE (CRUCIALE):
+       Se una materia è disegnata come un unico riquadro verticale che occupa due o più ore consecutive (ad esempio un blocco di laboratorio o palestra, come 09:58 - 11:42 che attraversa la 3ª e la 4ª ora, o 08:00 - 09:48 che copre la 1ª e la 2ª ora):
+       DEVI GENERARE UNA VOCE SEPARATA PER CIASCUNA ORA DI LEZIONE (con la stessa materia, aula e docenti).
+       Ad esempio per un blocco 09:58 - 11:42:
+       - 3ª ora ("ora": 3, "inizio": "09:58", "fine": "10:48")
+       - 4ª ora ("ora": 4, "inizio": "10:52", "fine": "11:42")
+       NON saltare alcuna ora: ogni giorno deve avere la sequenza completa delle ore (1, 2, 3, 4...).
+    3. Per le materie svolte in laboratorio con compresenza docenti (es. Sistemi e Reti, Informatica, TPSIT, Telecomunicazioni con insegnante teorico + ITP), estrai entrambi i docenti e imposta is_lab = true.
+    4. Estrai con la massima precisione il nome o codice dell'aula/laboratorio (es. 'B 010', 'B 045', 'C 170', 'Aula B 115', 'Palestra ITTS').
+    5. Cerca la data di decorrenza (es. 'In vigore dal...') o stato ('Orario Provvisorio' o 'Orario Definitivo') se indicati nell'intestazione o nel piè di pagina.
     """
 
     if scan_mode == "double":
@@ -729,7 +834,7 @@ def extract_timetable_with_gemini(
         result = reconcile_timetables(pass1, pass2, model1, model2)
         v = result["verification"]
         print(f"[GEMINI] Doppia scansione completata! Consenso: {v['consensus']*100:.1f}% ({v['matched_slots']}/{v['total_slots_checked']} slot concordanti) - Stato: {v['status']}")
-        return result
+        return normalize_timetable_multihour_slots(result)
     else:
         print(f"[GEMINI] === AVVIO SCANSIONE SINGOLA (MODALITÀ MANUALE DIRETTA) ===")
         data, model_used = extract_with_fallback(image_bytes, mime_type, prompt, main_model, fallback_model, key)
@@ -741,7 +846,7 @@ def extract_timetable_with_gemini(
             "model": model_used,
             "verified_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         }
-        return data
+        return normalize_timetable_multihour_slots(data)
 
 
 # --- GESTIONE CACHE & DOWNLOAD ---

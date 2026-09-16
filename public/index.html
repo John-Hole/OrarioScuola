@@ -133,34 +133,47 @@
         <div class="top-bar-spacer"></div>
       </div>
 
-      <!-- I 4 Grandi Bottoni di Selezione Modalità -->
+      <!-- SEZIONE ORARI GIÀ CARICATI (SEMPRE VISIBILE IN CIMA) -->
+      <section class="loaded-timetables-section">
+        <h3 class="section-card-title">Orari salvati</h3>
+        <div class="saved-timetables-list" id="modal-saved-timetables-list">
+          <!-- Popolato dinamicamente da JS -->
+        </div>
+      </section>
+
+      <!-- Intestazione Scelta Caricamento -->
+      <div class="change-mode-header">
+        <h3 class="section-card-title">Carica un altro orario</h3>
+      </div>
+
+      <!-- I 4 Bottoni di Selezione Modalità -->
       <div class="change-mode-buttons" role="tablist">
         <button class="change-mode-pill active" data-tab="image" role="tab" aria-selected="true">
           <span class="mode-pill-icon">📷</span>
           <div class="mode-pill-texts">
-            <span class="mode-pill-title">Carica l'immagine</span>
+            <span class="mode-pill-title">Immagine</span>
             <span class="mode-pill-sub">Foto o screenshot</span>
           </div>
         </button>
         <button class="change-mode-pill" data-tab="pdf" role="tab" aria-selected="false">
           <span class="mode-pill-icon">📄</span>
           <div class="mode-pill-texts">
-            <span class="mode-pill-title">Carica da PDF</span>
-            <span class="mode-pill-sub">File documento PDF</span>
+            <span class="mode-pill-title">PDF</span>
+            <span class="mode-pill-sub">Documento orario</span>
           </div>
         </button>
         <button class="change-mode-pill" data-tab="url" role="tab" aria-selected="false">
           <span class="mode-pill-icon">🔗</span>
           <div class="mode-pill-texts">
-            <span class="mode-pill-title">Carica da URL</span>
-            <span class="mode-pill-sub">Link web o Spaggiari</span>
+            <span class="mode-pill-title">URL</span>
+            <span class="mode-pill-sub">Link web Spaggiari</span>
           </div>
         </button>
         <button class="change-mode-pill" data-tab="preset" role="tab" aria-selected="false">
           <span class="mode-pill-icon">🏛️</span>
           <div class="mode-pill-texts">
-            <span class="mode-pill-title">Orari salvati & Volta</span>
-            <span class="mode-pill-sub">64 classi del Volta</span>
+            <span class="mode-pill-title">Classi Volta</span>
+            <span class="mode-pill-sub">Tutte le 64 classi</span>
           </div>
         </button>
       </div>
@@ -171,8 +184,7 @@
         <!-- SEZIONE 1: CARICA DA IMMAGINE -->
         <div class="tt-tab-content active" id="tab-content-image">
           <div class="change-section-card">
-            <h3 class="section-card-title">📷 Carica Immagine o Screenshot</h3>
-            <p class="tab-instruction">Seleziona o trascina una foto o screenshot dell'orario scolastico salvata sul tuo dispositivo:</p>
+            <h3 class="section-card-title">Carica Immagine</h3>
             
             <div class="file-dropzone" id="image-dropzone">
               <input type="file" id="input-timetable-image" accept="image/png, image/jpeg, image/webp" />
@@ -183,7 +195,7 @@
                   <polyline points="21 15 16 10 5 21"></polyline>
                 </svg>
                 <span class="dropzone-text" id="image-dropzone-text">Tocca per scegliere o trascina qui la foto</span>
-                <span class="dropzone-sub">Formati supportati: PNG, JPG, JPEG, WebP</span>
+                <span class="dropzone-sub">PNG, JPG, WebP</span>
               </div>
             </div>
 
@@ -193,7 +205,7 @@
             </div>
 
             <button id="btn-extract-from-image" class="btn-primary-action" disabled>
-              <span>✨ Analizza Immagine con Gemini ed Estrai</span>
+              <span>Estrai Orario</span>
             </button>
           </div>
         </div>
@@ -201,8 +213,7 @@
         <!-- SEZIONE 2: CARICA DA PDF -->
         <div class="tt-tab-content" id="tab-content-pdf">
           <div class="change-section-card">
-            <h3 class="section-card-title">📄 Carica Documento PDF</h3>
-            <p class="tab-instruction">Carica un documento o circolare in formato PDF con la tabella dell'orario scolastico:</p>
+            <h3 class="section-card-title">Carica PDF</h3>
             
             <div class="file-dropzone" id="pdf-dropzone">
               <input type="file" id="input-timetable-pdf" accept="application/pdf" />
@@ -215,7 +226,7 @@
                   <polyline points="10 9 9 9 8 9"></polyline>
                 </svg>
                 <span class="dropzone-text" id="pdf-dropzone-text">Tocca per scegliere o trascina qui il file PDF</span>
-                <span class="dropzone-sub">Formati supportati: Documento Adobe PDF (.pdf)</span>
+                <span class="dropzone-sub">Documento PDF (.pdf)</span>
               </div>
             </div>
 
@@ -225,7 +236,7 @@
             </div>
 
             <button id="btn-extract-from-pdf" class="btn-primary-action" disabled>
-              <span>✨ Analizza PDF con Gemini ed Estrai</span>
+              <span>Estrai Orario</span>
             </button>
           </div>
         </div>
@@ -233,8 +244,7 @@
         <!-- SEZIONE 3: CARICA DA URL -->
         <div class="tt-tab-content" id="tab-content-url">
           <div class="change-section-card">
-            <h3 class="section-card-title">🔗 Carica da Indirizzo Web (URL)</h3>
-            <p class="tab-instruction">Incolla l'indirizzo pubblico (URL) dell'immagine o del PDF dell'orario:</p>
+            <h3 class="section-card-title">Carica da URL</h3>
             
             <div class="input-group" style="margin-top: 10px;">
               <label for="input-timetable-url">URL Immagine o PDF</label>
@@ -245,28 +255,14 @@
               <input type="text" id="input-url-classname" placeholder="Es. 4 BINF, 3 ALS, 5 AINF..." />
             </div>
             <button id="btn-extract-from-url" class="btn-primary-action">
-              <span>✨ Analizza URL con Gemini ed Estrai</span>
+              <span>Estrai Orario</span>
             </button>
           </div>
         </div>
 
-        <!-- SEZIONE 4: ORARI SALVATI & CLASSI VOLTA -->
+        <!-- SEZIONE 4: CLASSI ISTITUTO VOLTA -->
         <div class="tt-tab-content" id="tab-content-preset">
           <div class="change-section-card">
-
-            <!-- 1. IN ALTO: ORARI GIÀ CARICATI CON TASTO ELIMINA -->
-            <div class="loaded-timetables-section">
-              <div class="section-title-row">
-                <h3 class="section-card-title">Orari già caricati</h3>
-                <span class="catalog-counter" id="loaded-timetables-count">1 orario</span>
-              </div>
-              <p class="tab-instruction" style="margin-bottom: 10px;">Tocca un orario per aprirlo, oppure usa Elimina per rimuoverlo:</p>
-              <div class="saved-timetables-list" id="modal-saved-timetables-list">
-                <!-- Popolato dinamicamente da JS con tutti gli orari caricati -->
-              </div>
-            </div>
-
-            <!-- 2. SOTTO: TUTTE LE 64 CLASSI DEL VOLTA (SEMPLIFICATA ED ESSENZIALE) -->
             <div class="preset-volta-catalog">
               <div class="catalog-header-row">
                 <h3 class="section-card-title">Classi Istituto Volta</h3>
@@ -296,7 +292,6 @@
               <!-- Griglia Scrollabile delle Classi -->
               <div class="volta-classes-grid" id="volta-all-classes-grid"></div>
             </div>
-
           </div>
         </div>
 

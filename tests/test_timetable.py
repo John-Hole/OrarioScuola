@@ -11,7 +11,7 @@ from pathlib import Path
 # Aggiungi scripts al sys.path
 sys.path.insert(0, str(Path(__file__).parent.parent / "scripts"))
 
-from sync_timetable import get_sample_mock_data, compute_widget_payload, TimetableSchema
+from sync_timetable import get_sample_mock_data, compute_widget_payload, TimetableSchema, normalize_timetable_multihour_slots
 
 class TestTimetableEngine(unittest.TestCase):
     def setUp(self):
@@ -138,6 +138,41 @@ class TestTimetableEngine(unittest.TestCase):
         dt_after = datetime(2026, 9, 14, 13, 40)
         res_after = compute_widget_payload(six_hour_timetable, dt_after)
         self.assertEqual(res_after["status"], "FINISHED")
+
+    def test_normalize_multihour_slots(self):
+        """Verifica lo sdoppiamento di lezioni che coprono 2 ore (es. TPSIT LAB 09:58-11:42)"""
+        raw_timetable = {
+            "classe": "4 CINF** (art. con 4 DGR)",
+            "giorni": [
+                {
+                    "giorno": "Mercoledì",
+                    "lezioni": [
+                        {"ora": 1, "inizio": "08:00", "fine": "08:54", "materia": "ITALIANO", "aula": "C 140"},
+                        {"ora": 2, "inizio": "08:58", "fine": "09:48", "materia": "RELIGIONE", "aula": "C 140"},
+                        {"ora": 3, "inizio": "09:58", "fine": "11:42", "materia": "TPSIT LAB.", "aula": "B 045", "is_lab": True}
+                    ]
+                }
+            ]
+        }
+
+        normalized = normalize_timetable_multihour_slots(raw_timetable)
+        mercoledi_lezioni = normalized["giorni"][0]["lezioni"]
+
+        self.assertEqual(len(mercoledi_lezioni), 4)
+        h3 = next(l for l in mercoledi_lezioni if l["ora"] == 3)
+        h4 = next(l for l in mercoledi_lezioni if l["ora"] == 4)
+
+        self.assertEqual(h3["materia"], "TPSIT LAB.")
+        self.assertEqual(h3["inizio"], "09:58")
+        self.assertEqual(h3["fine"], "10:48")
+        self.assertEqual(h3["aula"], "B 045")
+        self.assertTrue(h3["is_lab"])
+
+        self.assertEqual(h4["materia"], "TPSIT LAB.")
+        self.assertEqual(h4["inizio"], "10:52")
+        self.assertEqual(h4["fine"], "11:42")
+        self.assertEqual(h4["aula"], "B 045")
+        self.assertTrue(h4["is_lab"])
 
 if __name__ == "__main__":
     unittest.main()

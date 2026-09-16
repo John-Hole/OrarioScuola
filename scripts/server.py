@@ -118,7 +118,7 @@ class TimetableRequestHandler(SimpleHTTPRequestHandler):
         import urllib.request
         try:
             sys.path.insert(0, str(SCRIPTS_DIR))
-            from sync_timetable import load_env, extract_timetable_with_gemini, get_sample_mock_data
+            from sync_timetable import load_env, extract_timetable_with_gemini, get_sample_mock_data, normalize_timetable_multihour_slots
             load_env()
 
             content_length = int(self.headers.get("Content-Length", 0))
@@ -177,6 +177,9 @@ class TimetableRequestHandler(SimpleHTTPRequestHandler):
                     "status": "LOCAL_MOCK_FALLBACK",
                     "verified_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S") if "datetime" in globals() else ""
                 }
+
+            if extracted_data:
+                extracted_data = normalize_timetable_multihour_slots(extracted_data)
 
             res = {
                 "success": True,
