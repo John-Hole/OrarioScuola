@@ -26,7 +26,6 @@ import {
   getTimetableById,
   saveOrUpdateTimetable,
   deleteTimetable,
-  toggleFavoriteTimetable,
   loadPresetVolta4Binf,
   getFavoriteTimetable,
   fetchVoltaClassesList,
@@ -132,15 +131,13 @@ const elements = {
   ttTabContents: document.querySelectorAll('.tt-tab-content'),
 
   // Tab 1: Volta & Salvati
-  btnSelect4binf: document.getElementById('btn-select-4binf'),
-  starBtn4binf: document.getElementById('star-btn-4binf'),
   inputSearchVoltaClasses: document.getElementById('input-search-volta-classes'),
   btnClearVoltaSearch: document.getElementById('btn-clear-volta-search'),
   catalogYearFilters: document.querySelectorAll('.year-filter-btn'),
   voltaAllClassesGrid: document.getElementById('volta-all-classes-grid'),
   voltaClassesCount: document.getElementById('volta-classes-count'),
   modalSavedTimetablesList: document.getElementById('modal-saved-timetables-list'),
-  modalCustomTimetablesSection: document.getElementById('modal-custom-timetables-section'),
+  loadedTimetablesCount: document.getElementById('loaded-timetables-count'),
 
   // Tab 2: PDF
   pdfDropzone: document.getElementById('pdf-dropzone'),
@@ -530,28 +527,26 @@ function renderSavedTimetablesList() {
   // Aggiorna il selettore a capsula in cima sotto MENU
   updateClassSelectOptions();
 
-  // Popolamento Lista nella Pagina Dedicata "Cambia Orario" (Tab 4: Orari Salvati)
-  if (elements.modalSavedTimetablesList && elements.modalCustomTimetablesSection) {
+  // Popolamento Lista nella Pagina Dedicata "Cambia Orario" (In alto: Orari già caricati)
+  if (elements.modalSavedTimetablesList) {
     elements.modalSavedTimetablesList.innerHTML = '';
-    const customList = list.filter(item => item.id !== VOLTA_PRESET_ID);
-
-    if (customList.length === 0) {
-      elements.modalCustomTimetablesSection.style.display = 'none';
-    } else {
-      elements.modalCustomTimetablesSection.style.display = 'block';
-      customList.forEach((item) => {
-        const card = createTimetableCardElement(item, activeId, () => {
-          closeTimetableModal();
-          loadTimetableById(item.id);
-        });
-        elements.modalSavedTimetablesList.appendChild(card);
-      });
+    
+    if (elements.loadedTimetablesCount) {
+      elements.loadedTimetablesCount.textContent = `${list.length} ${list.length === 1 ? 'orario' : 'orari'}`;
     }
+
+    list.forEach((item) => {
+      const card = createTimetableCardElement(item, activeId, () => {
+        closeTimetableModal();
+        loadTimetableById(item.id);
+      });
+      elements.modalSavedTimetablesList.appendChild(card);
+    });
   }
 }
 
 /**
- * Crea un elemento DOM per una card di orario salvato (design elegante One UI)
+ * Crea un elemento DOM per una card di orario salvato (design essenziale, senza stelline)
  */
 function createTimetableCardElement(item, activeId, onSelect) {
   const card = document.createElement('div');
@@ -574,7 +569,7 @@ function createTimetableCardElement(item, activeId, onSelect) {
     typeIcon = '🏫';
     defaultSchool = 'Istituto Tecnico A. Volta';
   } else if (item.id === VOLTA_PRESET_ID) {
-    typeIcon = '⭐';
+    typeIcon = '🏛️';
     defaultSchool = 'Istituto Volta • Predefinito';
   }
 
@@ -605,24 +600,18 @@ function createTimetableCardElement(item, activeId, onSelect) {
   const actionsDiv = document.createElement('div');
   actionsDiv.className = 'saved-tt-actions';
 
-  // Bottone Stellina Preferito ⭐
-  const starBtn = document.createElement('button');
-  starBtn.className = `btn-tt-star ${item.isFavorite ? 'active' : ''}`;
-  starBtn.title = item.isFavorite ? 'Rimuovi dai preferiti' : 'Imposta come preferito';
-  starBtn.innerHTML = '★';
-  starBtn.addEventListener('click', (e) => {
-    e.stopPropagation();
-    toggleFavoriteTimetable(item.id);
-    renderSavedTimetablesList();
-  });
-  actionsDiv.appendChild(starBtn);
-
   // Bottone Elimina (disponibile per tutti tranne il preset principale 4 BINF)
   if (item.id !== VOLTA_PRESET_ID) {
     const delBtn = document.createElement('button');
-    delBtn.className = 'btn-tt-delete';
+    delBtn.className = 'btn-tt-delete-label';
     delBtn.title = 'Elimina questo orario';
-    delBtn.innerHTML = '✕';
+    delBtn.innerHTML = `
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="3 6 5 6 21 6"></polyline>
+        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+      </svg>
+      <span>Elimina</span>
+    `;
     delBtn.addEventListener('click', (e) => {
       e.stopPropagation();
       if (confirm(`Vuoi rimuovere l'orario "${item.name}" dalla lista?`)) {
@@ -637,6 +626,11 @@ function createTimetableCardElement(item, activeId, onSelect) {
       }
     });
     actionsDiv.appendChild(delBtn);
+  } else {
+    const presetBadge = document.createElement('span');
+    presetBadge.className = 'preset-tag-pill';
+    presetBadge.textContent = 'Predefinito';
+    actionsDiv.appendChild(presetBadge);
   }
 
   card.appendChild(leftDiv);
@@ -1403,28 +1397,7 @@ function setupEventListeners() {
     });
   }
 
-  // Tab 1: Selezione Preset Volta 4 BINF
-  if (elements.btnSelect4binf) {
-    elements.btnSelect4binf.addEventListener('click', async () => {
-      try {
-        elements.btnSelect4binf.textContent = 'Caricamento...';
-        const preset = await loadPresetVolta4Binf();
-        closeTimetableModal();
-        await loadTimetableById(preset.id);
-      } catch (err) {
-        console.error('[PRESET LOAD ERROR]', err);
-        alert('Impossibile caricare l\'orario 4 BINF: ' + err.message);
-      } finally {
-        if (elements.btnSelect4binf) elements.btnSelect4binf.textContent = 'Carica Orario';
-      }
-    });
-  }
 
-  if (elements.starBtn4binf) {
-    elements.starBtn4binf.addEventListener('click', () => {
-      elements.starBtn4binf.classList.toggle('active');
-    });
-  }
 
   // Ricerca testuale classi Volta
   if (elements.inputSearchVoltaClasses) {

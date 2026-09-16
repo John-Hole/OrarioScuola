@@ -253,42 +253,23 @@
         <!-- SEZIONE 4: ORARI SALVATI & CLASSI VOLTA -->
         <div class="tt-tab-content" id="tab-content-preset">
           <div class="change-section-card">
-            <div class="preset-school-header">
-              <div class="school-header-title-row">
-                <span class="school-tag">ISTITUTO TECNICO A. VOLTA</span>
-                <a href="https://www.avoltapg.edu.it/orario-serbatoio?id=https%3A%2F%2Fcspace.spaggiari.eu%2Fpub%2FPGIT0005%2Forario%2Findex.html" target="_blank" rel="noopener" class="school-external-link">
-                  <span>Archivio Spaggiari ↗</span>
-                </a>
-              </div>
-              <p class="preset-school-desc">Orari scolastici delle classi Volta integrati da EDT Spaggiari.</p>
-            </div>
 
-            <!-- Card In Primo Piano 4 BINF con Stellina ⭐ -->
-            <div class="preset-card-featured" id="preset-card-4binf">
-              <div class="featured-top">
-                <span class="featured-badge">⭐ PREDEFINITO / CONSIGLIATO</span>
-                <button class="star-toggle-btn active" id="star-btn-4binf" title="Preferito">★</button>
+            <!-- 1. IN ALTO: ORARI GIÀ CARICATI CON TASTO ELIMINA -->
+            <div class="loaded-timetables-section">
+              <div class="section-title-row">
+                <h3 class="section-card-title">Orari già caricati</h3>
+                <span class="catalog-counter" id="loaded-timetables-count">1 orario</span>
               </div>
-              <div class="featured-main">
-                <div class="featured-title">4 BINF</div>
-                <div class="featured-sub">Informatica e Telecomunicazioni • Sez. B</div>
-              </div>
-              <div class="featured-footer">
-                <span class="status-pill-green">● Pronto all'uso</span>
-                <button class="btn-select-preset" id="btn-select-4binf">Carica Orario 4 BINF</button>
+              <p class="tab-instruction" style="margin-bottom: 10px;">Tocca un orario per aprirlo, oppure usa Elimina per rimuoverlo:</p>
+              <div class="saved-timetables-list" id="modal-saved-timetables-list">
+                <!-- Popolato dinamicamente da JS con tutti gli orari caricati -->
               </div>
             </div>
 
-            <!-- Sezione Orari Salvati Personalizzati dall'utente -->
-            <div class="modal-user-timetables-section" id="modal-custom-timetables-section">
-              <div class="other-classes-title" style="margin-top: 14px;">I tuoi orari salvati:</div>
-              <div class="saved-timetables-list" id="modal-saved-timetables-list"></div>
-            </div>
-
-            <!-- Catalogo Completo Scrollabile di tutte le 64 Classi del Volta -->
+            <!-- 2. SOTTO: TUTTE LE 64 CLASSI DEL VOLTA (SEMPLIFICATA ED ESSENZIALE) -->
             <div class="preset-volta-catalog">
               <div class="catalog-header-row">
-                <span class="other-classes-title">Tutte le 64 Classi del Volta:</span>
+                <h3 class="section-card-title">Classi Istituto Volta</h3>
                 <span class="catalog-counter" id="volta-classes-count">64 classi</span>
               </div>
 
@@ -298,23 +279,24 @@
                   <circle cx="11" cy="11" r="8"></circle>
                   <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
                 </svg>
-                <input type="text" id="input-search-volta-classes" placeholder="Cerca classe (es. 4 AINF, 3 BINF, 1 CINF, 2 AM...)" />
+                <input type="text" id="input-search-volta-classes" placeholder="Cerca classe (es. 4 AINF, 3 BINF, 1 C...)" />
                 <button id="btn-clear-volta-search" class="btn-clear-search hidden" aria-label="Cancella ricerca">✕</button>
               </div>
 
               <!-- Filtro Rapido per Anno di Corso -->
               <div class="catalog-year-filters" id="catalog-year-filters">
                 <button class="year-filter-btn active" data-year="all">Tutte</button>
-                <button class="year-filter-btn" data-year="1">1° Anno</button>
-                <button class="year-filter-btn" data-year="2">2° Anno</button>
-                <button class="year-filter-btn" data-year="3">3° Anno</button>
-                <button class="year-filter-btn" data-year="4">4° Anno</button>
-                <button class="year-filter-btn" data-year="5">5° Anno</button>
+                <button class="year-filter-btn" data-year="1">1°</button>
+                <button class="year-filter-btn" data-year="2">2°</button>
+                <button class="year-filter-btn" data-year="3">3°</button>
+                <button class="year-filter-btn" data-year="4">4°</button>
+                <button class="year-filter-btn" data-year="5">5°</button>
               </div>
 
               <!-- Griglia Scrollabile delle Classi -->
               <div class="volta-classes-grid" id="volta-all-classes-grid"></div>
             </div>
+
           </div>
         </div>
 
