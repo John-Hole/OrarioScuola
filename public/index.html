@@ -38,8 +38,12 @@
       </div>
 
       <div class="header-right">
-        <!-- Spazio bilanciato -->
-        <div class="header-spacer"></div>
+        <button id="btn-header-change-class" class="header-class-badge" title="Cambia orario o classe scolastica">
+          <span id="header-class-name">4 BINF</span>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="6 9 12 15 18 9"></polyline>
+          </svg>
+        </button>
       </div>
     </header>
 
@@ -456,13 +460,16 @@
           <button class="modal-close-btn" id="btn-close-modal-timetable" aria-label="Chiudi finestra">✕</button>
         </div>
 
-        <!-- Selettore Tab: 1. Orari Salvati & Scuola | 2. Carica File Foto/PDF | 3. Carica da URL -->
+        <!-- Selettore Tab a 4 Modalità Richieste -->
         <div class="timetable-tab-pills" role="tablist">
           <button class="tt-tab-btn active" data-tab="preset" role="tab" aria-selected="true">
-            <span>📁 Orari Salvati</span>
+            <span>📁 Orari Salvati & Volta</span>
           </button>
-          <button class="tt-tab-btn" data-tab="file" role="tab" aria-selected="false">
-            <span>📷 Foto / PDF</span>
+          <button class="tt-tab-btn" data-tab="pdf" role="tab" aria-selected="false">
+            <span>📄 Carica PDF</span>
+          </button>
+          <button class="tt-tab-btn" data-tab="image" role="tab" aria-selected="false">
+            <span>📷 Carica Immagine</span>
           </button>
           <button class="tt-tab-btn" data-tab="url" role="tab" aria-selected="false">
             <span>🔗 Da URL</span>
@@ -471,11 +478,16 @@
 
         <div class="modal-body timetable-modal-body">
           
-          <!-- TAB 1: ARCHIVIO SCUOLA (VOLTA) -->
+          <!-- TAB 1: ORARI SALVATI & TUTTE LE CLASSI VOLTA -->
           <div class="tt-tab-content active" id="tab-content-preset">
             <div class="preset-school-header">
-              <span class="school-tag">ISTITUTO TECNICO A. VOLTA</span>
-              <p class="preset-school-desc">Orario integrato e sincronizzato automaticamente con Gemini Vision.</p>
+              <div class="school-header-title-row">
+                <span class="school-tag">ISTITUTO TECNICO A. VOLTA</span>
+                <a href="https://www.avoltapg.edu.it/orario-serbatoio?id=https%3A%2F%2Fcspace.spaggiari.eu%2Fpub%2FPGIT0005%2Forario%2Findex.html" target="_blank" rel="noopener" class="school-external-link">
+                  <span>Archivio Ufficiale Spaggiari ↗</span>
+                </a>
+              </div>
+              <p class="preset-school-desc">Orari scolastici integrati direttamente dall'indice ufficiale EDT Spaggiari del Volta.</p>
             </div>
 
             <!-- Card In Primo Piano 4 BINF con Stellina ⭐ -->
@@ -489,12 +501,12 @@
                 <div class="featured-sub">Informatica e Telecomunicazioni • Sez. B</div>
               </div>
               <div class="featured-footer">
-                <span class="status-pill-green">● Pronto</span>
-                <button class="btn-select-preset" id="btn-select-4binf">Seleziona e Apri</button>
+                <span class="status-pill-green">● Pronto all'uso</span>
+                <button class="btn-select-preset" id="btn-select-4binf">Carica Orario</button>
               </div>
             </div>
 
-            <!-- Sezione Orari Salvati Personalizzati -->
+            <!-- Sezione Orari Salvati Personalizzati dall'utente -->
             <div class="modal-user-timetables-section" id="modal-custom-timetables-section">
               <div class="other-classes-title" style="margin-top: 14px;">I tuoi orari salvati:</div>
               <div class="saved-timetables-list" id="modal-saved-timetables-list">
@@ -502,59 +514,108 @@
               </div>
             </div>
 
-            <!-- Altre Classi della Scuola (selezionabili) -->
-            <div class="preset-other-classes">
-              <div class="other-classes-title">Oppure scegli un'altra classe:</div>
-              <div class="classes-chip-list" id="preset-other-chips">
-                <button class="class-chip" data-class="4 AINF">4 AINF</button>
-                <button class="class-chip" data-class="3 BINF">3 BINF</button>
-                <button class="class-chip" data-class="5 BINF">5 BINF</button>
-                <button class="class-chip" data-class="4 AELT">4 AELT</button>
-                <button class="class-chip" data-class="4 AMEC">4 AMEC</button>
+            <!-- Catalogo Completo Scrollabile di tutte le 64 Classi del Volta -->
+            <div class="preset-volta-catalog">
+              <div class="catalog-header-row">
+                <span class="other-classes-title">Tutte le Classi dell'Istituto Volta:</span>
+                <span class="catalog-counter" id="volta-classes-count">64 classi</span>
+              </div>
+
+              <!-- Barra di ricerca rapida classe -->
+              <div class="catalog-search-wrapper">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                  <circle cx="11" cy="11" r="8"></circle>
+                  <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                </svg>
+                <input type="text" id="input-search-volta-classes" placeholder="Cerca classe (es. 4 AINF, 3 BINF, 1 CINF, 2 AM...)" />
+                <button id="btn-clear-volta-search" class="btn-clear-search hidden" aria-label="Cancella ricerca">✕</button>
+              </div>
+
+              <!-- Filtro Rapido per Anno di Corso -->
+              <div class="catalog-year-filters" id="catalog-year-filters">
+                <button class="year-filter-btn active" data-year="all">Tutte</button>
+                <button class="year-filter-btn" data-year="1">1° Anno</button>
+                <button class="year-filter-btn" data-year="2">2° Anno</button>
+                <button class="year-filter-btn" data-year="3">3° Anno</button>
+                <button class="year-filter-btn" data-year="4">4° Anno</button>
+              </div>
+
+              <!-- Griglia Scrollabile delle Classi -->
+              <div class="volta-classes-grid" id="volta-all-classes-grid">
+                <!-- Popolato dinamicamente da volta_classes.json con card cliccabili -->
               </div>
             </div>
           </div>
 
-          <!-- TAB 2: CARICA DA URL -->
-          <div class="tt-tab-content" id="tab-content-url">
-            <p class="tab-instruction">Incolla il link pubblico all'immagine (PNG/JPG) o al PDF dell'orario della tua scuola o classe (es. Spaggiari, Argo, circolare):</p>
-            <div class="input-group">
-              <label for="input-timetable-url">URL Immagine o PDF</label>
-              <input type="url" id="input-timetable-url" placeholder="https://scuola.edu.it/orario_classe.png" />
-            </div>
-            <div class="input-group">
-              <label for="input-url-classname">Nome Classe (opzionale)</label>
-              <input type="text" id="input-url-classname" placeholder="Es. 3 ALS, 5 AINF, 2 B..." />
-            </div>
-            <button id="btn-extract-from-url" class="btn-primary-action">
-              <span>✨ Analizza con Gemini ed Estrai</span>
-            </button>
-          </div>
-
-          <!-- TAB 3: CARICA FOTO O PDF -->
-          <div class="tt-tab-content" id="tab-content-file">
-            <p class="tab-instruction">Carica uno screenshot, una foto della tabella orario o un documento PDF salvato sul tuo telefono o PC:</p>
+          <!-- TAB 2: CARICA DA PDF -->
+          <div class="tt-tab-content" id="tab-content-pdf">
+            <p class="tab-instruction">Carica un documento o circolare in formato PDF con la tabella dell'orario scolastico:</p>
             
-            <div class="file-dropzone" id="file-dropzone">
-              <input type="file" id="input-timetable-file" accept="image/png, image/jpeg, image/webp, application/pdf" />
+            <div class="file-dropzone" id="pdf-dropzone">
+              <input type="file" id="input-timetable-pdf" accept="application/pdf" />
               <div class="dropzone-inner">
-                <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
-                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                  <polyline points="17 8 12 3 7 8"></polyline>
-                  <line x1="12" y1="3" x2="12" y2="15"></line>
+                <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                  <polyline points="14 2 14 8 20 8"></polyline>
+                  <line x1="16" y1="13" x2="8" y2="13"></line>
+                  <line x1="16" y1="17" x2="8" y2="17"></line>
+                  <polyline points="10 9 9 9 8 9"></polyline>
                 </svg>
-                <span class="dropzone-text" id="dropzone-text">Tocca per scegliere o trascina qui il file</span>
-                <span class="dropzone-sub">Formati supportati: Foto (PNG, JPG) o PDF</span>
+                <span class="dropzone-text" id="pdf-dropzone-text">Tocca per scegliere o trascina qui il file PDF</span>
+                <span class="dropzone-sub">Formati supportati: Documento Adobe PDF (.pdf)</span>
               </div>
             </div>
 
             <div class="input-group" style="margin-top: 12px;">
-              <label for="input-file-classname">Nome Classe (opzionale)</label>
-              <input type="text" id="input-file-classname" placeholder="Es. 3 ALS, 4 CINF..." />
+              <label for="input-pdf-classname">Nome Classe (opzionale)</label>
+              <input type="text" id="input-pdf-classname" placeholder="Es. 4 BINF, 3 ALS, 2 A..." />
             </div>
 
-            <button id="btn-extract-from-file" class="btn-primary-action" disabled>
-              <span>✨ Analizza con Gemini ed Estrai</span>
+            <button id="btn-extract-from-pdf" class="btn-primary-action" disabled>
+              <span>✨ Analizza PDF con Gemini ed Estrai</span>
+            </button>
+          </div>
+
+          <!-- TAB 3: CARICA DA IMMAGINE -->
+          <div class="tt-tab-content" id="tab-content-image">
+            <p class="tab-instruction">Carica uno screenshot o una foto della tabella orario salvata sul tuo dispositivo:</p>
+            
+            <div class="file-dropzone" id="image-dropzone">
+              <input type="file" id="input-timetable-image" accept="image/png, image/jpeg, image/webp" />
+              <div class="dropzone-inner">
+                <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                  <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                  <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                  <polyline points="21 15 16 10 5 21"></polyline>
+                </svg>
+                <span class="dropzone-text" id="image-dropzone-text">Tocca per scegliere o trascina qui l'immagine</span>
+                <span class="dropzone-sub">Formati supportati: PNG, JPG, JPEG, WebP</span>
+              </div>
+            </div>
+
+            <div class="input-group" style="margin-top: 12px;">
+              <label for="input-image-classname">Nome Classe (opzionale)</label>
+              <input type="text" id="input-image-classname" placeholder="Es. 4 BINF, 5 AINF, 3 C..." />
+            </div>
+
+            <button id="btn-extract-from-image" class="btn-primary-action" disabled>
+              <span>✨ Analizza Immagine con Gemini ed Estrai</span>
+            </button>
+          </div>
+
+          <!-- TAB 4: CARICA DA URL -->
+          <div class="tt-tab-content" id="tab-content-url">
+            <p class="tab-instruction">Incolla l'indirizzo pubblico (URL) dell'immagine o del PDF dell'orario:</p>
+            <div class="input-group">
+              <label for="input-timetable-url">URL Immagine o PDF</label>
+              <input type="url" id="input-timetable-url" placeholder="https://cspace.spaggiari.eu/.../orario.png" />
+            </div>
+            <div class="input-group">
+              <label for="input-url-classname">Nome Classe (opzionale)</label>
+              <input type="text" id="input-url-classname" placeholder="Es. 4 BINF, 3 ALS, 5 AINF..." />
+            </div>
+            <button id="btn-extract-from-url" class="btn-primary-action">
+              <span>✨ Analizza URL con Gemini ed Estrai</span>
             </button>
           </div>
 

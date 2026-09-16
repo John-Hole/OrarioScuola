@@ -32,6 +32,9 @@ export function getTimetableRegistry() {
     if (raw) {
       const parsed = JSON.parse(raw);
       if (parsed && Array.isArray(parsed.items)) {
+        if (!parsed.activeId) {
+          parsed.activeId = VOLTA_PRESET_ID;
+        }
         return parsed;
       }
     }
@@ -39,10 +42,14 @@ export function getTimetableRegistry() {
     console.warn('[STORE] Errore lettura registro orari:', e);
   }
 
-  // Se è la prima volta in assoluto e non c'è registro
+  // Di base all'avvio 4 BINF è sempre attivo e presente
   return {
-    activeId: null, // Nessun orario attivo finché l'utente non sceglie o non ha un preferito
-    items: []
+    activeId: VOLTA_PRESET_ID,
+    items: [
+      {
+        ...VOLTA_4_BINF_PRESET
+      }
+    ]
   };
 }
 
@@ -161,7 +168,7 @@ export function toggleFavoriteTimetable(id) {
  */
 export async function loadPresetVolta4Binf() {
   try {
-    const res = await fetch('data/timetable.json');
+    const res = await fetch('data/timetable.json?t=' + Date.now());
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
 
@@ -177,4 +184,77 @@ export async function loadPresetVolta4Binf() {
     console.error('[STORE] Errore caricamento preset Volta 4 BINF:', err);
     throw err;
   }
+}
+
+/**
+ * Carica l'elenco di tutte le 64 classi disponibili dell'Istituto Volta da data/volta_classes.json
+ */
+let _cachedVoltaClasses = null;
+export async function fetchVoltaClassesList() {
+  if (_cachedVoltaClasses && _cachedVoltaClasses.length > 0) {
+    return _cachedVoltaClasses;
+  }
+  try {
+    const res = await fetch('data/volta_classes.json?t=' + Date.now());
+    if (res.ok) {
+      _cachedVoltaClasses = await res.json();
+      return _cachedVoltaClasses;
+    }
+  } catch (e) {
+    console.warn('[STORE] Impossibile caricare data/volta_classes.json:', e);
+  }
+  return [];
+}
+
+/**
+ * Carica o estrae l'orario di una qualsiasi classe del Volta
+ */
+export async function loadVoltaClassTimetable(classObj) {
+  if (!classObj) return null;
+
+  // Se è 4 BINF, carica il preset ufficiale pre-estratto
+  if (classObj.name === '4 BINF') {
+    return await loadPresetVolta4Binf();
+  }
+
+  const itemId = 'volta_' + (classObj.code || classObj.name.toLowerCase().replace(/\s+/g, '_'));
+  const existing = getTimetableById(itemId);
+
+  if (existing && existing.data && existing.data.giorni && existing.data.giorni.length > 0) {
+    setActiveTimetableId(itemId);
+    return existing;
+  }
+
+  // Altrimenti estraiamo l'orario dall'URL Spaggiari EDT con Gemini tramite /api/extract
+  const extractUrl = '/api/extract';
+  const res = await fetch(extractUrl, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      imageUrl: classObj.url,
+      targetClass: classObj.name
+    })
+  });
+
+  const json = await res.json();
+  if (!res.ok || !json.success) {
+    throw new Error(json.error || 'Estrazione orario non riuscita');
+  }
+
+  const extracted = json.timetable;
+  const newItem = {
+    id: itemId,
+    name: classObj.name,
+    school: 'Istituto Tecnico A. Volta',
+    sublabel: `Classe ${classObj.name} (EDT Spaggiari)`,
+    type: 'volta_class',
+    code: classObj.code,
+    imageUrl: classObj.url,
+    isFavorite: false,
+    lastUpdated: extracted.data_aggiornamento || new Date().toLocaleDateString('it-IT'),
+    data: extracted
+  };
+
+  saveOrUpdateTimetable(newItem, true);
+  return newItem;
 }

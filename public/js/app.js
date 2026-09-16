@@ -29,6 +29,8 @@ import {
   toggleFavoriteTimetable,
   loadPresetVolta4Binf,
   getFavoriteTimetable,
+  fetchVoltaClassesList,
+  loadVoltaClassTimetable,
   VOLTA_PRESET_ID
 } from './timetable_store.js';
 
@@ -40,7 +42,10 @@ const state = {
   selectedDay: 'Lunedì',
   lastCalendarDay: null,
   simulatedTime: null, // null = ora reale, altrimenti Date
-  hasAutoScrolled: false
+  hasAutoScrolled: false,
+  voltaClasses: [],
+  voltaSearchQuery: '',
+  voltaFilterYear: 'all'
 };
 
 const DAY_ORDER = ['Lunedì', 'Martedì', 'Mercoledì', 'Giovedì', 'Venerdì'];
@@ -52,6 +57,10 @@ const elements = {
   btnViewWeekly: document.getElementById('btn-view-weekly'),
   viewDaily: document.getElementById('view-daily'),
   viewWeekly: document.getElementById('view-weekly'),
+
+  // Header Cambio Classe
+  btnHeaderChangeClass: document.getElementById('btn-header-change-class'),
+  headerClassName: document.getElementById('header-class-name'),
 
   // Vista Giorno
   dailyDateTitle: document.getElementById('daily-date-title'),
@@ -107,29 +116,48 @@ const elements = {
   btnCloseModalSettings: document.getElementById('btn-close-modal-settings'),
   simButtons: document.querySelectorAll('.sim-btn'),
 
-  // Modale Gestione Orari & Onboarding Multi-Orario
+  // Modale Gestione Orari (4 Modalità)
   modalManageTimetables: document.getElementById('modal-manage-timetables'),
   btnCloseModalTimetable: document.getElementById('btn-close-modal-timetable'),
   btnOpenAddTimetable: document.getElementById('btn-open-add-timetable'),
   savedTimetablesList: document.getElementById('saved-timetables-list'),
   ttTabButtons: document.querySelectorAll('.tt-tab-btn'),
   ttTabContents: document.querySelectorAll('.tt-tab-content'),
+
+  // Tab 1: Volta & Salvati
   btnSelect4binf: document.getElementById('btn-select-4binf'),
   starBtn4binf: document.getElementById('star-btn-4binf'),
-  presetOtherChips: document.querySelectorAll('.class-chip'),
+  inputSearchVoltaClasses: document.getElementById('input-search-volta-classes'),
+  btnClearVoltaSearch: document.getElementById('btn-clear-volta-search'),
+  catalogYearFilters: document.querySelectorAll('.year-filter-btn'),
+  voltaAllClassesGrid: document.getElementById('volta-all-classes-grid'),
+  voltaClassesCount: document.getElementById('volta-classes-count'),
+  modalSavedTimetablesList: document.getElementById('modal-saved-timetables-list'),
+  modalCustomTimetablesSection: document.getElementById('modal-custom-timetables-section'),
+
+  // Tab 2: PDF
+  pdfDropzone: document.getElementById('pdf-dropzone'),
+  inputTimetablePdf: document.getElementById('input-timetable-pdf'),
+  pdfDropzoneText: document.getElementById('pdf-dropzone-text'),
+  inputPdfClassname: document.getElementById('input-pdf-classname'),
+  btnExtractFromPdf: document.getElementById('btn-extract-from-pdf'),
+
+  // Tab 3: Immagine
+  imageDropzone: document.getElementById('image-dropzone'),
+  inputTimetableImage: document.getElementById('input-timetable-image'),
+  imageDropzoneText: document.getElementById('image-dropzone-text'),
+  inputImageClassname: document.getElementById('input-image-classname'),
+  btnExtractFromImage: document.getElementById('btn-extract-from-image'),
+
+  // Tab 4: URL
   inputTimetableUrl: document.getElementById('input-timetable-url'),
   inputUrlClassname: document.getElementById('input-url-classname'),
   btnExtractFromUrl: document.getElementById('btn-extract-from-url'),
-  inputTimetableFile: document.getElementById('input-timetable-file'),
-  inputFileClassname: document.getElementById('input-file-classname'),
-  btnExtractFromFile: document.getElementById('btn-extract-from-file'),
-  fileDropzone: document.getElementById('file-dropzone'),
-  dropzoneText: document.getElementById('dropzone-text'),
+
+  // Feedback Estrazione
   extractionLoading: document.getElementById('extraction-loading'),
   extractionError: document.getElementById('extraction-error'),
-  extractionErrorMsg: document.getElementById('extraction-error-msg'),
-  modalSavedTimetablesList: document.getElementById('modal-saved-timetables-list'),
-  modalCustomTimetablesSection: document.getElementById('modal-custom-timetables-section')
+  extractionErrorMsg: document.getElementById('extraction-error-msg')
 };
 
 let currentTutorialStep = 0;
@@ -202,39 +230,33 @@ async function init() {
     elements.mfCodeNext.textContent = `$wg("${widgetFullPath}", json, .next_title)$ ($wg("${widgetFullPath}", json, .next_room)$)`;
   }
 
-  applyCalibration(state.calibration);
-  updateCalibrationReadout();
-
   renderSavedTimetablesList();
+  initVoltaClassesCatalog().catch(e => console.warn('[INIT CATALOG WARN]', e));
 
   try {
-    const activeId = getActiveTimetableId();
-    if (activeId) {
-      await loadTimetableById(activeId);
-    } else {
-      // Se non c'è un ID attivo esplicito, verifichiamo se c'è un preferito salvato
-      const fav = getFavoriteTimetable();
-      if (fav) {
-        await loadTimetableById(fav.id);
-      } else {
-        // All'avvio carica direttamente il preset Volta 4 BINF senza bloccare l'utente con popup
-        const preset = await loadPresetVolta4Binf();
-        await loadTimetableById(preset.id);
-      }
-    }
+    const activeId = getActiveTimetableId() || VOLTA_PRESET_ID;
+    await loadTimetableById(activeId);
   } catch (err) {
     console.error('[INIT LOAD TIMETABLE ERROR]', err);
     try {
-      const resp = await fetch('data/timetable.json?t=' + Date.now());
-      if (resp.ok) {
-        state.timetable = await resp.json();
-        const now = getCurrentDate();
-        state.lastCalendarDay = now.toDateString();
-        state.selectedDay = getSmartDefaultDay(state.timetable.giorni, now);
-        render();
-      }
+      const preset = await loadPresetVolta4Binf();
+      await loadTimetableById(preset.id);
     } catch (e2) {
       console.error('[CRITICAL FALLBACK ERROR]', e2);
+      try {
+        const resp = await fetch('data/timetable.json?t=' + Date.now());
+        if (resp.ok) {
+          state.timetable = await resp.json();
+          state.currentClass = state.timetable.classe || '4 BINF';
+          if (elements.headerClassName) elements.headerClassName.textContent = state.currentClass;
+          const now = getCurrentDate();
+          state.lastCalendarDay = now.toDateString();
+          state.selectedDay = getSmartDefaultDay(state.timetable.giorni, now);
+          render();
+        }
+      } catch (e3) {
+        console.error('[FATAL FALLBACK]', e3);
+      }
     }
   }
 
@@ -286,14 +308,28 @@ async function loadTimetableById(id) {
   }
 
   if (!state.timetable) {
+    try {
+      const resp = await fetch('data/timetable.json?t=' + Date.now());
+      if (resp.ok) {
+        state.timetable = await resp.json();
+        setActiveTimetableId(VOLTA_PRESET_ID);
+      }
+    } catch (fallbackErr) {
+      console.warn('[DATI] Errore fetch fallback data/timetable.json:', fallbackErr);
+    }
+  }
+
+  if (!state.timetable) {
     console.warn('[DATI] Nessun dato orario per ID:', id);
     openTimetableModal('preset');
     return;
   }
 
-  setActiveTimetableId(id);
-  state.currentClass = item.name || state.timetable.classe || '4 BINF';
-
+  setActiveTimetableId(id || VOLTA_PRESET_ID);
+  state.currentClass = (item && item.name) || state.timetable.classe || '4 BINF';
+  if (elements.headerClassName) {
+    elements.headerClassName.textContent = state.currentClass;
+  }
 
   if (state.timetable) {
     if (elements.drawerStatusText) {
@@ -310,12 +346,106 @@ async function loadTimetableById(id) {
   state.selectedDay = getSmartDefaultDay(state.timetable.giorni, now);
 
   renderSavedTimetablesList();
+  renderVoltaClassesGrid();
   render();
 
   setTimeout(() => {
     autoScrollToActiveLesson(elements.timelineContainer);
     state.hasAutoScrolled = true;
   }, 350);
+}
+
+/**
+ * Inizializza il catalogo completo delle 64 classi dell'Istituto A. Volta
+ */
+async function initVoltaClassesCatalog() {
+  try {
+    state.voltaClasses = await fetchVoltaClassesList();
+    renderVoltaClassesGrid();
+  } catch (err) {
+    console.warn('[VOLTA CATALOG] Errore caricamento catalogo classi:', err);
+  }
+}
+
+/**
+ * Renderizza la griglia filtrabile delle 64 classi del Volta
+ */
+function renderVoltaClassesGrid() {
+  if (!elements.voltaAllClassesGrid) return;
+  elements.voltaAllClassesGrid.innerHTML = '';
+
+  const query = (state.voltaSearchQuery || '').toLowerCase().trim();
+  const yearFilter = state.voltaFilterYear || 'all';
+
+  const filtered = (state.voltaClasses || []).filter(cls => {
+    // Filtro per anno
+    if (yearFilter !== 'all' && cls.year !== parseInt(yearFilter, 10)) {
+      return false;
+    }
+    // Filtro per ricerca testuale
+    if (query) {
+      const matchName = cls.name.toLowerCase().includes(query);
+      const matchCode = cls.code.toLowerCase().includes(query);
+      return matchName || matchCode;
+    }
+    return true;
+  });
+
+  if (elements.voltaClassesCount) {
+    elements.voltaClassesCount.textContent = `${filtered.length} classi`;
+  }
+
+  if (filtered.length === 0) {
+    const emptyEl = document.createElement('div');
+    emptyEl.style.gridColumn = '1 / -1';
+    emptyEl.style.padding = '20px 10px';
+    emptyEl.style.textAlign = 'center';
+    emptyEl.style.color = 'var(--text-dim)';
+    emptyEl.style.fontSize = '0.78rem';
+    emptyEl.textContent = 'Nessuna classe trovata per questo filtro.';
+    elements.voltaAllClassesGrid.appendChild(emptyEl);
+    return;
+  }
+
+  filtered.forEach(cls => {
+    const card = document.createElement('div');
+    const isActive = cls.name.trim().toUpperCase() === (state.currentClass || '').trim().toUpperCase();
+    card.className = `volta-class-card ${isActive ? 'is-active' : ''}`;
+    card.setAttribute('data-class', cls.name);
+
+    const nameEl = document.createElement('span');
+    nameEl.className = 'volta-class-name';
+    nameEl.textContent = cls.name;
+
+    const subEl = document.createElement('span');
+    subEl.className = 'volta-class-sub';
+    subEl.textContent = cls.year ? `${cls.year}° Anno` : 'Volta';
+
+    card.appendChild(nameEl);
+    card.appendChild(subEl);
+
+    card.addEventListener('click', async () => {
+      try {
+        if (elements.extractionLoading) {
+          elements.extractionLoading.classList.remove('hidden');
+        }
+        closeTimetableModal();
+        const item = await loadVoltaClassTimetable(cls);
+        if (item) {
+          await loadTimetableById(item.id);
+        }
+      } catch (err) {
+        console.error('[LOAD VOLTA CLASS ERROR]', err);
+        alert(`Impossibile caricare l'orario della classe ${cls.name}: ${err.message}`);
+      } finally {
+        if (elements.extractionLoading) {
+          elements.extractionLoading.classList.add('hidden');
+        }
+      }
+    });
+
+    elements.voltaAllClassesGrid.appendChild(card);
+  });
 }
 
 /**
@@ -1168,6 +1298,13 @@ function setupEventListeners() {
     });
   }
 
+  // Header Cambio Classe rapido
+  if (elements.btnHeaderChangeClass) {
+    elements.btnHeaderChangeClass.addEventListener('click', () => {
+      openTimetableModal('preset');
+    });
+  }
+
   // Tab 1: Selezione Preset Volta 4 BINF
   if (elements.btnSelect4binf) {
     elements.btnSelect4binf.addEventListener('click', async () => {
@@ -1180,7 +1317,7 @@ function setupEventListeners() {
         console.error('[PRESET LOAD ERROR]', err);
         alert('Impossibile caricare l\'orario 4 BINF: ' + err.message);
       } finally {
-        if (elements.btnSelect4binf) elements.btnSelect4binf.textContent = 'Seleziona e Apri';
+        if (elements.btnSelect4binf) elements.btnSelect4binf.textContent = 'Carica Orario';
       }
     });
   }
@@ -1191,182 +1328,233 @@ function setupEventListeners() {
     });
   }
 
-  // Chip altre classi della scuola Volta
-  if (elements.presetOtherChips) {
-    elements.presetOtherChips.forEach(chip => {
-      chip.addEventListener('click', async () => {
-        const clsName = chip.getAttribute('data-class');
-        const customItem = {
-          id: 'volta_' + clsName.toLowerCase().replace(/\s+/g, '_'),
-          name: clsName,
-          school: 'Istituto Tecnico A. Volta',
-          type: 'preset_other',
-          isFavorite: false,
-          lastUpdated: new Date().toLocaleDateString('it-IT'),
-          data: state.timetable || {}
-        };
-        saveOrUpdateTimetable(customItem, true);
-        closeTimetableModal();
-        await loadTimetableById(customItem.id);
+  // Ricerca testuale classi Volta
+  if (elements.inputSearchVoltaClasses) {
+    elements.inputSearchVoltaClasses.addEventListener('input', (e) => {
+      state.voltaSearchQuery = e.target.value;
+      if (elements.btnClearVoltaSearch) {
+        elements.btnClearVoltaSearch.classList.toggle('hidden', !state.voltaSearchQuery);
+      }
+      renderVoltaClassesGrid();
+    });
+  }
+
+  if (elements.btnClearVoltaSearch) {
+    elements.btnClearVoltaSearch.addEventListener('click', () => {
+      state.voltaSearchQuery = '';
+      if (elements.inputSearchVoltaClasses) elements.inputSearchVoltaClasses.value = '';
+      elements.btnClearVoltaSearch.classList.add('hidden');
+      renderVoltaClassesGrid();
+    });
+  }
+
+  // Filtri per anno classi Volta
+  if (elements.catalogYearFilters) {
+    elements.catalogYearFilters.forEach(btn => {
+      btn.addEventListener('click', () => {
+        elements.catalogYearFilters.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        state.voltaFilterYear = btn.getAttribute('data-year') || 'all';
+        renderVoltaClassesGrid();
       });
     });
   }
 
-  // Tab 2: Estrazione da URL con Gemini
+  // Funzione unificata di estrazione Gemini per PDF, Immagini e URL
+  async function performExtraction({ imageBase64, mimeType, imageUrl, targetClass, type, sourceUrl }) {
+    try {
+      if (elements.extractionLoading) elements.extractionLoading.classList.remove('hidden');
+      if (elements.extractionError) elements.extractionError.classList.add('hidden');
+
+      const bodyPayload = {
+        targetClass: targetClass || 'Mio Orario'
+      };
+      if (imageBase64) {
+        bodyPayload.imageBase64 = imageBase64;
+        bodyPayload.mimeType = mimeType || 'image/png';
+      }
+      if (imageUrl) {
+        bodyPayload.imageUrl = imageUrl;
+      }
+
+      const res = await fetch('/api/extract', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(bodyPayload)
+      });
+
+      const json = await res.json();
+      if (!res.ok || !json.success) {
+        throw new Error(json.error || json.details || 'Estrazione fallita');
+      }
+
+      const extracted = json.timetable;
+      const customItem = {
+        id: (type || 'custom') + '_' + Date.now(),
+        name: extracted.classe || targetClass || 'Mio Orario',
+        school: extracted.istituto || (type === 'custom_pdf' ? 'Orario PDF' : 'Orario Personale'),
+        type: type || 'custom_upload',
+        isFavorite: true,
+        sourceUrl: sourceUrl || null,
+        lastUpdated: extracted.data_aggiornamento || new Date().toLocaleDateString('it-IT'),
+        data: extracted
+      };
+
+      saveOrUpdateTimetable(customItem, true);
+      closeTimetableModal();
+      await loadTimetableById(customItem.id);
+    } catch (err) {
+      console.error('[EXTRACTION ERROR]', err);
+      if (elements.extractionError) {
+        elements.extractionError.classList.remove('hidden');
+        if (elements.extractionErrorMsg) {
+          elements.extractionErrorMsg.textContent = 'Errore estrazione: ' + err.message;
+        }
+      }
+    } finally {
+      if (elements.extractionLoading) elements.extractionLoading.classList.add('hidden');
+    }
+  }
+
+  // Tab 2: Carica da PDF
+  let selectedPdfBase64 = null;
+  if (elements.inputTimetablePdf) {
+    elements.inputTimetablePdf.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      if (elements.pdfDropzoneText) {
+        elements.pdfDropzoneText.textContent = `PDF selezionato: ${file.name} (${(file.size / 1024).toFixed(0)} KB)`;
+      }
+      if (elements.btnExtractFromPdf) {
+        elements.btnExtractFromPdf.disabled = false;
+      }
+
+      const reader = new FileReader();
+      reader.onload = () => {
+        selectedPdfBase64 = reader.result;
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+
+  if (elements.pdfDropzone) {
+    ['dragenter', 'dragover'].forEach(eventName => {
+      elements.pdfDropzone.addEventListener(eventName, (e) => {
+        e.preventDefault();
+        elements.pdfDropzone.classList.add('dragover');
+      });
+    });
+    ['dragleave', 'drop'].forEach(eventName => {
+      elements.pdfDropzone.addEventListener(eventName, (e) => {
+        e.preventDefault();
+        elements.pdfDropzone.classList.remove('dragover');
+      });
+    });
+    elements.pdfDropzone.addEventListener('drop', (e) => {
+      const file = e.dataTransfer.files[0];
+      if (file && elements.inputTimetablePdf) {
+        elements.inputTimetablePdf.files = e.dataTransfer.files;
+        elements.inputTimetablePdf.dispatchEvent(new Event('change'));
+      }
+    });
+  }
+
+  if (elements.btnExtractFromPdf) {
+    elements.btnExtractFromPdf.addEventListener('click', async () => {
+      if (!selectedPdfBase64) {
+        alert('Seleziona prima un documento PDF.');
+        return;
+      }
+      const className = elements.inputPdfClassname?.value.trim() || 'Orario PDF';
+      await performExtraction({
+        imageBase64: selectedPdfBase64,
+        mimeType: 'application/pdf',
+        targetClass: className,
+        type: 'custom_pdf'
+      });
+    });
+  }
+
+  // Tab 3: Carica da Immagine
+  let selectedImgBase64 = null;
+  let selectedImgMime = 'image/png';
+  if (elements.inputTimetableImage) {
+    elements.inputTimetableImage.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      if (elements.imageDropzoneText) {
+        elements.imageDropzoneText.textContent = `Immagine selezionata: ${file.name} (${(file.size / 1024).toFixed(0)} KB)`;
+      }
+      if (elements.btnExtractFromImage) {
+        elements.btnExtractFromImage.disabled = false;
+      }
+
+      selectedImgMime = file.type || 'image/png';
+      const reader = new FileReader();
+      reader.onload = () => {
+        selectedImgBase64 = reader.result;
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+
+  if (elements.imageDropzone) {
+    ['dragenter', 'dragover'].forEach(eventName => {
+      elements.imageDropzone.addEventListener(eventName, (e) => {
+        e.preventDefault();
+        elements.imageDropzone.classList.add('dragover');
+      });
+    });
+    ['dragleave', 'drop'].forEach(eventName => {
+      elements.imageDropzone.addEventListener(eventName, (e) => {
+        e.preventDefault();
+        elements.imageDropzone.classList.remove('dragover');
+      });
+    });
+    elements.imageDropzone.addEventListener('drop', (e) => {
+      const file = e.dataTransfer.files[0];
+      if (file && elements.inputTimetableImage) {
+        elements.inputTimetableImage.files = e.dataTransfer.files;
+        elements.inputTimetableImage.dispatchEvent(new Event('change'));
+      }
+    });
+  }
+
+  if (elements.btnExtractFromImage) {
+    elements.btnExtractFromImage.addEventListener('click', async () => {
+      if (!selectedImgBase64) {
+        alert('Seleziona prima una foto o screenshot.');
+        return;
+      }
+      const className = elements.inputImageClassname?.value.trim() || 'Orario Immagine';
+      await performExtraction({
+        imageBase64: selectedImgBase64,
+        mimeType: selectedImgMime,
+        targetClass: className,
+        type: 'custom_image'
+      });
+    });
+  }
+
+  // Tab 4: Carica da URL
   if (elements.btnExtractFromUrl) {
     elements.btnExtractFromUrl.addEventListener('click', async () => {
       const url = elements.inputTimetableUrl?.value.trim();
-      const className = elements.inputUrlClassname?.value.trim();
+      const className = elements.inputUrlClassname?.value.trim() || 'Orario URL';
 
       if (!url) {
         alert('Inserisci l\'URL dell\'immagine o del PDF dell\'orario');
         return;
       }
 
-      try {
-        if (elements.extractionLoading) elements.extractionLoading.classList.remove('hidden');
-        if (elements.extractionError) elements.extractionError.classList.add('hidden');
-
-        const res = await fetch('/api/extract', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ imageUrl: url, targetClass: className })
-        });
-
-        const json = await res.json();
-        if (!res.ok || !json.success) {
-          throw new Error(json.error || json.details || 'Estrazione fallita');
-        }
-
-        const extracted = json.timetable;
-        const customItem = {
-          id: 'custom_url_' + Date.now(),
-          name: extracted.classe || className || 'Mio Orario',
-          school: extracted.istituto || 'Scuola',
-          type: 'custom_url',
-          isFavorite: true,
-          sourceUrl: url,
-          lastUpdated: extracted.data_aggiornamento || new Date().toLocaleDateString('it-IT'),
-          data: extracted
-        };
-
-        saveOrUpdateTimetable(customItem, true);
-        closeTimetableModal();
-        await loadTimetableById(customItem.id);
-      } catch (err) {
-        console.error('[EXTRACT URL ERROR]', err);
-        if (elements.extractionError) {
-          elements.extractionError.classList.remove('hidden');
-          if (elements.extractionErrorMsg) {
-            elements.extractionErrorMsg.textContent = 'Errore Gemini: ' + err.message;
-          }
-        }
-      } finally {
-        if (elements.extractionLoading) elements.extractionLoading.classList.add('hidden');
-      }
-    });
-  }
-
-  // Tab 3: Estrazione da Foto o PDF con Gemini
-  let selectedFileBase64 = null;
-  let selectedFileMime = null;
-
-  if (elements.inputTimetableFile) {
-    elements.inputTimetableFile.addEventListener('change', (e) => {
-      const file = e.target.files[0];
-      if (!file) return;
-
-      if (elements.dropzoneText) {
-        elements.dropzoneText.textContent = `Selezionato: ${file.name} (${(file.size / 1024).toFixed(0)} KB)`;
-      }
-      if (elements.btnExtractFromFile) {
-        elements.btnExtractFromFile.disabled = false;
-      }
-
-      selectedFileMime = file.type || (file.name.endsWith('.pdf') ? 'application/pdf' : 'image/png');
-      const reader = new FileReader();
-      reader.onload = () => {
-        selectedFileBase64 = reader.result;
-      };
-      reader.readAsDataURL(file);
-    });
-  }
-
-  if (elements.fileDropzone) {
-    ['dragenter', 'dragover'].forEach(eventName => {
-      elements.fileDropzone.addEventListener(eventName, (e) => {
-        e.preventDefault();
-        elements.fileDropzone.classList.add('dragover');
+      await performExtraction({
+        imageUrl: url,
+        targetClass: className,
+        type: 'custom_url',
+        sourceUrl: url
       });
-    });
-    ['dragleave', 'drop'].forEach(eventName => {
-      elements.fileDropzone.addEventListener(eventName, (e) => {
-        e.preventDefault();
-        elements.fileDropzone.classList.remove('dragover');
-      });
-    });
-    elements.fileDropzone.addEventListener('drop', (e) => {
-      const file = e.dataTransfer.files[0];
-      if (file && elements.inputTimetableFile) {
-        elements.inputTimetableFile.files = e.dataTransfer.files;
-        elements.inputTimetableFile.dispatchEvent(new Event('change'));
-      }
-    });
-  }
-
-  if (elements.btnExtractFromFile) {
-    elements.btnExtractFromFile.addEventListener('click', async () => {
-      if (!selectedFileBase64) {
-        alert('Seleziona prima una foto o un documento PDF.');
-        return;
-      }
-
-      const className = elements.inputFileClassname?.value.trim();
-
-      try {
-        if (elements.extractionLoading) elements.extractionLoading.classList.remove('hidden');
-        if (elements.extractionError) elements.extractionError.classList.add('hidden');
-
-        const res = await fetch('/api/extract', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            imageBase64: selectedFileBase64,
-            mimeType: selectedFileMime,
-            targetClass: className
-          })
-        });
-
-        const json = await res.json();
-        if (!res.ok || !json.success) {
-          throw new Error(json.error || json.details || 'Estrazione fallita');
-        }
-
-        const extracted = json.timetable;
-        const customItem = {
-          id: 'custom_file_' + Date.now(),
-          name: extracted.classe || className || 'Mio Orario',
-          school: extracted.istituto || 'Scuola',
-          type: 'custom_file',
-          isFavorite: true,
-          lastUpdated: extracted.data_aggiornamento || new Date().toLocaleDateString('it-IT'),
-          data: extracted
-        };
-
-        saveOrUpdateTimetable(customItem, true);
-        closeTimetableModal();
-        await loadTimetableById(customItem.id);
-      } catch (err) {
-        console.error('[EXTRACT FILE ERROR]', err);
-        if (elements.extractionError) {
-          elements.extractionError.classList.remove('hidden');
-          if (elements.extractionErrorMsg) {
-            elements.extractionErrorMsg.textContent = 'Errore Gemini: ' + err.message;
-          }
-        }
-      } finally {
-        if (elements.extractionLoading) elements.extractionLoading.classList.add('hidden');
-      }
     });
   }
 

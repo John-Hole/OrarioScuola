@@ -1,0 +1,450 @@
+[
+  {
+    "name": "1 AC",
+    "code": "c0000047",
+    "file": "classi/edc0000047p00001s3fffffffffffffff_1_ac_ac.png",
+    "url": "https://cspace.spaggiari.eu/pub/PGIT0005/orario/classi/edc0000047p00001s3fffffffffffffff_1_ac_ac.png",
+    "year": 1
+  },
+  {
+    "name": "1 AET",
+    "code": "c0000002",
+    "file": "classi/edc0000002p00001s3fffffffffffffff_1_aet_ac.png",
+    "url": "https://cspace.spaggiari.eu/pub/PGIT0005/orario/classi/edc0000002p00001s3fffffffffffffff_1_aet_ac.png",
+    "year": 1
+  },
+  {
+    "name": "1 AGR",
+    "code": "c0000111",
+    "file": "classi/edc0000111p00001s3fffffffffffffff_1_agr_ac.png",
+    "url": "https://cspace.spaggiari.eu/pub/PGIT0005/orario/classi/edc0000111p00001s3fffffffffffffff_1_agr_ac.png",
+    "year": 1
+  },
+  {
+    "name": "1 AINF",
+    "code": "c0000211",
+    "file": "classi/edc0000211p00001s3fffffffffffffff_1_ainf_ac.png",
+    "url": "https://cspace.spaggiari.eu/pub/PGIT0005/orario/classi/edc0000211p00001s3fffffffffffffff_1_ainf_ac.png",
+    "year": 1
+  },
+  {
+    "name": "1 AM",
+    "code": "c0000008",
+    "file": "classi/edc0000008p00001s3fffffffffffffff_1_am_ac.png",
+    "url": "https://cspace.spaggiari.eu/pub/PGIT0005/orario/classi/edc0000008p00001s3fffffffffffffff_1_am_ac.png",
+    "year": 1
+  },
+  {
+    "name": "1 BINF",
+    "code": "c0000005",
+    "file": "classi/edc0000005p00001s3fffffffffffffff_1_binf_ac.png",
+    "url": "https://cspace.spaggiari.eu/pub/PGIT0005/orario/classi/edc0000005p00001s3fffffffffffffff_1_binf_ac.png",
+    "year": 1
+  },
+  {
+    "name": "1 BM",
+    "code": "c0000009",
+    "file": "classi/edc0000009p00001s3fffffffffffffff_1_bm_ac.png",
+    "url": "https://cspace.spaggiari.eu/pub/PGIT0005/orario/classi/edc0000009p00001s3fffffffffffffff_1_bm_ac.png",
+    "year": 1
+  },
+  {
+    "name": "1 CINF",
+    "code": "c0000044",
+    "file": "classi/edc0000044p00001s3fffffffffffffff_1_cinf_ac.png",
+    "url": "https://cspace.spaggiari.eu/pub/PGIT0005/orario/classi/edc0000044p00001s3fffffffffffffff_1_cinf_ac.png",
+    "year": 1
+  },
+  {
+    "name": "1 SP",
+    "code": "c0000133",
+    "file": "classi/edc0000133p00001s3fffffffffffffff_1_sp_ac.png",
+    "url": "https://cspace.spaggiari.eu/pub/PGIT0005/orario/classi/edc0000133p00001s3fffffffffffffff_1_sp_ac.png",
+    "year": 1
+  },
+  {
+    "name": "1^ CQ",
+    "code": "c0000238",
+    "file": "classi/edc0000238p00001s3fffffffffffffff_1_cq_ac.png",
+    "url": "https://cspace.spaggiari.eu/pub/PGIT0005/orario/classi/edc0000238p00001s3fffffffffffffff_1_cq_ac.png",
+    "year": 1
+  },
+  {
+    "name": "1^ EQ",
+    "code": "c0000203",
+    "file": "classi/edc0000203p00001s3fffffffffffffff_1_eq_ac.png",
+    "url": "https://cspace.spaggiari.eu/pub/PGIT0005/orario/classi/edc0000203p00001s3fffffffffffffff_1_eq_ac.png",
+    "year": 1
+  },
+  {
+    "name": "1^ GQ",
+    "code": "c0000223",
+    "file": "classi/edc0000223p00001s3fffffffffffffff_1_gq_ac.png",
+    "url": "https://cspace.spaggiari.eu/pub/PGIT0005/orario/classi/edc0000223p00001s3fffffffffffffff_1_gq_ac.png",
+    "year": 1
+  },
+  {
+    "name": "1^ IQ",
+    "code": "c0000222",
+    "file": "classi/edc0000222p00001s3fffffffffffffff_1_iq_ac.png",
+    "url": "https://cspace.spaggiari.eu/pub/PGIT0005/orario/classi/edc0000222p00001s3fffffffffffffff_1_iq_ac.png",
+    "year": 1
+  },
+  {
+    "name": "1^ MQ",
+    "code": "c0000234",
+    "file": "classi/edc0000234p00001s3fffffffffffffff_1_mq_ac.png",
+    "url": "https://cspace.spaggiari.eu/pub/PGIT0005/orario/classi/edc0000234p00001s3fffffffffffffff_1_mq_ac.png",
+    "year": 1
+  },
+  {
+    "name": "2 AC",
+    "code": "c0000043",
+    "file": "classi/edc0000043p00001s3fffffffffffffff_2_ac_ac.png",
+    "url": "https://cspace.spaggiari.eu/pub/PGIT0005/orario/classi/edc0000043p00001s3fffffffffffffff_2_ac_ac.png",
+    "year": 2
+  },
+  {
+    "name": "2 AET",
+    "code": "c0000010",
+    "file": "classi/edc0000010p00001s3fffffffffffffff_2_aet_ac.png",
+    "url": "https://cspace.spaggiari.eu/pub/PGIT0005/orario/classi/edc0000010p00001s3fffffffffffffff_2_aet_ac.png",
+    "year": 2
+  },
+  {
+    "name": "2 AGR",
+    "code": "c0000013",
+    "file": "classi/edc0000013p00001s3fffffffffffffff_2_agr_ac.png",
+    "url": "https://cspace.spaggiari.eu/pub/PGIT0005/orario/classi/edc0000013p00001s3fffffffffffffff_2_agr_ac.png",
+    "year": 2
+  },
+  {
+    "name": "2 AINF",
+    "code": "c0000041",
+    "file": "classi/edc0000041p00001s3fffffffffffffff_2_ainf_ac.png",
+    "url": "https://cspace.spaggiari.eu/pub/PGIT0005/orario/classi/edc0000041p00001s3fffffffffffffff_2_ainf_ac.png",
+    "year": 2
+  },
+  {
+    "name": "2 AM",
+    "code": "c0000040",
+    "file": "classi/edc0000040p00001s3fffffffffffffff_2_am_ac.png",
+    "url": "https://cspace.spaggiari.eu/pub/PGIT0005/orario/classi/edc0000040p00001s3fffffffffffffff_2_am_ac.png",
+    "year": 2
+  },
+  {
+    "name": "2 BGR",
+    "code": "c0000154",
+    "file": "classi/edc0000154p00001s3fffffffffffffff_2_bgr_ac.png",
+    "url": "https://cspace.spaggiari.eu/pub/PGIT0005/orario/classi/edc0000154p00001s3fffffffffffffff_2_bgr_ac.png",
+    "year": 2
+  },
+  {
+    "name": "2 BINF",
+    "code": "c0000042",
+    "file": "classi/edc0000042p00001s3fffffffffffffff_2_binf_ac.png",
+    "url": "https://cspace.spaggiari.eu/pub/PGIT0005/orario/classi/edc0000042p00001s3fffffffffffffff_2_binf_ac.png",
+    "year": 2
+  },
+  {
+    "name": "2 BM",
+    "code": "c0000014",
+    "file": "classi/edc0000014p00001s3fffffffffffffff_2_bm_ac.png",
+    "url": "https://cspace.spaggiari.eu/pub/PGIT0005/orario/classi/edc0000014p00001s3fffffffffffffff_2_bm_ac.png",
+    "year": 2
+  },
+  {
+    "name": "2 CINF",
+    "code": "c0000114",
+    "file": "classi/edc0000114p00001s3fffffffffffffff_2_cinf_ac.png",
+    "url": "https://cspace.spaggiari.eu/pub/PGIT0005/orario/classi/edc0000114p00001s3fffffffffffffff_2_cinf_ac.png",
+    "year": 2
+  },
+  {
+    "name": "2 CM",
+    "code": "c0000015",
+    "file": "classi/edc0000015p00001s3fffffffffffffff_2_cm_ac.png",
+    "url": "https://cspace.spaggiari.eu/pub/PGIT0005/orario/classi/edc0000015p00001s3fffffffffffffff_2_cm_ac.png",
+    "year": 2
+  },
+  {
+    "name": "2 DM",
+    "code": "c0000241",
+    "file": "classi/edc0000241p00001s3fffffffffffffff_2_dm_ac.png",
+    "url": "https://cspace.spaggiari.eu/pub/PGIT0005/orario/classi/edc0000241p00001s3fffffffffffffff_2_dm_ac.png",
+    "year": 2
+  },
+  {
+    "name": "2 SP",
+    "code": "c0000134",
+    "file": "classi/edc0000134p00001s3fffffffffffffff_2_sp_ac.png",
+    "url": "https://cspace.spaggiari.eu/pub/PGIT0005/orario/classi/edc0000134p00001s3fffffffffffffff_2_sp_ac.png",
+    "year": 2
+  },
+  {
+    "name": "2^ EQ",
+    "code": "c0000197",
+    "file": "classi/edc0000197p00001s3fffffffffffffff_2_eq_ac.png",
+    "url": "https://cspace.spaggiari.eu/pub/PGIT0005/orario/classi/edc0000197p00001s3fffffffffffffff_2_eq_ac.png",
+    "year": 2
+  },
+  {
+    "name": "2^ GQ",
+    "code": "c0000235",
+    "file": "classi/edc0000235p00001s3fffffffffffffff_2_gq_ac.png",
+    "url": "https://cspace.spaggiari.eu/pub/PGIT0005/orario/classi/edc0000235p00001s3fffffffffffffff_2_gq_ac.png",
+    "year": 2
+  },
+  {
+    "name": "2^ IQ",
+    "code": "c0000240",
+    "file": "classi/edc0000240p00001s3fffffffffffffff_2_iq_ac.png",
+    "url": "https://cspace.spaggiari.eu/pub/PGIT0005/orario/classi/edc0000240p00001s3fffffffffffffff_2_iq_ac.png",
+    "year": 2
+  },
+  {
+    "name": "3 AC",
+    "code": "c0000016",
+    "file": "classi/edc0000016p00001s3fffffffffffffff_3_ac_ac.png",
+    "url": "https://cspace.spaggiari.eu/pub/PGIT0005/orario/classi/edc0000016p00001s3fffffffffffffff_3_ac_ac.png",
+    "year": 3
+  },
+  {
+    "name": "3 AE",
+    "code": "c0000017",
+    "file": "classi/edc0000017p00001s3fffffffffffffff_3_ae_ac.png",
+    "url": "https://cspace.spaggiari.eu/pub/PGIT0005/orario/classi/edc0000017p00001s3fffffffffffffff_3_ae_ac.png",
+    "year": 3
+  },
+  {
+    "name": "3 AGR",
+    "code": "c0000020",
+    "file": "classi/edc0000020p00001s3fffffffffffffff_3_agr_ac.png",
+    "url": "https://cspace.spaggiari.eu/pub/PGIT0005/orario/classi/edc0000020p00001s3fffffffffffffff_3_agr_ac.png",
+    "year": 3
+  },
+  {
+    "name": "3 AINF",
+    "code": "c0000038",
+    "file": "classi/edc0000038p00001s3fffffffffffffff_3_ainf_ac.png",
+    "url": "https://cspace.spaggiari.eu/pub/PGIT0005/orario/classi/edc0000038p00001s3fffffffffffffff_3_ainf_ac.png",
+    "year": 3
+  },
+  {
+    "name": "3 AM",
+    "code": "c0000018",
+    "file": "classi/edc0000018p00001s3fffffffffffffff_3_am_ac.png",
+    "url": "https://cspace.spaggiari.eu/pub/PGIT0005/orario/classi/edc0000018p00001s3fffffffffffffff_3_am_ac.png",
+    "year": 3
+  },
+  {
+    "name": "3 AT",
+    "code": "c0000019",
+    "file": "classi/edc0000019p00001s3fffffffffffffff_3_at_ac.png",
+    "url": "https://cspace.spaggiari.eu/pub/PGIT0005/orario/classi/edc0000019p00001s3fffffffffffffff_3_at_ac.png",
+    "year": 3
+  },
+  {
+    "name": "3 BC* (art. con 3 BEN)",
+    "code": "c0000239",
+    "file": "classi/edc0000239p00001s3fffffffffffffff_3_bc_art_con_3_ben_ac.png",
+    "url": "https://cspace.spaggiari.eu/pub/PGIT0005/orario/classi/edc0000239p00001s3fffffffffffffff_3_bc_art_con_3_ben_ac.png",
+    "year": 3
+  },
+  {
+    "name": "3 BEN* (art. con 3 BC)",
+    "code": "c0000200",
+    "file": "classi/edc0000200p00001s3fffffffffffffff_3_ben_art_con_3_bc_ac.png",
+    "url": "https://cspace.spaggiari.eu/pub/PGIT0005/orario/classi/edc0000200p00001s3fffffffffffffff_3_ben_art_con_3_bc_ac.png",
+    "year": 3
+  },
+  {
+    "name": "3 BGR",
+    "code": "c0000124",
+    "file": "classi/edc0000124p00001s3fffffffffffffff_3_bgr_ac.png",
+    "url": "https://cspace.spaggiari.eu/pub/PGIT0005/orario/classi/edc0000124p00001s3fffffffffffffff_3_bgr_ac.png",
+    "year": 3
+  },
+  {
+    "name": "3 BINF",
+    "code": "c0000050",
+    "file": "classi/edc0000050p00001s3fffffffffffffff_3_binf_ac.png",
+    "url": "https://cspace.spaggiari.eu/pub/PGIT0005/orario/classi/edc0000050p00001s3fffffffffffffff_3_binf_ac.png",
+    "year": 3
+  },
+  {
+    "name": "3 BM",
+    "code": "c0000216",
+    "file": "classi/edc0000216p00001s3fffffffffffffff_3_bm_ac.png",
+    "url": "https://cspace.spaggiari.eu/pub/PGIT0005/orario/classi/edc0000216p00001s3fffffffffffffff_3_bm_ac.png",
+    "year": 3
+  },
+  {
+    "name": "3 CGR",
+    "code": "c0000215",
+    "file": "classi/edc0000215p00001s3fffffffffffffff_3_cgr_ac.png",
+    "url": "https://cspace.spaggiari.eu/pub/PGIT0005/orario/classi/edc0000215p00001s3fffffffffffffff_3_cgr_ac.png",
+    "year": 3
+  },
+  {
+    "name": "3 CINF",
+    "code": "c0000116",
+    "file": "classi/edc0000116p00001s3fffffffffffffff_3_cinf_ac.png",
+    "url": "https://cspace.spaggiari.eu/pub/PGIT0005/orario/classi/edc0000116p00001s3fffffffffffffff_3_cinf_ac.png",
+    "year": 3
+  },
+  {
+    "name": "3 DGR* (art. con 3 DINF)",
+    "code": "c0000244",
+    "file": "classi/edc0000244p00001s3fffffffffffffff_3_dgr_art_con_3_dinf_ac.png",
+    "url": "https://cspace.spaggiari.eu/pub/PGIT0005/orario/classi/edc0000244p00001s3fffffffffffffff_3_dgr_art_con_3_dinf_ac.png",
+    "year": 3
+  },
+  {
+    "name": "3 DINF* (art. con 3 DGR)",
+    "code": "c0000165",
+    "file": "classi/edc0000165p00001s3fffffffffffffff_3_dinf_art_con_3_dgr_ac.png",
+    "url": "https://cspace.spaggiari.eu/pub/PGIT0005/orario/classi/edc0000165p00001s3fffffffffffffff_3_dinf_art_con_3_dgr_ac.png",
+    "year": 3
+  },
+  {
+    "name": "3 SP",
+    "code": "c0000153",
+    "file": "classi/edc0000153p00001s3fffffffffffffff_3_sp_ac.png",
+    "url": "https://cspace.spaggiari.eu/pub/PGIT0005/orario/classi/edc0000153p00001s3fffffffffffffff_3_sp_ac.png",
+    "year": 3
+  },
+  {
+    "name": "3^ QUAD",
+    "code": "c0000224",
+    "file": "classi/edc0000224p00001s3fffffffffffffff_3_quad_ac.png",
+    "url": "https://cspace.spaggiari.eu/pub/PGIT0005/orario/classi/edc0000224p00001s3fffffffffffffff_3_quad_ac.png",
+    "year": 3
+  },
+  {
+    "name": "4 AC",
+    "code": "c0000217",
+    "file": "classi/edc0000217p00001s3fffffffffffffff_4_ac_ac.png",
+    "url": "https://cspace.spaggiari.eu/pub/PGIT0005/orario/classi/edc0000217p00001s3fffffffffffffff_4_ac_ac.png",
+    "year": 4
+  },
+  {
+    "name": "4 AE",
+    "code": "c0000247",
+    "file": "classi/edc0000247p00001s3fffffffffffffff_4_ae_ac.png",
+    "url": "https://cspace.spaggiari.eu/pub/PGIT0005/orario/classi/edc0000247p00001s3fffffffffffffff_4_ae_ac.png",
+    "year": 4
+  },
+  {
+    "name": "4 AGR",
+    "code": "c0000127",
+    "file": "classi/edc0000127p00001s3fffffffffffffff_4_agr_ac.png",
+    "url": "https://cspace.spaggiari.eu/pub/PGIT0005/orario/classi/edc0000127p00001s3fffffffffffffff_4_agr_ac.png",
+    "year": 4
+  },
+  {
+    "name": "4 AINF",
+    "code": "c0000026",
+    "file": "classi/edc0000026p00001s3fffffffffffffff_4_ainf_ac.png",
+    "url": "https://cspace.spaggiari.eu/pub/PGIT0005/orario/classi/edc0000026p00001s3fffffffffffffff_4_ainf_ac.png",
+    "year": 4
+  },
+  {
+    "name": "4 AM",
+    "code": "c0000023",
+    "file": "classi/edc0000023p00001s3fffffffffffffff_4_am_ac.png",
+    "url": "https://cspace.spaggiari.eu/pub/PGIT0005/orario/classi/edc0000023p00001s3fffffffffffffff_4_am_ac.png",
+    "year": 4
+  },
+  {
+    "name": "4 AT",
+    "code": "c0000024",
+    "file": "classi/edc0000024p00001s3fffffffffffffff_4_at_ac.png",
+    "url": "https://cspace.spaggiari.eu/pub/PGIT0005/orario/classi/edc0000024p00001s3fffffffffffffff_4_at_ac.png",
+    "year": 4
+  },
+  {
+    "name": "4 BC*** (art. con 4 BEN)",
+    "code": "c0000246",
+    "file": "classi/edc0000246p00001s3fffffffffffffff_4_bc_art_con_4_ben_ac.png",
+    "url": "https://cspace.spaggiari.eu/pub/PGIT0005/orario/classi/edc0000246p00001s3fffffffffffffff_4_bc_art_con_4_ben_ac.png",
+    "year": 4
+  },
+  {
+    "name": "4 BE* (art. con 4 BM)",
+    "code": "c0000214",
+    "file": "classi/edc0000214p00001s3fffffffffffffff_4_be_art_con_4_bm_ac.png",
+    "url": "https://cspace.spaggiari.eu/pub/PGIT0005/orario/classi/edc0000214p00001s3fffffffffffffff_4_be_art_con_4_bm_ac.png",
+    "year": 4
+  },
+  {
+    "name": "4 BEN*** (art. con 4 BC)",
+    "code": "c0000219",
+    "file": "classi/edc0000219p00001s3fffffffffffffff_4_ben_art_con_4_bc_ac.png",
+    "url": "https://cspace.spaggiari.eu/pub/PGIT0005/orario/classi/edc0000219p00001s3fffffffffffffff_4_ben_art_con_4_bc_ac.png",
+    "year": 4
+  },
+  {
+    "name": "4 BGR",
+    "code": "c0000141",
+    "file": "classi/edc0000141p00001s3fffffffffffffff_4_bgr_ac.png",
+    "url": "https://cspace.spaggiari.eu/pub/PGIT0005/orario/classi/edc0000141p00001s3fffffffffffffff_4_bgr_ac.png",
+    "year": 4
+  },
+  {
+    "name": "4 BINF",
+    "code": "c0000119",
+    "file": "classi/edc0000119p00001s3fffffffffffffff_4_binf_ac.png",
+    "url": "https://cspace.spaggiari.eu/pub/PGIT0005/orario/classi/edc0000119p00001s3fffffffffffffff_4_binf_ac.png",
+    "year": 4
+  },
+  {
+    "name": "4 BM* (art. con 4 BE)",
+    "code": "c0000228",
+    "file": "classi/edc0000228p00001s3fffffffffffffff_4_bm_art_con_4_be_ac.png",
+    "url": "https://cspace.spaggiari.eu/pub/PGIT0005/orario/classi/edc0000228p00001s3fffffffffffffff_4_bm_art_con_4_be_ac.png",
+    "year": 4
+  },
+  {
+    "name": "4 CGR",
+    "code": "c0000229",
+    "file": "classi/edc0000229p00001s3fffffffffffffff_4_cgr_ac.png",
+    "url": "https://cspace.spaggiari.eu/pub/PGIT0005/orario/classi/edc0000229p00001s3fffffffffffffff_4_cgr_ac.png",
+    "year": 4
+  },
+  {
+    "name": "4 CINF** (art. con 4 DGR)",
+    "code": "c0000139",
+    "file": "classi/edc0000139p00001s3fffffffffffffff_4_cinf_art_con_4_dgr_ac.png",
+    "url": "https://cspace.spaggiari.eu/pub/PGIT0005/orario/classi/edc0000139p00001s3fffffffffffffff_4_cinf_art_con_4_dgr_ac.png",
+    "year": 4
+  },
+  {
+    "name": "4 DGR** (art. con 4 CINF)",
+    "code": "c0000236",
+    "file": "classi/edc0000236p00001s3fffffffffffffff_4_dgr_art_con_4_cinf_ac.png",
+    "url": "https://cspace.spaggiari.eu/pub/PGIT0005/orario/classi/edc0000236p00001s3fffffffffffffff_4_dgr_art_con_4_cinf_ac.png",
+    "year": 4
+  },
+  {
+    "name": "4 DINF",
+    "code": "c0000175",
+    "file": "classi/edc0000175p00001s3fffffffffffffff_4_dinf_ac.png",
+    "url": "https://cspace.spaggiari.eu/pub/PGIT0005/orario/classi/edc0000175p00001s3fffffffffffffff_4_dinf_ac.png",
+    "year": 4
+  },
+  {
+    "name": "4 SP",
+    "code": "c0000160",
+    "file": "classi/edc0000160p00001s3fffffffffffffff_4_sp_ac.png",
+    "url": "https://cspace.spaggiari.eu/pub/PGIT0005/orario/classi/edc0000160p00001s3fffffffffffffff_4_sp_ac.png",
+    "year": 4
+  },
+  {
+    "name": "4^ QUAD",
+    "code": "c0000242",
+    "file": "classi/edc0000242p00001s3fffffffffffffff_4_quad_ac.png",
+    "url": "https://cspace.spaggiari.eu/pub/PGIT0005/orario/classi/edc0000242p00001s3fffffffffffffff_4_quad_ac.png",
+    "year": 4
+  }
+]

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'smart-timetable-v20';
+const CACHE_NAME = 'smart-timetable-v21';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
@@ -7,6 +7,8 @@ const STATIC_ASSETS = [
   '/js/timeline.js',
   '/js/timetable_store.js',
   '/js/widget_helper.js',
+  '/data/volta_classes.json',
+  '/data/timetable.json',
   '/manifest.json',
   '/icons/icon.svg'
 ];

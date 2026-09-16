@@ -155,29 +155,44 @@ export default async function handler(req, res) {
       }
     };
 
-    // Chiama l'API ufficiale Google Gemini
-    const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
+    const mainModel = process.env.GEMINI_MAIN_MODEL || 'gemini-3.8-flash';
+    const fallbackModel = process.env.GEMINI_FALLBACK_MODEL || 'gemini-3.5-flash-lite';
+    const modelsToTry = [mainModel, fallbackModel, 'gemini-3.6-flash', 'gemini-2.5-flash'];
 
-    const geminiRes = await fetch(geminiUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(requestBody)
-    });
+    let candidateText = null;
+    let lastError = null;
 
-    if (!geminiRes.ok) {
-      const errBody = await geminiRes.text();
-      console.error('[GEMINI API ERROR]', errBody);
-      return res.status(geminiRes.status).json({
-        error: `Errore chiamata Gemini: ${geminiRes.statusText}`,
-        details: errBody
-      });
+    for (const model of modelsToTry) {
+      try {
+        const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+        const geminiRes = await fetch(geminiUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(requestBody)
+        });
+
+        if (geminiRes.ok) {
+          const geminiData = await geminiRes.json();
+          candidateText = geminiData?.candidates?.[0]?.content?.parts?.[0]?.text;
+          if (candidateText) {
+            break;
+          }
+        } else {
+          const errBody = await geminiRes.text();
+          lastError = `${geminiRes.status}: ${errBody}`;
+          console.warn(`[GEMINI WARN] Model ${model} failed:`, lastError);
+        }
+      } catch (e) {
+        lastError = e.message;
+        console.warn(`[GEMINI WARN] Model ${model} exception:`, e.message);
+      }
     }
 
-    const geminiData = await geminiRes.json();
-    const candidateText = geminiData?.candidates?.[0]?.content?.parts?.[0]?.text;
-
     if (!candidateText) {
-      throw new Error('Risposta vuota ricevuta da Gemini');
+      return res.status(500).json({
+        error: 'Errore durante la chiamata ai modelli Gemini',
+        details: lastError
+      });
     }
 
     const parsedTimetable = JSON.parse(candidateText);

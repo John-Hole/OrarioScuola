@@ -85,7 +85,6 @@ if BaseModel:
         data_decorrenza: str = Field(default="", description="Data da cui ha validità l'orario (es. 'dal 15 Settembre 2026')")
         data_aggiornamento: str = Field(default="", description="Data/ora di rilascio rilevata nel documento")
         classi_disponibili: Optional[List[str]] = Field(default=None, description="Eventuali altre classi presenti nel foglio")
-        verification: Optional[Dict[str, Any]] = Field(default=None, description="Metadati del processo di verifica e controllo qualità scansione")
         giorni: List[DaySchedule] = Field(default_factory=list, description="Tutti i giorni della settimana con relative lezioni")
 
 
@@ -563,9 +562,10 @@ def extract_with_fallback(
     models_to_try = [main_model]
     if fallback_model not in models_to_try:
         models_to_try.append(fallback_model)
-    # Ulteriore rete di sicurezza se entrambi falliscono
-    if "gemini-2.5-flash" not in models_to_try:
-        models_to_try.append("gemini-2.5-flash")
+    # Rete di sicurezza aggiuntiva
+    for safety in ["gemini-3.6-flash", "gemini-2.5-flash"]:
+        if safety not in models_to_try:
+            models_to_try.append(safety)
 
     last_err = None
     for model in models_to_try:
@@ -808,7 +808,7 @@ def main():
     parser.add_argument("--class-name", type=str, default="4 BINF", help="Classe di default (default: '4 BINF')")
     parser.add_argument("--output", type=str, default="public/data/timetable.json", help="File di output orario completo")
     parser.add_argument("--widget-output", type=str, default="public/data/widget_data.json", help="File di output feed widget S24")
-    parser.add_argument("--mock", action="store_true", help="Usa dati mock (nessuna chiamata a Gemini API)")
+    parser.add_argument("--mock", action="store_true", help="Usa dati realistici di simulazione senza chiamare Gemini API")
     parser.add_argument("--force", action="store_true", help="Forza la rielaborazione anche se l'hash dell'immagine non è cambiato")
     parser.add_argument("--scan-mode", choices=["single", "double"], default=None, help="Modalità scansione: 'single' (manuale) o 'double' (automatica mattutina)")
     parser.add_argument("--main-model", type=str, default=None, help="Modello Gemini principale (default: gemini-3.8-flash o da .env)")
