@@ -1,0 +1,65 @@
+﻿body {
+  background-color: white; 
+  margin: 0px;
+  cursor: default;
+}
+
+.marges {
+	padding: 5px;
+}
+
+.fondBleuMarine {
+	background-color: #006699; 
+}
+
+.fondBleuVert {
+	background-color: #99CCCC; 
+}
+
+.espaceGauche {
+  padding-left:30px;  
+}
+
+.titre {
+  color: white;	
+  vertical-align: middle; 	
+}
+
+.emploi {
+  font-size: 14px;  	
+}
+
+.date {
+  font-size: 10px;  
+  text-align: right;	
+}
+
+.genre { 
+  text-decoration: underline;
+  cursor: pointer;	
+}
+
+.choix {
+  color: #006666;
+  vertical-align: middle; 
+}
+
+.signature {
+  font-size: 10px;  
+}
+
+.titreRenvoi, .emploi, .recherche, .genre, .choix {
+	font-weight: bold;
+}
+
+.centrer, .signature, .genre {
+  text-align: center;	
+}
+
+select, .choix, .genre, .recherche {
+  font-size: 12px;	 
+}
+
+select, .signature, .choix, .titre {
+  font-family: Verdana,Geneva,Arial,Helvetica,sans-serif; 
+}

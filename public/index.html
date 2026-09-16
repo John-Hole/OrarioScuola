@@ -353,6 +353,47 @@
 
     </main>
 
+    <!-- ==========================================================================
+         VISTA 4: ORARIO ORIGINALE SCUOLA (EDT EMBEDDED VIEW)
+         ========================================================================== -->
+    <main id="view-original-schedule" class="view-container original-schedule-view hidden-view">
+      
+      <!-- Barra Superiore Navigazione -->
+      <div class="original-page-top-bar">
+        <button id="btn-back-from-original" class="btn-back-nav" aria-label="Torna all'orario">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="15 18 9 12 15 6"></polyline>
+          </svg>
+          <span>Torna all'orario</span>
+        </button>
+        <div class="original-page-title-wrap">
+          <h2 class="original-page-title">ORARIO ORIGINALE</h2>
+          <span class="original-page-badge">PORTALE SCUOLA</span>
+        </div>
+        <div class="original-top-actions">
+          <button id="btn-reload-original-iframe" class="icon-button-subtle" title="Ricarica orario scuola" aria-label="Ricarica">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="23 4 23 10 17 10"></polyline>
+              <polyline points="1 20 1 14 7 14"></polyline>
+              <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+            </svg>
+          </button>
+          <a id="btn-external-school-link" href="https://cspace.spaggiari.eu/pub/PGIT0005/orario/" target="_blank" rel="noopener" class="icon-button-subtle" title="Apri sul sito della scuola" aria-label="Apri esterno">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+              <polyline points="15 3 21 3 21 9"></polyline>
+              <line x1="10" y1="14" x2="21" y2="3"></line>
+            </svg>
+          </a>
+        </div>
+      </div>
+
+      <!-- Contenitore Iframe con Portale EDT -->
+      <div class="original-iframe-container" id="original-iframe-container">
+        <iframe id="iframe-original-schedule" src="about:blank" title="Orario scolastico originale"></iframe>
+      </div>
+    </main>
+
 
 
     <!-- ==========================================================================
@@ -413,6 +454,18 @@
               <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
             </svg>
             <span class="item-label">Cambia orario</span>
+          </div>
+          <span class="item-arrow">›</span>
+        </button>
+
+        <button class="drawer-item" id="nav-item-original-schedule">
+          <div class="item-left">
+            <svg class="item-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="2" y1="12" x2="22" y2="12"></line>
+              <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+            </svg>
+            <span class="item-label">Orario originale</span>
           </div>
           <span class="item-arrow">›</span>
         </button>
@@ -675,6 +728,10 @@
             <button class="sim-btn" data-sim-time="12:15" data-sim-day="Lunedì">12:15 (Finito)</button>
             <button class="sim-btn active" data-sim-time="real">Ora Reale</button>
           </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Banner / Pop-up Notifica Sincronizzazione -->
     <div id="sync-banner" class="sync-banner hidden" role="status" aria-live="polite">
       <div class="sync-banner-content">

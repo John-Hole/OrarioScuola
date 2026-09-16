@@ -1,0 +1,9 @@
+﻿var listeSignature = new Array ();
+listeSignature ["grProf"] = "Realizzato da EDT, l'orario delle scuole";
+listeSignature ["grClasse"] = "Realizzato da EDT, l'orario delle scuole";
+listeSignature ["grSalle"] = "Realizzato da EDT, l'orario delle scuole";
+listeSignature ["grEleve"] = "Realizzato da EDT, l'orario delle scuole";
+listeSignature ["grSession"] = "Realizzato da EDT, il planning delle scuole";
+var SigUrlSite = "https://www.index-education.com/it/";
+var SigUrlTitre = "INDEX EDUCATION: Editore di software di gestione didattica per la scuola";
+var SigIdxEditeur = "Editore di software";

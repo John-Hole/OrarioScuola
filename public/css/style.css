@@ -1325,24 +1325,33 @@ body {
 }
 
 .status-dot-green {
-  width: 7px;
-  height: 7px;
+  width: 8px;
+  height: 8px;
   border-radius: 50%;
   background-color: var(--accent-green);
   box-shadow: 0 0 6px var(--accent-green);
+  animation: pulseDot 2.4s infinite ease-in-out;
+}
+
+@keyframes pulseDot {
+  0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); }
+  70% { transform: scale(1.15); box-shadow: 0 0 0 5px rgba(34, 197, 94, 0); }
+  100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
 }
 
 .status-title-text {
   font-size: 0.72rem;
   font-weight: 800;
-  color: var(--text-muted);
-  letter-spacing: 0.5px;
+  color: #E2E8F0;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
 }
 
 .status-date-text {
-  font-size: 0.75rem;
+  font-size: 0.76rem;
   color: var(--text-dim);
-  padding-left: 15px;
+  padding-left: 16px;
+  font-weight: 500;
 }
 
 .btn-drawer-sync {
@@ -2756,4 +2765,284 @@ body {
   color: #FFFFFF;
   margin-bottom: 8px;
 }
+
+/* ==========================================================================
+   BANNER & POP-UP DI SINCRONIZZAZIONE ANIMATO
+   ========================================================================== */
+.sync-banner {
+  position: fixed;
+  top: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  background: rgba(15, 23, 42, 0.94);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  border-radius: 50px;
+  padding: 10px 22px 10px 14px;
+  box-shadow: 0 14px 35px -4px rgba(0, 0, 0, 0.7), 0 0 20px rgba(56, 189, 248, 0.15);
+  pointer-events: auto;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+  max-width: 90vw;
+}
+
+.sync-banner.hidden {
+  display: none !important;
+}
+
+.sync-banner.anim-enter {
+  animation: syncBannerEnter 0.38s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.sync-banner.anim-exit {
+  animation: syncBannerExit 0.28s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+@keyframes syncBannerEnter {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -26px) scale(0.92);
+  }
+  100% {
+    opacity: 1;
+    transform: translate(-50%, 0) scale(1);
+  }
+}
+
+@keyframes syncBannerExit {
+  0% {
+    opacity: 1;
+    transform: translate(-50%, 0) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -18px) scale(0.95);
+  }
+}
+
+.sync-banner-content {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.sync-banner-icon-container {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  background: rgba(56, 189, 248, 0.12);
+  color: #38BDF8;
+  transition: background 0.3s ease, color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.sync-spinner-icon {
+  width: 22px;
+  height: 22px;
+  animation: spin 0.85s linear infinite;
+}
+
+.sync-success-icon {
+  width: 22px;
+  height: 22px;
+  stroke-dasharray: 40;
+  stroke-dashoffset: 40;
+  animation: checkDraw 0.45s ease forwards, checkBounce 0.45s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.sync-error-icon {
+  width: 22px;
+  height: 22px;
+  animation: checkBounce 0.35s ease;
+}
+
+@keyframes checkDraw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes checkBounce {
+  0% { transform: scale(0.5); }
+  60% { transform: scale(1.18); }
+  100% { transform: scale(1); }
+}
+
+.sync-banner-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.sync-banner-title {
+  font-size: 0.92rem;
+  font-weight: 800;
+  color: #FFFFFF;
+  letter-spacing: 0.2px;
+  line-height: 1.2;
+}
+
+.sync-banner-subtitle {
+  font-size: 0.76rem;
+  font-weight: 500;
+  color: #94A3B8;
+  line-height: 1.2;
+}
+
+/* Stato Successo */
+.sync-banner.is-success {
+  border-color: rgba(34, 197, 94, 0.45);
+  box-shadow: 0 14px 35px -4px rgba(0, 0, 0, 0.7), 0 0 25px rgba(34, 197, 94, 0.22);
+}
+
+.sync-banner.is-success .sync-banner-icon-container {
+  background: rgba(34, 197, 94, 0.2);
+  color: #22C55E;
+  box-shadow: 0 0 14px rgba(34, 197, 94, 0.4);
+}
+
+.sync-banner.is-success .sync-banner-title {
+  color: #F0FDF4;
+}
+
+/* Stato Errore */
+.sync-banner.is-error {
+  border-color: rgba(239, 68, 68, 0.45);
+  box-shadow: 0 14px 35px -4px rgba(0, 0, 0, 0.7), 0 0 25px rgba(239, 68, 68, 0.22);
+}
+
+.sync-banner.is-error .sync-banner-icon-container {
+  background: rgba(239, 68, 68, 0.2);
+  color: #EF4444;
+}
+
+@media (max-width: 600px) {
+  .sync-banner {
+    top: 16px;
+    padding: 8px 18px 8px 12px;
+  }
+  .sync-banner-title {
+    font-size: 0.86rem;
+  }
+  .sync-banner-subtitle {
+    font-size: 0.72rem;
+  }
+}
+
+/* ==========================================================================
+   VISTA 4: ORARIO ORIGINALE SCUOLA (EDT EMBEDDED VIEW)
+   ========================================================================== */
+.original-schedule-view {
+  min-height: 100vh;
+  padding: calc(14px + var(--safe-top)) 16px calc(20px + var(--safe-bottom)) 16px;
+  background: var(--bg-app);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+.original-page-top-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.original-page-title-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.original-page-title {
+  font-size: 1.1rem;
+  font-weight: 900;
+  color: #FFFFFF;
+  letter-spacing: 0.5px;
+  text-align: center;
+  margin: 0;
+}
+
+.original-page-badge {
+  display: inline-block;
+  font-size: 0.65rem;
+  font-weight: 800;
+  color: #38bdf8;
+  background: rgba(56, 189, 248, 0.12);
+  border: 1px solid rgba(56, 189, 248, 0.25);
+  padding: 1px 6px;
+  border-radius: var(--radius-pill);
+  letter-spacing: 0.5px;
+}
+
+.original-top-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.icon-button-subtle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: #141A24;
+  border: 1px solid var(--border-subtle);
+  color: var(--text-muted);
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+
+.icon-button-subtle:hover, .icon-button-subtle:active {
+  background: #1E2636;
+  border-color: var(--live-line-color);
+  color: #FFFFFF;
+}
+
+.original-iframe-container {
+  flex: 1;
+  width: 100%;
+  height: calc(100vh - 120px - var(--safe-top) - var(--safe-bottom));
+  min-height: 580px;
+  background: #ffffff;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-subtle);
+  overflow: hidden;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.35);
+  position: relative;
+}
+
+.original-iframe-container iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+  display: block;
+}
+
+@media (max-width: 600px) {
+  .original-schedule-view {
+    padding: calc(10px + var(--safe-top)) 10px calc(14px + var(--safe-bottom)) 10px;
+  }
+  .original-page-title {
+    font-size: 0.95rem;
+  }
+  .original-iframe-container {
+    height: calc(100vh - 110px - var(--safe-top) - var(--safe-bottom));
+    border-radius: var(--radius-md);
+  }
+}
+
 

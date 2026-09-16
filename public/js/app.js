@@ -85,6 +85,7 @@ const elements = {
   btnToggleClassMenu: document.getElementById('btn-toggle-class-menu'),
   navItemSchedule: document.getElementById('nav-item-schedule'),
   navItemChangeClass: document.getElementById('nav-item-change-class'),
+  navItemOriginalSchedule: document.getElementById('nav-item-original-schedule'),
   navItemSync: document.getElementById('nav-item-sync'),
   navItemWidget: document.getElementById('nav-item-widget'),
   navItemNotifications: document.getElementById('nav-item-notifications'),
@@ -94,6 +95,15 @@ const elements = {
   btnSyncNow: document.getElementById('btn-sync-now'),
   syncIcon: document.getElementById('sync-icon'),
   syncBtnLabel: document.getElementById('sync-btn-label'),
+
+  // Banner Notifica Sincronizzazione
+  syncBanner: document.getElementById('sync-banner'),
+  syncBannerIconBox: document.getElementById('sync-banner-icon-box'),
+  syncBannerSpinner: document.getElementById('sync-banner-spinner'),
+  syncBannerCheck: document.getElementById('sync-banner-check'),
+  syncBannerError: document.getElementById('sync-banner-error'),
+  syncBannerTitle: document.getElementById('sync-banner-title'),
+  syncBannerSubtitle: document.getElementById('sync-banner-subtitle'),
 
   // Modali
   modalWidget: document.getElementById('modal-widget'),
@@ -123,6 +133,14 @@ const elements = {
   appHeader: document.querySelector('.app-header'),
   viewChangeSchedule: document.getElementById('view-change-schedule'),
   btnBackToSchedule: document.getElementById('btn-back-to-schedule'),
+
+  // Pagina Dedicata Orario Originale Scuola (EDT)
+  viewOriginalSchedule: document.getElementById('view-original-schedule'),
+  btnBackFromOriginal: document.getElementById('btn-back-from-original'),
+  iframeOriginalSchedule: document.getElementById('iframe-original-schedule'),
+  btnReloadOriginalIframe: document.getElementById('btn-reload-original-iframe'),
+  btnExternalSchoolLink: document.getElementById('btn-external-school-link'),
+
   changeModePills: document.querySelectorAll('.change-mode-pill'),
   modalManageTimetables: document.getElementById('modal-manage-timetables'),
   btnCloseModalTimetable: document.getElementById('btn-close-modal-timetable'),
@@ -266,6 +284,7 @@ async function init() {
           state.lastCalendarDay = now.toDateString();
           state.selectedDay = getSmartDefaultDay(state.timetable.giorni, now);
           render();
+          updateDrawerSyncStatus();
         }
       } catch (e3) {
         console.error('[FATAL FALLBACK]', e3);
@@ -347,12 +366,7 @@ async function loadTimetableById(id) {
   }
 
   if (state.timetable) {
-    if (elements.drawerStatusText) {
-      elements.drawerStatusText.textContent = (state.timetable.stato_orario || 'ORARIO ATTIVO').toUpperCase();
-    }
-    if (elements.drawerStatusDate) {
-      elements.drawerStatusDate.textContent = `- ${state.timetable.data_aggiornamento || new Date().toLocaleDateString('it-IT')}`.toUpperCase();
-    }
+    updateDrawerSyncStatus();
   }
 
   // Giorno di partenza (giorno corrente fino alle 23:59 dello stesso giorno)
@@ -664,6 +678,10 @@ function openChangeScheduleView(tab = 'image') {
     elements.viewWeekly.classList.add('hidden-view');
     elements.viewWeekly.classList.remove('active-view');
   }
+  if (elements.viewOriginalSchedule) {
+    elements.viewOriginalSchedule.classList.add('hidden-view');
+    elements.viewOriginalSchedule.classList.remove('active-view');
+  }
   if (elements.viewChangeSchedule) {
     elements.viewChangeSchedule.classList.remove('hidden-view');
     elements.viewChangeSchedule.classList.add('active-view');
@@ -676,8 +694,45 @@ function openChangeScheduleView(tab = 'image') {
   if (elements.extractionError) elements.extractionError.classList.add('hidden');
 }
 
+/**
+ * Gestione Pagina Dedicata Orario Originale Scuola (Portale EDT)
+ */
+function openOriginalScheduleView() {
+  state.currentView = 'original-schedule';
+  if (elements.viewDaily) {
+    elements.viewDaily.classList.add('hidden-view');
+    elements.viewDaily.classList.remove('active-view');
+  }
+  if (elements.viewWeekly) {
+    elements.viewWeekly.classList.add('hidden-view');
+    elements.viewWeekly.classList.remove('active-view');
+  }
+  if (elements.viewChangeSchedule) {
+    elements.viewChangeSchedule.classList.add('hidden-view');
+    elements.viewChangeSchedule.classList.remove('active-view');
+  }
+  if (elements.viewOriginalSchedule) {
+    elements.viewOriginalSchedule.classList.remove('hidden-view');
+    elements.viewOriginalSchedule.classList.add('active-view');
+  }
+  if (elements.appHeader) {
+    elements.appHeader.style.display = 'none';
+  }
+
+  if (elements.iframeOriginalSchedule) {
+    const targetUrl = 'orario-originale/index.html?classe=4%20BINF';
+    if (!elements.iframeOriginalSchedule.src || elements.iframeOriginalSchedule.src === 'about:blank' || !elements.iframeOriginalSchedule.src.includes('orario-originale')) {
+      elements.iframeOriginalSchedule.src = targetUrl;
+    }
+  }
+}
+
 function returnToScheduleView() {
   state.currentView = 'daily';
+  if (elements.viewOriginalSchedule) {
+    elements.viewOriginalSchedule.classList.add('hidden-view');
+    elements.viewOriginalSchedule.classList.remove('active-view');
+  }
   if (elements.viewChangeSchedule) {
     elements.viewChangeSchedule.classList.add('hidden-view');
     elements.viewChangeSchedule.classList.remove('active-view');
@@ -1368,6 +1423,12 @@ function setupEventListeners() {
     toggleDrawer(false);
     openChangeScheduleView('image');
   });
+  if (elements.navItemOriginalSchedule) {
+    elements.navItemOriginalSchedule.addEventListener('click', () => {
+      toggleDrawer(false);
+      openOriginalScheduleView();
+    });
+  }
 
   // Selettore Orario / Elenco a Capsula in drawer-top
   if (elements.classSelect) {
@@ -1391,6 +1452,20 @@ function setupEventListeners() {
   if (elements.btnBackToSchedule) {
     elements.btnBackToSchedule.addEventListener('click', () => {
       returnToScheduleView();
+    });
+  }
+
+  // Tasto Torna all'orario dalla schermata Orario Originale
+  if (elements.btnBackFromOriginal) {
+    elements.btnBackFromOriginal.addEventListener('click', () => {
+      returnToScheduleView();
+    });
+  }
+
+  // Pulsante Ricarica Iframe Orario Originale
+  if (elements.btnReloadOriginalIframe && elements.iframeOriginalSchedule) {
+    elements.btnReloadOriginalIframe.addEventListener('click', () => {
+      elements.iframeOriginalSchedule.src = `orario-originale/index.html?classe=4%20BINF&_t=${Date.now()}`;
     });
   }
 
@@ -1942,8 +2017,18 @@ function setupEventListeners() {
   });
 
 
-  // Pulsante Sincronizza
-  elements.btnSyncNow.addEventListener('click', () => triggerSync());
+  // Pulsante Sincronizza nel Footer del Drawer
+  if (elements.btnSyncNow) {
+    elements.btnSyncNow.addEventListener('click', () => triggerSync());
+  }
+
+  // Voce "Sincronizza orario" nel Menu del Drawer
+  if (elements.navItemSync) {
+    elements.navItemSync.addEventListener('click', () => {
+      toggleDrawer(false);
+      triggerSync();
+    });
+  }
 
   // Copia link Widget S24
   elements.btnCopyWidgetUrl.addEventListener('click', () => {
@@ -1996,18 +2081,164 @@ function setupEventListeners() {
 }
 
 
+/**
+ * Formatta la data e l'ora della sincronizzazione in stile italiano chiaro
+ */
+function formatItalianSyncDate(dateInput) {
+  if (!dateInput) return null;
+  const d = typeof dateInput === 'string' || typeof dateInput === 'number' ? new Date(dateInput) : dateInput;
+  if (isNaN(d.getTime())) return null;
+
+  const now = new Date();
+  const isToday = d.getDate() === now.getDate() &&
+                  d.getMonth() === now.getMonth() &&
+                  d.getFullYear() === now.getFullYear();
+
+  const yesterday = new Date(now);
+  yesterday.setDate(now.getDate() - 1);
+  const isYesterday = d.getDate() === yesterday.getDate() &&
+                      d.getMonth() === yesterday.getMonth() &&
+                      d.getFullYear() === yesterday.getFullYear();
+
+  const hours = String(d.getHours()).padStart(2, '0');
+  const minutes = String(d.getMinutes()).padStart(2, '0');
+  const timeStr = `${hours}:${minutes}`;
+
+  if (isToday) {
+    return `Oggi alle ${timeStr}`;
+  }
+  if (isYesterday) {
+    return `Ieri alle ${timeStr}`;
+  }
+
+  const months = ['Gen', 'Feb', 'Mar', 'Apr', 'Mag', 'Giu', 'Lug', 'Ago', 'Set', 'Ott', 'Nov', 'Dic'];
+  return `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}, ${timeStr}`;
+}
+
+/**
+ * Aggiorna il testo e la data nel footer in basso del menu (drawer)
+ */
+function updateDrawerSyncStatus() {
+  if (!elements.drawerStatusText || !elements.drawerStatusDate) return;
+
+  const storedTimestamp = localStorage.getItem('orario_scuola_last_sync_timestamp');
+  if (storedTimestamp) {
+    const formatted = formatItalianSyncDate(storedTimestamp);
+    if (formatted) {
+      elements.drawerStatusText.textContent = 'SINCRONIZZAZIONE AVVENUTA';
+      elements.drawerStatusDate.textContent = `- ${formatted}`;
+      return;
+    }
+  }
+
+  if (state.timetable) {
+    const status = (state.timetable.stato_orario || 'ORARIO AGGIORNATO').toUpperCase();
+    elements.drawerStatusText.textContent = status;
+    elements.drawerStatusDate.textContent = `- ${state.timetable.data_aggiornamento || new Date().toLocaleDateString('it-IT')}`.toUpperCase();
+  }
+}
+
+/**
+ * Gestione Banner / Pop-up animato di Sincronizzazione
+ */
+let syncBannerTimeout = null;
+
+function showSyncBanner(status, customTitle, customSubtitle) {
+  if (!elements.syncBanner) return;
+
+  if (syncBannerTimeout) {
+    clearTimeout(syncBannerTimeout);
+    syncBannerTimeout = null;
+  }
+
+  elements.syncBanner.classList.remove('hidden', 'anim-exit', 'is-success', 'is-error');
+  elements.syncBanner.classList.add('anim-enter');
+
+  if (status === 'loading') {
+    elements.syncBannerSpinner?.classList.remove('hidden');
+    elements.syncBannerCheck?.classList.add('hidden');
+    elements.syncBannerError?.classList.add('hidden');
+    if (elements.syncBannerTitle) {
+      elements.syncBannerTitle.textContent = customTitle || 'Sincronizzazione in corso...';
+    }
+    if (elements.syncBannerSubtitle) {
+      elements.syncBannerSubtitle.textContent = customSubtitle || 'Verifica e aggiornamento orario...';
+    }
+  } else if (status === 'success') {
+    elements.syncBanner.classList.add('is-success');
+    elements.syncBannerSpinner?.classList.add('hidden');
+    elements.syncBannerCheck?.classList.remove('hidden');
+    elements.syncBannerError?.classList.add('hidden');
+    if (elements.syncBannerTitle) {
+      elements.syncBannerTitle.textContent = customTitle || 'Sincronizzazione completata!';
+    }
+    if (elements.syncBannerSubtitle) {
+      elements.syncBannerSubtitle.textContent = customSubtitle || 'Orario aggiornato con successo';
+    }
+
+    syncBannerTimeout = setTimeout(() => {
+      dismissSyncBanner();
+    }, 2400);
+  } else if (status === 'error') {
+    elements.syncBanner.classList.add('is-error');
+    elements.syncBannerSpinner?.classList.add('hidden');
+    elements.syncBannerCheck?.classList.add('hidden');
+    elements.syncBannerError?.classList.remove('hidden');
+    if (elements.syncBannerTitle) {
+      elements.syncBannerTitle.textContent = customTitle || 'Sincronizzazione non riuscita';
+    }
+    if (elements.syncBannerSubtitle) {
+      elements.syncBannerSubtitle.textContent = customSubtitle || 'Impossibile contattare il server';
+    }
+
+    syncBannerTimeout = setTimeout(() => {
+      dismissSyncBanner();
+    }, 3200);
+  }
+}
+
+function dismissSyncBanner() {
+  if (!elements.syncBanner || elements.syncBanner.classList.contains('hidden')) return;
+  elements.syncBanner.classList.remove('anim-enter');
+  elements.syncBanner.classList.add('anim-exit');
+  setTimeout(() => {
+    elements.syncBanner.classList.add('hidden');
+    elements.syncBanner.classList.remove('anim-exit', 'is-success', 'is-error');
+  }, 280);
+}
+
+/**
+ * Trigger operazione di sincronizzazione orario con animazione e aggiornamento data
+ */
+let isSyncing = false;
+
 async function triggerSync() {
-  elements.btnSyncNow.classList.add('spinning');
-  elements.syncBtnLabel.textContent = 'Scansione Gemini...';
+  if (isSyncing) return;
+  isSyncing = true;
+
+  if (elements.btnSyncNow) {
+    elements.btnSyncNow.classList.add('spinning');
+  }
+  if (elements.syncBtnLabel) {
+    elements.syncBtnLabel.textContent = 'SINCRONIZZAZIONE...';
+  }
+
+  const currentClassName = state.currentClass || (state.timetable && state.timetable.classe) || 'la tua classe';
+  showSyncBanner('loading', 'Sincronizzazione in corso...', `Verifica orario per ${currentClassName}...`);
+
+  // Assicura una rotella fluida di almeno 650ms per un feedback visivo naturale
+  const minSpinTimer = new Promise(resolve => setTimeout(resolve, 650));
+
+  let success = false;
+  let errorMsg = 'Impossibile aggiornare l\'orario';
 
   try {
-    // Tenta la sincronizzazione dinamica con Gemini tramite l'endpoint del server locale
     const response = await fetch('api/sync', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         class_name: state.currentClass,
-        mode: 'single', // Singola scansione per trigger manuale dell'utente
+        mode: 'single',
         force: true
       })
     });
@@ -2017,45 +2248,61 @@ async function triggerSync() {
       if (data.timetable) {
         state.timetable = normalizeTimetableMultiHourSlots(data.timetable);
         localStorage.setItem('cached_timetable', JSON.stringify(state.timetable));
-        if (elements.drawerStatusText) {
-          const vStatus = (state.timetable.verification && state.timetable.verification.scan_mode) 
-            ? `GEMINI (${state.timetable.verification.scan_mode.toUpperCase()})` 
-            : (state.timetable.stato_orario || 'ORARIO AGGIORNATO').toUpperCase();
-          elements.drawerStatusText.textContent = vStatus;
-        }
-        if (elements.drawerStatusDate) {
-          elements.drawerStatusDate.textContent = `- ${state.timetable.data_aggiornamento || new Date().toLocaleDateString('it-IT')}`.toUpperCase();
-        }
         render();
-        elements.syncBtnLabel.textContent = 'AGGIORNATO! ✓';
+        success = true;
       } else {
         await loadTimetableData();
-        elements.syncBtnLabel.textContent = 'AGGIORNATO! ✓';
+        success = true;
       }
     } else {
-      // Fallback su caricamento file statico se l'endpoint risponde con errore
       await loadTimetableData();
-      elements.syncBtnLabel.textContent = 'AGGIORNATO! ✓';
+      success = true;
     }
   } catch (err) {
-    // Fallback offline / host statico senza server attivo
-    console.log('[SYNC] Server /api/sync non attivo, ricarico da file locale:', err.message);
+    console.log('[SYNC] Server /api/sync non attivo, fallback locale:', err.message);
     try {
       await loadTimetableData();
-      elements.syncBtnLabel.textContent = 'AGGIORNATO! ✓';
+      success = true;
     } catch (e) {
+      success = false;
+      errorMsg = e.message || 'Errore di connessione';
+    }
+  }
+
+  await minSpinTimer;
+
+  const now = new Date();
+  if (success) {
+    localStorage.setItem('orario_scuola_last_sync_timestamp', now.toISOString());
+    const formattedDate = formatItalianSyncDate(now);
+
+    updateDrawerSyncStatus();
+    showSyncBanner('success', 'Sincronizzazione completata!', `Aggiornato: ${formattedDate}`);
+
+    if (elements.syncBtnLabel) {
+      elements.syncBtnLabel.textContent = 'AGGIORNATO! ✓';
+    }
+  } else {
+    showSyncBanner('error', 'Sincronizzazione fallita', errorMsg);
+    if (elements.syncBtnLabel) {
       elements.syncBtnLabel.textContent = 'ERRORE';
     }
   }
 
   setTimeout(() => {
-    elements.syncBtnLabel.textContent = 'SINCRONIZZA ORARIO';
-    elements.btnSyncNow.classList.remove('spinning');
-  }, 1800);
+    if (elements.syncBtnLabel) {
+      elements.syncBtnLabel.textContent = 'SINCRONIZZA ORARIO';
+    }
+    if (elements.btnSyncNow) {
+      elements.btnSyncNow.classList.remove('spinning');
+    }
+    isSyncing = false;
+  }, 2200);
 }
 
 function toggleDrawer(open) {
   if (open) {
+    updateDrawerSyncStatus();
     elements.sidebarDrawer.classList.add('open');
     elements.drawerOverlay.classList.add('open');
     elements.sidebarDrawer.setAttribute('aria-hidden', 'false');

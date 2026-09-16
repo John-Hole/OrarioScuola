@@ -1,4 +1,4 @@
-const CACHE_NAME = 'smart-timetable-v29';
+const CACHE_NAME = 'smart-timetable-v30';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
@@ -10,7 +10,18 @@ const STATIC_ASSETS = [
   '/data/volta_classes.json',
   '/data/timetable.json',
   '/manifest.json',
-  '/icons/icon.svg'
+  '/icons/icon.svg',
+  '/orario-originale/index.html',
+  '/orario-originale/_style.css',
+  '/orario-originale/_impression.css',
+  '/orario-originale/_affichage.js',
+  '/orario-originale/_bandeau.js',
+  '/orario-originale/_genre.js',
+  '/orario-originale/_ressource.js',
+  '/orario-originale/_periode.js',
+  '/orario-originale/_grille.js',
+  '/orario-originale/_signature.js',
+  '/orario-originale/classi/edc0000119p00001s3fffffffffffffff_4_binf_ac.png'
 ];
 
 self.addEventListener('install', (event) => {
