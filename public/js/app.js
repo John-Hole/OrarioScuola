@@ -32,50 +32,15 @@ import {
   VOLTA_PRESET_ID
 } from './timetable_store.js';
 
-// Parametri di calibrazione predefiniti (misure geometriche al millimetro)
-const DEFAULT_CALIBRATION = {
-  d1Offset: 0,
-  d2Offset: 0,
-  spacing: 1.5,
-  slotHeight: 74,
-  axisWidth: 52
-};
-
-function loadCalibration() {
-  try {
-    const saved = localStorage.getItem('smart_timetable_calibration');
-    if (saved) {
-      return { ...DEFAULT_CALIBRATION, ...JSON.parse(saved) };
-    }
-  } catch (e) {}
-  return { ...DEFAULT_CALIBRATION };
-}
-
-function saveCalibration(calib) {
-  try {
-    localStorage.setItem('smart_timetable_calibration', JSON.stringify(calib));
-  } catch (e) {}
-}
-
-function applyCalibration(calib) {
-  document.documentElement.style.setProperty('--timeline-divider1-offset', `${calib.d1Offset}px`);
-  document.documentElement.style.setProperty('--timeline-divider2-offset', `${calib.d2Offset}px`);
-  document.documentElement.style.setProperty('--timeline-time-spacing', `${calib.spacing}px`);
-  document.documentElement.style.setProperty('--timeline-slot-height', `${calib.slotHeight}px`);
-  document.documentElement.style.setProperty('--timeline-axis-width', `${calib.axisWidth}px`);
-}
-
 // Stato globale dell'applicazione
 const state = {
   timetable: null,
   currentClass: localStorage.getItem('school_class') || '4 BINF',
-  currentView: 'daily', // 'daily' | 'weekly' | 'grid-lab'
+  currentView: 'daily', // 'daily' | 'weekly'
   selectedDay: 'Lunedì',
   lastCalendarDay: null,
   simulatedTime: null, // null = ora reale, altrimenti Date
-  hasAutoScrolled: false,
-  labMode: 'bare', // 'bare' | 'single' | 'double'
-  calibration: loadCalibration()
+  hasAutoScrolled: false
 };
 
 const DAY_ORDER = ['Lunedì', 'Martedì', 'Mercoledì', 'Giovedì', 'Venerdì'];
@@ -102,38 +67,10 @@ const elements = {
   weeklyScrollWrapper: document.getElementById('weekly-scroll-wrapper'),
   weeklyGridContainer: document.getElementById('weekly-grid-container'),
 
-  // Laboratorio Griglia & Calibrazione
-  viewGridLab: document.getElementById('view-grid-lab'),
-  navItemGridLab: document.getElementById('nav-item-grid-lab'),
-  btnCloseGridLab: document.getElementById('btn-close-grid-lab'),
-  btnResetLabHeader: document.getElementById('btn-reset-lab-header'),
-  labPreviewPills: document.querySelectorAll('.lab-pill-btn'),
-  gridLabCanvas: document.getElementById('grid-lab-canvas'),
-  gridLabPanel: document.getElementById('grid-lab-panel'),
-  labPanelToggle: document.getElementById('lab-panel-toggle'),
-  labPanelContent: document.getElementById('lab-panel-content'),
-  rangeD1: document.getElementById('range-d1-offset'),
-  rangeD2: document.getElementById('range-d2-offset'),
-  rangeSpacing: document.getElementById('range-spacing'),
-  rangeSlotHeight: document.getElementById('range-slot-height'),
-  rangeAxisWidth: document.getElementById('range-axis-width'),
-  valD1: document.getElementById('val-d1-offset'),
-  valD2: document.getElementById('val-d2-offset'),
-  valSpacing: document.getElementById('val-spacing'),
-  valSlotHeight: document.getElementById('val-slot-height'),
-  valAxisWidth: document.getElementById('val-axis-width'),
-  btnLabApply: document.getElementById('btn-lab-apply'),
-  btnLabCopy: document.getElementById('btn-lab-copy'),
-  btnLabReset: document.getElementById('btn-lab-reset'),
-
   // Drawer
   sidebarDrawer: document.getElementById('sidebar-drawer'),
   drawerOverlay: document.getElementById('drawer-overlay'),
   btnCloseDrawer: document.getElementById('btn-close-drawer'),
-  drawerClassName: document.getElementById('drawer-class-name'),
-  classSelect: document.getElementById('class-select'),
-  btnToggleClassMenu: document.getElementById('btn-toggle-class-menu'),
-  btnSearchClass: document.getElementById('btn-search-class'),
   navItemSchedule: document.getElementById('nav-item-schedule'),
   navItemChangeClass: document.getElementById('nav-item-change-class'),
   navItemSync: document.getElementById('nav-item-sync'),
@@ -357,12 +294,6 @@ async function loadTimetableById(id) {
   setActiveTimetableId(id);
   state.currentClass = item.name || state.timetable.classe || '4 BINF';
 
-  if (elements.drawerClassName) {
-    elements.drawerClassName.textContent = state.currentClass;
-  }
-  if (elements.classSelect) {
-    elements.classSelect.value = state.currentClass;
-  }
 
   if (state.timetable) {
     if (elements.drawerStatusText) {
@@ -554,13 +485,6 @@ function setTimetableModalTab(tabName) {
   }
 }
 
-  render();
-
-  setTimeout(() => {
-    autoScrollToActiveLesson(elements.timelineContainer);
-    state.hasAutoScrolled = true;
-  }, 350);
-}
 
 /**
  * Raggruppa ore consecutive della stessa materia e aula in blocchi unici per qualsiasi numero di ore (es. 4, 5, 6 ore)
@@ -1507,14 +1431,6 @@ function setupEventListeners() {
     });
   });
 
-  // Cambio classe
-  elements.classSelect.addEventListener('change', (e) => {
-    state.currentClass = e.target.value;
-    localStorage.setItem('school_class', state.currentClass);
-    if (elements.drawerClassName) {
-      elements.drawerClassName.textContent = state.currentClass;
-    }
-  });
 
   // Pulsante Sincronizza
   elements.btnSyncNow.addEventListener('click', () => triggerSync());
@@ -1567,335 +1483,8 @@ function setupEventListeners() {
       }
     });
   });
-  // Voce Laboratorio Griglia nel Drawer
-  if (elements.navItemGridLab) {
-    elements.navItemGridLab.addEventListener('click', () => {
-      toggleDrawer(false);
-      openGridLab();
-    });
-  }
-
-  // Chiusura Laboratorio Griglia
-  if (elements.btnCloseGridLab) {
-    elements.btnCloseGridLab.addEventListener('click', () => {
-      closeGridLab();
-    });
-  }
-
-  // Reset dall'header del Lab
-  if (elements.btnResetLabHeader) {
-    elements.btnResetLabHeader.addEventListener('click', () => {
-      resetCalibration();
-    });
-  }
-
-  // Pill Selezione Modalità Anteprima nel Lab
-  elements.labPreviewPills.forEach((pill) => {
-    pill.addEventListener('click', () => {
-      elements.labPreviewPills.forEach(p => p.classList.remove('active'));
-      pill.classList.add('active');
-      state.labMode = pill.getAttribute('data-mode');
-      renderGridLab();
-    });
-  });
-
-  // Toggle collassamento pannello regolazione
-  if (elements.labPanelToggle) {
-    elements.labPanelToggle.addEventListener('click', () => {
-      elements.gridLabPanel.classList.toggle('collapsed');
-    });
-  }
-
-  // Sliders del Lab
-  function attachRangeListener(slider, key) {
-    if (!slider) return;
-    slider.addEventListener('input', (e) => {
-      const val = parseFloat(e.target.value);
-      state.calibration[key] = val;
-      applyCalibration(state.calibration);
-      updateCalibrationReadout();
-    });
-  }
-
-  attachRangeListener(elements.rangeD1, 'd1Offset');
-  attachRangeListener(elements.rangeD2, 'd2Offset');
-  attachRangeListener(elements.rangeSpacing, 'spacing');
-  attachRangeListener(elements.rangeSlotHeight, 'slotHeight');
-  attachRangeListener(elements.rangeAxisWidth, 'axisWidth');
-
-  // Pulsanti Stepper del pannello (+/- 1px / 2px / 0.5px)
-  document.querySelectorAll('.btn-lab-step').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      const target = btn.getAttribute('data-target');
-      const step = parseFloat(btn.getAttribute('data-step'));
-      if (target === 'd1') {
-        state.calibration.d1Offset = Math.max(-30, Math.min(30, state.calibration.d1Offset + step));
-      } else if (target === 'd2') {
-        state.calibration.d2Offset = Math.max(-30, Math.min(30, state.calibration.d2Offset + step));
-      } else if (target === 'spacing') {
-        state.calibration.spacing = Math.max(0, Math.min(10, parseFloat((state.calibration.spacing + step).toFixed(1))));
-      } else if (target === 'slotHeight') {
-        state.calibration.slotHeight = Math.max(56, Math.min(100, state.calibration.slotHeight + step));
-      } else if (target === 'axisWidth') {
-        state.calibration.axisWidth = Math.max(40, Math.min(75, state.calibration.axisWidth + step));
-      }
-      applyCalibration(state.calibration);
-      updateCalibrationReadout();
-    });
-  });
-
-  // Click e Drag sui controlli della linea nel canvas
-  if (elements.gridLabCanvas) {
-    elements.gridLabCanvas.addEventListener('click', (e) => {
-      const stepBtn = e.target.closest('.lab-mini-step-btn');
-      if (stepBtn) {
-        const target = stepBtn.getAttribute('data-target');
-        const step = parseInt(stepBtn.getAttribute('data-step'), 10);
-        if (target === 'd1') {
-          state.calibration.d1Offset = Math.max(-30, Math.min(30, state.calibration.d1Offset + step));
-        } else if (target === 'd2') {
-          state.calibration.d2Offset = Math.max(-30, Math.min(30, state.calibration.d2Offset + step));
-        }
-        applyCalibration(state.calibration);
-        updateCalibrationReadout();
-      }
-    });
-
-    let dragTarget = null;
-    let startY = 0;
-    let initialOffset = 0;
-
-    const onPointerDown = (e) => {
-      const handle = e.target.closest('.lab-line-handle-tag');
-      if (!handle || e.target.closest('.lab-mini-step-btn')) return;
-      dragTarget = handle.getAttribute('data-target') || (handle.textContent.includes('1') ? 'd1' : 'd2');
-      startY = e.clientY || (e.touches && e.touches[0].clientY) || 0;
-      initialOffset = dragTarget === 'd1' ? state.calibration.d1Offset : state.calibration.d2Offset;
-      window.addEventListener('mousemove', onPointerMove);
-      window.addEventListener('mouseup', onPointerUp);
-      window.addEventListener('touchmove', onPointerMove, { passive: false });
-      window.addEventListener('touchend', onPointerUp);
-    };
-
-    const onPointerMove = (e) => {
-      if (!dragTarget) return;
-      const currentY = e.clientY || (e.touches && e.touches[0].clientY) || 0;
-      const diff = Math.round(currentY - startY);
-      const newOffset = Math.max(-30, Math.min(30, initialOffset + diff));
-      if (dragTarget === 'd1') {
-        state.calibration.d1Offset = newOffset;
-      } else {
-        state.calibration.d2Offset = newOffset;
-      }
-      applyCalibration(state.calibration);
-      updateCalibrationReadout();
-    };
-
-    const onPointerUp = () => {
-      dragTarget = null;
-      window.removeEventListener('mousemove', onPointerMove);
-      window.removeEventListener('mouseup', onPointerUp);
-      window.removeEventListener('touchmove', onPointerMove);
-      window.removeEventListener('touchend', onPointerUp);
-    };
-
-    elements.gridLabCanvas.addEventListener('mousedown', onPointerDown);
-    elements.gridLabCanvas.addEventListener('touchstart', onPointerDown, { passive: true });
-  }
-
-  // Pulsante Applica all'Orario
-  if (elements.btnLabApply) {
-    elements.btnLabApply.addEventListener('click', () => {
-      saveCalibration(state.calibration);
-      applyCalibration(state.calibration);
-      alert('✓ Configurazione millimetrica salvata ed applicata a tutto l\'orario!');
-    });
-  }
-
-  // Pulsante Ripristina
-  if (elements.btnLabReset) {
-    elements.btnLabReset.addEventListener('click', () => {
-      resetCalibration();
-    });
-  }
-
-  // Pulsante Copia Valori
-  if (elements.btnLabCopy) {
-    elements.btnLabCopy.addEventListener('click', () => {
-      const c = state.calibration;
-      const mm1 = (c.d1Offset * 0.264).toFixed(2);
-      const mm2 = (c.d2Offset * 0.264).toFixed(2);
-      const text = `Calibrazione Millimetrica Griglia:\n` +
-        `- Offset Cambio 1: ${c.d1Offset > 0 ? '+' : ''}${c.d1Offset}px (${mm1} mm)\n` +
-        `- Offset Cambio 2: ${c.d2Offset > 0 ? '+' : ''}${c.d2Offset}px (${mm2} mm)\n` +
-        `- Spaziatura Orari dalla Linea: ${c.spacing}px\n` +
-        `- Altezza Slot Ora: ${c.slotHeight}px\n` +
-        `- Larghezza Asse: ${c.axisWidth}px`;
-      navigator.clipboard.writeText(text).then(() => {
-        alert('Misure copiate negli appunti!\n\n' + text);
-      });
-    });
-  }
 }
 
-function openGridLab() {
-  state.currentView = 'grid-lab';
-  elements.viewDaily.classList.add('hidden-view');
-  elements.viewWeekly.classList.add('hidden-view');
-  elements.viewGridLab.classList.remove('hidden-view');
-  renderGridLab();
-}
-
-function closeGridLab() {
-  state.currentView = 'daily';
-  elements.viewGridLab.classList.add('hidden-view');
-  elements.viewDaily.classList.remove('hidden-view');
-  elements.viewWeekly.classList.add('hidden-view');
-  elements.btnViewDaily.classList.add('active');
-  elements.btnViewWeekly.classList.remove('active');
-  render();
-}
-
-function updateCalibrationReadout() {
-  const c = state.calibration;
-  const mm1 = (c.d1Offset * 0.264).toFixed(1);
-  const mm2 = (c.d2Offset * 0.264).toFixed(1);
-  if (elements.valD1) elements.valD1.textContent = `${c.d1Offset > 0 ? '+' : ''}${c.d1Offset} px (${mm1} mm)`;
-  if (elements.valD2) elements.valD2.textContent = `${c.d2Offset > 0 ? '+' : ''}${c.d2Offset} px (${mm2} mm)`;
-  if (elements.valSpacing) elements.valSpacing.textContent = `${c.spacing} px`;
-  if (elements.valSlotHeight) elements.valSlotHeight.textContent = `${c.slotHeight} px`;
-  if (elements.valAxisWidth) elements.valAxisWidth.textContent = `${c.axisWidth} px`;
-
-  if (elements.rangeD1) elements.rangeD1.value = c.d1Offset;
-  if (elements.rangeD2) elements.rangeD2.value = c.d2Offset;
-  if (elements.rangeSpacing) elements.rangeSpacing.value = c.spacing;
-  if (elements.rangeSlotHeight) elements.rangeSlotHeight.value = c.slotHeight;
-  if (elements.rangeAxisWidth) elements.rangeAxisWidth.value = c.axisWidth;
-}
-
-function resetCalibration() {
-  state.calibration = { ...DEFAULT_CALIBRATION };
-  saveCalibration(state.calibration);
-  applyCalibration(state.calibration);
-  updateCalibrationReadout();
-  renderGridLab();
-}
-
-/**
- * Renderizza il Laboratorio Griglia (Test & Calibrazione al Millimetro)
- */
-function renderGridLab() {
-  if (!elements.gridLabCanvas) return;
-  elements.gridLabCanvas.innerHTML = '';
-
-  const grid = document.createElement('div');
-  grid.className = 'daily-timeline-grid';
-
-  const mode = state.labMode || 'bare';
-
-  // 1. Inizio Giornata (08:00)
-  grid.appendChild(createDailyEdge('08:00', false));
-
-  // 2. Base Line 1 (08:54 / 08:58)
-  const d1 = createDailyDivider('08:54', '08:58', 'divider-1');
-  const tag1 = document.createElement('div');
-  tag1.className = 'lab-line-handle-tag';
-  tag1.setAttribute('data-target', 'd1');
-  tag1.title = 'Trascina o clicca per regolare Cambio 1';
-  tag1.innerHTML = `
-    <span>Cambio 1</span>
-    <button class="lab-mini-step-btn" data-target="d1" data-step="-1" title="Sposta su 1px">▲</button>
-    <button class="lab-mini-step-btn" data-target="d1" data-step="1" title="Sposta giù 1px">▼</button>
-  `;
-  d1.appendChild(tag1);
-  grid.appendChild(d1);
-
-  // 3. Slot Mattina in base alla modalità
-  if (mode === 'bare') {
-    // Griglia Nuda: Wireframe pulito delle ore
-    const w1 = document.createElement('div');
-    w1.className = 'timeline-lesson-row lesson-h1';
-    w1.innerHTML = `
-      <div class="bare-slot-wireframe">
-        <span>1ª ORA BASE</span>
-        <span class="bare-slot-sub">08:00 - 08:54 (54 min)</span>
-      </div>
-    `;
-    grid.appendChild(w1);
-
-    const w2 = document.createElement('div');
-    w2.className = 'timeline-lesson-row lesson-h2';
-    w2.innerHTML = `
-      <div class="bare-slot-wireframe">
-        <span>2ª ORA BASE</span>
-        <span class="bare-slot-sub">08:58 - 09:48 (50 min)</span>
-      </div>
-    `;
-    grid.appendChild(w2);
-  } else if (mode === 'single') {
-    const l1 = { materia: 'ITALIANO', aula: 'B 060' };
-    const l2 = { materia: 'INGLESE', aula: 'B 060' };
-    grid.appendChild(createDailyLessonSlot(l1, '08:00', '08:54', 'lesson-h1'));
-    grid.appendChild(createDailyLessonSlot(l2, '08:58', '09:48', 'lesson-h2'));
-  } else if (mode === 'double') {
-    const l1 = { materia: 'TPSIT LAB', aula: 'B 045' };
-    grid.appendChild(createDailyLessonSlot(l1, '08:00', '09:48', 'lesson-double-morning'));
-  }
-
-  // 4. Ricreazione (09:48 - 09:58)
-  grid.appendChild(createDailyBreakRow());
-
-  // 5. Base Line 2 (10:48 / 10:52)
-  const d2 = createDailyDivider('10:48', '10:52', 'divider-2');
-  const tag2 = document.createElement('div');
-  tag2.className = 'lab-line-handle-tag';
-  tag2.setAttribute('data-target', 'd2');
-  tag2.title = 'Trascina o clicca per regolare Cambio 2';
-  tag2.innerHTML = `
-    <span>Cambio 2</span>
-    <button class="lab-mini-step-btn" data-target="d2" data-step="-1" title="Sposta su 1px">▲</button>
-    <button class="lab-mini-step-btn" data-target="d2" data-step="1" title="Sposta giù 1px">▼</button>
-  `;
-  d2.appendChild(tag2);
-  grid.appendChild(d2);
-
-  // 6. Slot Pomeriggio in base alla modalità
-  if (mode === 'bare') {
-    const w3 = document.createElement('div');
-    w3.className = 'timeline-lesson-row lesson-h3';
-    w3.innerHTML = `
-      <div class="bare-slot-wireframe">
-        <span>3ª ORA BASE</span>
-        <span class="bare-slot-sub">09:58 - 10:48 (50 min)</span>
-      </div>
-    `;
-    grid.appendChild(w3);
-
-    const w4 = document.createElement('div');
-    w4.className = 'timeline-lesson-row lesson-h4';
-    w4.innerHTML = `
-      <div class="bare-slot-wireframe">
-        <span>4ª ORA BASE</span>
-        <span class="bare-slot-sub">10:52 - 11:42 (50 min)</span>
-      </div>
-    `;
-    grid.appendChild(w4);
-  } else if (mode === 'single') {
-    const l3 = { materia: 'MATEMATICA', aula: 'C 220' };
-    const l4 = { materia: 'SISTEMI E RETI', aula: 'C 220' };
-    grid.appendChild(createDailyLessonSlot(l3, '09:58', '10:48', 'lesson-h3'));
-    grid.appendChild(createDailyLessonSlot(l4, '10:52', '11:42', 'lesson-h4'));
-  } else if (mode === 'double') {
-    const l3 = { materia: 'MATEMATICA', aula: 'C 180' };
-    grid.appendChild(createDailyLessonSlot(l3, '09:58', '11:42', 'lesson-double-afternoon'));
-  }
-
-  // 7. Fine Giornata (11:42)
-  grid.appendChild(createDailyEdge('11:42', true));
-
-  elements.gridLabCanvas.appendChild(grid);
-  updateCalibrationReadout();
-}
 
 async function triggerSync() {
   elements.btnSyncNow.classList.add('spinning');

@@ -22,8 +22,7 @@ Documento di pianificazione per le prossime iterazioni del progetto **Smart Scho
   - Estendere la struttura dati per supportare l'intero istituto o tutte le classi disponibili (non solo la 4 BINF con mock limitato).
   - Creare una mappa JSON/database con file per classe (es. `data/classes/4_BINF.json`, `data/classes/4_AINF.json`, ecc.) o un indice unificato.
 - [ ] **Interfaccia Selezione & Ricerca Classi:**
-  - Completare il pulsante di ricerca classe (`#btn-search-class`) con modale o campo di ricerca rapido ad autocompletamento.
-  - Sincronizzazione automatica tra select del drawer e stato applicazione.
+  - Gestione avanzata tramite modale 'Cambia Orario' con ricerca orari e autocompletamento.
 - [ ] **Persistenza & Switch Istantaneo:**
   - Salvataggio classe preferita su `localStorage` e ricaricamento istantaneo dell'orario senza refresh completo della pagina.
   - Aggiornamento contestuale di timeline, griglia settimanale e widget.

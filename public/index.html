@@ -117,136 +117,7 @@
       </div>
     </main>
 
-    <!-- ==========================================================================
-         VISTA 3: LABORATORIO GRIGLIA & CALIBRAZIONE AL MILLIMETRO (TEST MODE)
-         Permette di visualizzare la griglia base senza materie,
-         e spostare/calibrare interattivamente ogni linea e orario al millimetro.
-         ========================================================================== -->
-    <main id="view-grid-lab" class="view-container hidden-view">
-      
-      <!-- Intestazione Laboratorio -->
-      <section class="grid-lab-header">
-        <button id="btn-close-grid-lab" class="lab-back-btn" aria-label="Torna all'orario">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-            <polyline points="15 18 9 12 15 6"></polyline>
-          </svg>
-          <span>Orario</span>
-        </button>
-        <h2 class="grid-lab-title">LABORATORIO GRIGLIA</h2>
-        <button id="btn-reset-lab-header" class="lab-header-action" title="Ripristina valori predefiniti" aria-label="Ripristina default">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
-            <path d="M3 3v5h5"></path>
-          </svg>
-        </button>
-      </section>
 
-      <!-- Selettore Modalità Anteprima: Griglia Nuda vs Con Materie -->
-      <div class="lab-preview-pills" role="tablist">
-        <button class="lab-pill-btn active" data-mode="bare">Solo Griglia Base</button>
-        <button class="lab-pill-btn" data-mode="single">Ore Singole (GIO)</button>
-        <button class="lab-pill-btn" data-mode="double">Blocchi Doppi (MER)</button>
-      </div>
-
-      <!-- Area Canvas Griglia Live -->
-      <div class="grid-lab-viewport">
-        <div class="grid-lab-container" id="grid-lab-canvas">
-          <!-- Popolato dinamicamente con griglia ed elementi interattivi -->
-        </div>
-      </div>
-
-      <!-- Pannello Controlli / Regolazione Millimetrica Floating in Basso -->
-      <section class="grid-lab-panel" id="grid-lab-panel">
-        <div class="lab-panel-handle" id="lab-panel-toggle">
-          <div class="panel-handle-bar"></div>
-          <span class="panel-handle-title">Regolazione al Millimetro</span>
-          <span class="panel-handle-indicator">▲</span>
-        </div>
-
-        <div class="lab-panel-content" id="lab-panel-content">
-          <!-- Gruppo 1: Spostamento Cambio 1 (08:54 / 08:58) -->
-          <div class="lab-control-row">
-            <div class="control-label-group">
-              <span class="control-title">Cambio 1 (08:54 / 08:58)</span>
-              <span class="control-value" id="val-d1-offset">0 px (0.0 mm)</span>
-            </div>
-            <div class="control-actions">
-              <button class="btn-lab-step" data-target="d1" data-step="-1">▲ -1px</button>
-              <input type="range" id="range-d1-offset" min="-30" max="30" value="0" class="lab-slider">
-              <button class="btn-lab-step" data-target="d1" data-step="1">▼ +1px</button>
-            </div>
-          </div>
-
-          <!-- Gruppo 2: Spostamento Cambio 2 (10:48 / 10:52) -->
-          <div class="lab-control-row">
-            <div class="control-label-group">
-              <span class="control-title">Cambio 2 (10:48 / 10:52)</span>
-              <span class="control-value" id="val-d2-offset">0 px (0.0 mm)</span>
-            </div>
-            <div class="control-actions">
-              <button class="btn-lab-step" data-target="d2" data-step="-1">▲ -1px</button>
-              <input type="range" id="range-d2-offset" min="-30" max="30" value="0" class="lab-slider">
-              <button class="btn-lab-step" data-target="d2" data-step="1">▼ +1px</button>
-            </div>
-          </div>
-
-          <!-- Gruppo 3: Spaziatura Testo Orari dalla Linea -->
-          <div class="lab-control-row">
-            <div class="control-label-group">
-              <span class="control-title">Distanza Orario dalla Linea</span>
-              <span class="control-value" id="val-spacing">1.5 px</span>
-            </div>
-            <div class="control-actions">
-              <button class="btn-lab-step" data-target="spacing" data-step="-0.5">-0.5</button>
-              <input type="range" id="range-spacing" min="0" max="10" step="0.5" value="1.5" class="lab-slider">
-              <button class="btn-lab-step" data-target="spacing" data-step="0.5">+0.5</button>
-            </div>
-          </div>
-
-          <!-- Gruppo 4: Altezza di Ciascuna Ora -->
-          <div class="lab-control-row">
-            <div class="control-label-group">
-              <span class="control-title">Altezza Slot Ora</span>
-              <span class="control-value" id="val-slot-height">74 px</span>
-            </div>
-            <div class="control-actions">
-              <button class="btn-lab-step" data-target="slotHeight" data-step="-2">-2px</button>
-              <input type="range" id="range-slot-height" min="56" max="100" value="74" class="lab-slider">
-              <button class="btn-lab-step" data-target="slotHeight" data-step="2">+2px</button>
-            </div>
-          </div>
-
-          <!-- Gruppo 5: Larghezza Asse Orari Sinistra -->
-          <div class="lab-control-row">
-            <div class="control-label-group">
-              <span class="control-title">Larghezza Asse Orari</span>
-              <span class="control-value" id="val-axis-width">52 px</span>
-            </div>
-            <div class="control-actions">
-              <button class="btn-lab-step" data-target="axisWidth" data-step="-2">-2px</button>
-              <input type="range" id="range-axis-width" min="40" max="75" value="52" class="lab-slider">
-              <button class="btn-lab-step" data-target="axisWidth" data-step="2">+2px</button>
-            </div>
-          </div>
-
-          <!-- Azioni di Salvataggio e Copia -->
-          <div class="lab-panel-buttons">
-            <button id="btn-lab-apply" class="btn-lab-primary">
-              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                <polyline points="20 6 9 17 4 12"></polyline>
-              </svg>
-              <span>Applica all'Orario</span>
-            </button>
-            <button id="btn-lab-copy" class="btn-lab-secondary">
-              <span>Copia Valori</span>
-            </button>
-            <button id="btn-lab-reset" class="btn-lab-secondary">
-              <span>Ripristina</span>
-            </button>
-          </div>
-        </div>
-      </section>
-    </main>
 
     <!-- ==========================================================================
          DRAWER LATERALE A SCOMPARSA (MENU NERO IN STILE MOCKUP SCREEN 3)
@@ -266,29 +137,6 @@
           </button>
         </div>
 
-        <!-- Selettore Classe a Capsula con Ricerca -->
-        <div class="drawer-class-box">
-          <div class="class-pill-dropdown" id="btn-toggle-class-menu">
-            <span id="drawer-class-name">4 BINF</span>
-            <svg class="chevron-down" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
-              <polyline points="6 9 12 15 18 9"></polyline>
-            </svg>
-            <select id="class-select" class="class-hidden-select">
-              <option value="4 BINF" selected>4 BINF</option>
-              <option value="4 AINF">4 AINF</option>
-              <option value="3 BINF">3 BINF</option>
-              <option value="5 BINF">5 BINF</option>
-              <option value="4 AELT">4 AELT</option>
-              <option value="4 AMEC">4 AMEC</option>
-            </select>
-          </div>
-          <button id="btn-search-class" class="btn-search-circle" aria-label="Cerca classe">
-            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
-              <circle cx="11" cy="11" r="7"></circle>
-              <line x1="21" y1="21" x2="16" y2="16"></line>
-            </svg>
-          </button>
-        </div>
 
         <!-- Sezione I Miei Orari con Supporto Preferiti ⭐ -->
         <div class="drawer-timetables-section">
@@ -331,18 +179,6 @@
           <span class="item-arrow">›</span>
         </button>
 
-        <button class="drawer-item" id="nav-item-grid-lab">
-          <div class="item-left">
-            <svg class="item-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-              <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-              <line x1="3" y1="9" x2="21" y2="9"></line>
-              <line x1="3" y1="15" x2="21" y2="15"></line>
-              <line x1="9" y1="3" x2="9" y2="21"></line>
-            </svg>
-            <span class="item-label">Laboratorio Griglia (Test)</span>
-          </div>
-          <span class="item-arrow">›</span>
-        </button>
 
         <button class="drawer-item" id="nav-item-sync">
           <div class="item-left">
