@@ -481,6 +481,12 @@ function renderSavedTimetablesList() {
   const list = getAllSavedTimetables();
   const activeId = getActiveTimetableId();
 
+  // Aggiorna badge contatore nel drawer
+  const countBadge = document.getElementById('drawer-timetables-count');
+  if (countBadge) {
+    countBadge.textContent = list.length;
+  }
+
   // 1. Popolamento Lista nel Drawer
   if (elements.savedTimetablesList) {
     elements.savedTimetablesList.innerHTML = '';
@@ -489,7 +495,7 @@ function renderSavedTimetablesList() {
       const emptyNotice = document.createElement('div');
       emptyNotice.style.fontSize = '0.74rem';
       emptyNotice.style.color = 'var(--text-dim)';
-      emptyNotice.style.padding = '6px 4px';
+      emptyNotice.style.padding = '8px 4px';
       emptyNotice.textContent = 'Nessun orario salvato. Tocca + Aggiungi.';
       elements.savedTimetablesList.appendChild(emptyNotice);
     } else {
@@ -503,10 +509,10 @@ function renderSavedTimetablesList() {
     }
   }
 
-  // 2. Popolamento Lista nel Modale "Cambia Orario" (Tab 1: Orari Salvati)
+  // 2. Popolamento Lista nella Pagina Dedicata "Cambia Orario" (Tab 4: Orari Salvati)
   if (elements.modalSavedTimetablesList && elements.modalCustomTimetablesSection) {
     elements.modalSavedTimetablesList.innerHTML = '';
-    const customList = list.filter(item => item.type !== 'preset');
+    const customList = list.filter(item => item.id !== VOLTA_PRESET_ID);
 
     if (customList.length === 0) {
       elements.modalCustomTimetablesSection.style.display = 'none';
@@ -524,26 +530,56 @@ function renderSavedTimetablesList() {
 }
 
 /**
- * Crea un elemento DOM per una card di orario salvato
+ * Crea un elemento DOM per una card di orario salvato (design elegante One UI)
  */
 function createTimetableCardElement(item, activeId, onSelect) {
   const card = document.createElement('div');
   const isActive = item.id === activeId;
   card.className = `saved-tt-item ${isActive ? 'is-active' : ''}`;
 
+  // Icona basata sulla provenienza dell'orario
+  let typeIcon = '🏛️';
+  let defaultSchool = 'Istituto Tecnico A. Volta';
+  if (item.type === 'custom_image') {
+    typeIcon = '📷';
+    defaultSchool = 'Orario da Immagine';
+  } else if (item.type === 'custom_pdf') {
+    typeIcon = '📄';
+    defaultSchool = 'Orario da PDF';
+  } else if (item.type === 'custom_url') {
+    typeIcon = '🔗';
+    defaultSchool = 'Orario da URL';
+  } else if (item.type === 'volta_class') {
+    typeIcon = '🏫';
+    defaultSchool = 'Istituto Tecnico A. Volta';
+  } else if (item.id === VOLTA_PRESET_ID) {
+    typeIcon = '⭐';
+    defaultSchool = 'Istituto Volta • Predefinito';
+  }
+
+  const leftDiv = document.createElement('div');
+  leftDiv.className = 'saved-tt-left';
+
+  const iconBox = document.createElement('div');
+  iconBox.className = 'saved-tt-icon-box';
+  iconBox.textContent = typeIcon;
+
   const infoDiv = document.createElement('div');
   infoDiv.className = 'saved-tt-info';
 
   const nameSpan = document.createElement('div');
   nameSpan.className = 'saved-tt-name';
-  nameSpan.innerHTML = `<span>${item.name}</span> ${isActive ? '<span class="active-tag">ATTIVO</span>' : ''}`;
+  nameSpan.innerHTML = `<span>${escapeHtml(item.name)}</span> ${isActive ? '<span class="active-tag"><span class="active-dot-live"></span>ATTIVO</span>' : ''}`;
 
   const schoolSpan = document.createElement('div');
   schoolSpan.className = 'saved-tt-school';
-  schoolSpan.textContent = item.school || (item.type === 'preset' ? 'Istituto A. Volta' : 'Orario Personale');
+  schoolSpan.textContent = item.school || defaultSchool;
 
   infoDiv.appendChild(nameSpan);
   infoDiv.appendChild(schoolSpan);
+
+  leftDiv.appendChild(iconBox);
+  leftDiv.appendChild(infoDiv);
 
   const actionsDiv = document.createElement('div');
   actionsDiv.className = 'saved-tt-actions';
@@ -560,15 +596,15 @@ function createTimetableCardElement(item, activeId, onSelect) {
   });
   actionsDiv.appendChild(starBtn);
 
-  // Bottone Cestino se personalizzato
-  if (item.type !== 'preset') {
+  // Bottone Elimina (disponibile per tutti tranne il preset principale 4 BINF)
+  if (item.id !== VOLTA_PRESET_ID) {
     const delBtn = document.createElement('button');
     delBtn.className = 'btn-tt-delete';
     delBtn.title = 'Elimina questo orario';
-    delBtn.innerHTML = '🗑️';
+    delBtn.innerHTML = '✕';
     delBtn.addEventListener('click', (e) => {
       e.stopPropagation();
-      if (confirm(`Vuoi rimuovere l'orario "${item.name}"?`)) {
+      if (confirm(`Vuoi rimuovere l'orario "${item.name}" dalla lista?`)) {
         deleteTimetable(item.id);
         renderSavedTimetablesList();
         const newActive = getActiveTimetableId();
@@ -582,7 +618,7 @@ function createTimetableCardElement(item, activeId, onSelect) {
     actionsDiv.appendChild(delBtn);
   }
 
-  card.appendChild(infoDiv);
+  card.appendChild(leftDiv);
   card.appendChild(actionsDiv);
 
   // Click per selezionare e attivare l'orario
@@ -1310,6 +1346,13 @@ function setupEventListeners() {
     toggleDrawer(false);
     openChangeScheduleView('image');
   });
+
+  if (elements.btnOpenAddTimetable) {
+    elements.btnOpenAddTimetable.addEventListener('click', () => {
+      toggleDrawer(false);
+      openChangeScheduleView('preset');
+    });
+  }
 
   // Tasto Torna all'orario dalla schermata Cambia Orario
   if (elements.btnBackToSchedule) {

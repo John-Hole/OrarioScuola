@@ -1773,132 +1773,241 @@ body {
   border: 1px solid var(--border-subtle);
 }
 
-.section-subtitle-row {
+/* ==========================================================================
+   SEZIONE I MIEI ORARI NEL DRAWER LATERALE (ELEGANTE SELETTORE SOTTO IL MENU)
+   ========================================================================== */
+.drawer-timetables-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px 0 18px 0;
+  border-top: 1px solid var(--border-subtle);
+  border-bottom: 1px solid var(--border-subtle);
+  margin: 6px 0 14px 0;
+}
+
+.drawer-section-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 8px;
+  padding: 0 4px;
+}
+
+.section-title-with-badge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .drawer-section-title {
-  font-size: 0.68rem;
+  font-size: 0.72rem;
   font-weight: 800;
   letter-spacing: 0.08em;
   color: var(--text-dim);
+  text-transform: uppercase;
+}
+
+.saved-count-badge {
+  font-size: 0.65rem;
+  font-weight: 800;
+  color: var(--live-line-color);
+  background: rgba(56, 189, 248, 0.12);
+  border: 1px solid rgba(56, 189, 248, 0.25);
+  padding: 1px 7px;
+  border-radius: var(--radius-pill);
 }
 
 .btn-add-timetable-mini {
-  background: #1C2433;
-  border: 1px solid var(--border-subtle);
+  background: rgba(56, 189, 248, 0.1);
+  border: 1px solid rgba(56, 189, 248, 0.25);
   color: var(--live-line-color);
   font-size: 0.72rem;
   font-weight: 700;
-  padding: 3px 8px;
+  padding: 4px 10px;
   border-radius: var(--radius-pill);
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
 }
 
 .btn-add-timetable-mini:hover {
   background: var(--live-blue);
+  border-color: var(--live-blue);
   color: #FFFFFF;
+  box-shadow: 0 2px 8px var(--live-blue-glow);
 }
 
 .saved-timetables-list {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
+  max-height: 280px;
+  overflow-y: auto;
+  padding-right: 2px;
+}
+
+.saved-timetables-list::-webkit-scrollbar {
+  width: 4px;
+}
+.saved-timetables-list::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 4px;
 }
 
 .saved-tt-item {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: #151B25;
-  border: 1px solid var(--border-subtle);
-  border-radius: 8px;
-  padding: 8px 10px;
+  gap: 10px;
+  background: #111722;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 12px;
+  padding: 10px 12px;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+  user-select: none;
 }
 
 .saved-tt-item:hover {
-  border-color: var(--border-hover);
-  background: #1B2330;
+  background: #172030;
+  border-color: rgba(56, 189, 248, 0.3);
+  transform: translateY(-1px);
 }
 
 .saved-tt-item.is-active {
-  border-color: var(--live-blue);
-  background: rgba(37, 99, 235, 0.12);
+  background: linear-gradient(135deg, rgba(37, 99, 235, 0.2), rgba(15, 23, 42, 0.8));
+  border: 1.5px solid var(--live-line-color);
+  box-shadow: 0 4px 16px rgba(56, 189, 248, 0.15);
+}
+
+.saved-tt-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  min-width: 0;
+}
+
+.saved-tt-icon-box {
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.05rem;
+  flex-shrink: 0;
+}
+
+.saved-tt-item.is-active .saved-tt-icon-box {
+  background: rgba(56, 189, 248, 0.15);
+  border-color: rgba(56, 189, 248, 0.35);
 }
 
 .saved-tt-info {
   display: flex;
   flex-direction: column;
   gap: 2px;
+  min-width: 0;
 }
 
 .saved-tt-name {
-  font-size: 0.88rem;
+  font-size: 0.92rem;
   font-weight: 800;
-  color: var(--text-main);
+  color: #FFFFFF;
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 7px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .active-tag {
-  font-size: 0.6rem;
+  font-size: 0.58rem;
   font-weight: 800;
-  padding: 1px 5px;
-  border-radius: 4px;
+  letter-spacing: 0.04em;
+  padding: 1px 6px;
+  border-radius: var(--radius-pill);
   background: var(--live-blue);
   color: #FFFFFF;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.active-dot-live {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #38BDF8;
+  box-shadow: 0 0 6px #38BDF8;
+  display: inline-block;
 }
 
 .saved-tt-school {
-  font-size: 0.68rem;
+  font-size: 0.7rem;
   color: var(--text-dim);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.saved-tt-item.is-active .saved-tt-school {
+  color: #93C5FD;
 }
 
 .saved-tt-actions {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
+  flex-shrink: 0;
 }
 
 .btn-tt-star {
   background: transparent;
   border: none;
-  font-size: 1.1rem;
-  color: var(--text-dim);
+  font-size: 1.15rem;
+  color: rgba(255, 255, 255, 0.2);
   cursor: pointer;
-  padding: 2px;
-  transition: transform 0.15s ease, color 0.15s ease;
+  padding: 4px;
+  border-radius: 6px;
+  line-height: 1;
+  transition: all 0.15s ease;
 }
 
 .btn-tt-star.active {
   color: #FBBF24;
-  text-shadow: 0 0 8px rgba(251, 191, 36, 0.5);
+  text-shadow: 0 0 8px rgba(251, 191, 36, 0.6);
 }
 
 .btn-tt-star:hover {
-  transform: scale(1.18);
+  color: #FBBF24;
+  transform: scale(1.15);
 }
 
 .btn-tt-delete {
   background: transparent;
   border: none;
-  color: var(--text-dim);
-  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.25);
+  font-size: 0.95rem;
   cursor: pointer;
-  padding: 2px 4px;
-  border-radius: 4px;
+  padding: 4px 6px;
+  border-radius: 6px;
+  line-height: 1;
+  transition: all 0.15s ease;
 }
 
 .btn-tt-delete:hover {
   color: #EF4444;
-  background: rgba(239, 68, 68, 0.1);
+  background: rgba(239, 68, 68, 0.12);
+  transform: scale(1.1);
 }
 
 /* ==========================================================================
