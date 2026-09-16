@@ -1,0 +1,2159 @@
+/* ==========================================================================
+   Smart School Timetable - Core Style Sheet
+   Stile Dark AMOLED con Proporzioni in Scala, Linee Guida e Cursore Live Non Invasivo
+   ========================================================================== */
+
+:root {
+  /* AMOLED Deep Dark Palette */
+  --bg-app: #0B0E14;
+  --bg-surface: #121720;
+  --bg-header: rgba(11, 14, 20, 0.95);
+  --bg-drawer: #10141B;
+  --bg-card-dark: #161C26;
+  
+  /* Text Colors */
+  --text-main: #FFFFFF;
+  --text-muted: #8896A6;
+  --text-dim: #556477;
+  
+  /* Linee Guida Sottilissime ("linee grigie piccolissime") */
+  --border-subtle: rgba(255, 255, 255, 0.08);
+  --border-guide-line: rgba(255, 255, 255, 0.12);
+  --border-guide-dashed: rgba(255, 255, 255, 0.16);
+  --border-pill: #2C3543;
+  --border-hover: #3E4B5E;
+  
+  /* Pill Switcher Colors */
+  --pill-container-bg: #181E27;
+  --pill-active-bg: #2B3444;
+  --pill-active-text: #FFFFFF;
+  --pill-inactive-text: #7E8D9F;
+
+  /* Live Cursor Accent & Dimensioni Badge Orario */
+  --live-blue: #2563EB;
+  --live-blue-glow: rgba(37, 99, 235, 0.5);
+  --live-line-color: #38BDF8;
+  --live-cursor-font-size: 0.72rem;
+  --live-cursor-padding: 2px 5px;
+  --live-cursor-dot-size: 4.5px;
+  --accent-green: #22C55E;
+  --accent-amber: #F59E0B;
+
+  /* Parametri di Calibrazione Griglia Regolabili al Millimetro */
+  --timeline-axis-width: 52px;
+  --timeline-slot-height: 74px;
+  --timeline-break-height: 30px;
+  --timeline-divider1-offset: 0px;
+  --timeline-divider2-offset: 0px;
+  --timeline-time-spacing: 1.5px;
+
+  /* ==========================================================================
+     Mappe Colori Pastello per Materie (con testo scuro ad alto contrasto)
+     ========================================================================== */
+  --subject-sistemi-bg: #76A6D7;
+  --subject-sistemi-text: #0D1C2E;
+
+  --subject-tpsit-bg: #F7E388;
+  --subject-tpsit-text: #2B2306;
+
+  --subject-matematica-bg: #7ED68B;
+  --subject-matematica-text: #0B2810;
+
+  --subject-inglese-bg: #89E098;
+  --subject-inglese-text: #0A2810;
+
+  --subject-lettere-bg: #BBB6EB;
+  --subject-lettere-text: #191433;
+
+  --subject-informatica-bg: #73CBBE;
+  --subject-informatica-text: #092722;
+
+  --subject-motoria-bg: #F6B1BC;
+  --subject-motoria-text: #341016;
+
+  --subject-scienze-bg: #F5A7B8;
+  --subject-scienze-text: #320E15;
+
+  --subject-religione-bg: #DCE7DF;
+  --subject-religione-text: #142318;
+
+  --subject-telecom-bg: #AFA8EA;
+  --subject-telecom-text: #181334;
+
+  --subject-default-bg: #C5CDD8;
+  --subject-default-text: #18202A;
+
+  /* Geometry & Radii */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-card: 16px;
+  --radius-pill: 9999px;
+
+  /* Dimensioni Asse */
+  --timeline-axis-width: 52px;
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  background-color: var(--bg-app);
+  color: var(--text-main);
+  line-height: 1.4;
+  overflow-x: hidden;
+  user-select: none;
+  -webkit-font-smoothing: antialiased;
+}
+
+.app-layout {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  max-width: 500px;
+  margin: 0 auto;
+  position: relative;
+  background-color: var(--bg-app);
+  padding-bottom: calc(30px + var(--safe-bottom));
+}
+
+/* ==========================================================================
+   Top Bar Header con Switcher a Capsula
+   ========================================================================== */
+.app-header {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  background: var(--bg-header);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border-bottom: 1px solid var(--border-subtle);
+  padding: calc(12px + var(--safe-top)) 16px 12px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  width: 44px;
+}
+
+.header-center {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+}
+
+.header-right {
+  width: 44px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.header-spacer {
+  width: 24px;
+}
+
+.icon-button {
+  background: transparent;
+  border: none;
+  color: var(--text-main);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px;
+  border-radius: var(--radius-sm);
+  transition: opacity 0.2s ease;
+}
+
+.icon-button:active {
+  opacity: 0.6;
+}
+
+.view-switch-pill {
+  background: var(--pill-container-bg);
+  border: 1px solid var(--border-pill);
+  border-radius: var(--radius-pill);
+  padding: 3px;
+  display: inline-flex;
+  gap: 2px;
+}
+
+.pill-btn {
+  background: transparent;
+  border: none;
+  color: var(--pill-inactive-text);
+  font-size: 0.85rem;
+  font-weight: 600;
+  padding: 6px 18px;
+  border-radius: var(--radius-pill);
+  cursor: pointer;
+  transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.pill-btn.active {
+  background: var(--pill-active-bg);
+  color: var(--pill-active-text);
+  font-weight: 700;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+
+.view-container {
+  display: flex;
+  flex-direction: column;
+}
+
+.hidden-view {
+  display: none !important;
+}
+
+/* ==========================================================================
+   VISTA 1: GIORNO
+   ========================================================================== */
+.daily-header-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 16px 10px 16px;
+}
+
+.daily-date-title {
+  font-size: 1.2rem;
+  font-weight: 800;
+  color: var(--text-main);
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  text-align: center;
+}
+
+.day-nav-arrow {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px;
+  border-radius: 50%;
+  transition: color 0.15s ease;
+}
+
+.day-nav-arrow:active {
+  color: var(--text-main);
+}
+
+.days-nav {
+  display: flex;
+  padding: 0 16px 12px 16px;
+  gap: 8px;
+  justify-content: space-between;
+}
+
+.day-chip {
+  flex: 1;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  font-weight: 700;
+  padding: 7px 0;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.2s ease;
+}
+
+.day-chip.active {
+  background: #1C2433;
+  border-color: var(--live-blue);
+  color: #60A5FA;
+}
+
+/* ==========================================================================
+   Classi Tema Pastello per Materie (AMOLED con testo scuro ad alto contrasto)
+   ========================================================================== */
+.theme-sistemi {
+  background-color: var(--subject-sistemi-bg) !important;
+  color: var(--subject-sistemi-text) !important;
+}
+
+.theme-tpsit {
+  background-color: var(--subject-tpsit-bg) !important;
+  color: var(--subject-tpsit-text) !important;
+}
+
+.theme-matematica {
+  background-color: var(--subject-matematica-bg) !important;
+  color: var(--subject-matematica-text) !important;
+}
+
+.theme-inglese {
+  background-color: var(--subject-inglese-bg) !important;
+  color: var(--subject-inglese-text) !important;
+}
+
+.theme-lettere {
+  background-color: var(--subject-lettere-bg) !important;
+  color: var(--subject-lettere-text) !important;
+}
+
+.theme-informatica {
+  background-color: var(--subject-informatica-bg) !important;
+  color: var(--subject-informatica-text) !important;
+}
+
+.theme-motoria {
+  background-color: var(--subject-motoria-bg) !important;
+  color: var(--subject-motoria-text) !important;
+}
+
+.theme-scienze {
+  background-color: var(--subject-scienze-bg) !important;
+  color: var(--subject-scienze-text) !important;
+}
+
+.theme-religione {
+  background-color: var(--subject-religione-bg) !important;
+  color: var(--subject-religione-text) !important;
+}
+
+.theme-telecom {
+  background-color: var(--subject-telecom-bg) !important;
+  color: var(--subject-telecom-text) !important;
+}
+
+.theme-default {
+  background-color: var(--subject-default-bg) !important;
+  color: var(--subject-default-text) !important;
+}
+
+/* Timeline Viewport */
+.timeline-viewport {
+  position: relative;
+  padding: 6px 16px 40px 16px;
+}
+
+.timeline-container {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.timeline-time-column {
+  display: none; /* Time box integrato in ciascuna riga per allineamento perfetto */
+}
+
+/* Cursore Dinamico Live (Badge orario più compatto per far emergere la lignetta di raccordo) */
+.live-cursor {
+  display: none;
+  position: absolute;
+  left: 0px;
+  transform: translateY(-50%);
+  z-index: 35;
+  align-items: center;
+  gap: 2.5px;
+  background: var(--live-blue);
+  color: #FFFFFF;
+  padding: var(--live-cursor-padding, 2px 5px);
+  border-radius: var(--radius-pill);
+  font-size: var(--live-cursor-font-size, 0.62rem);
+  font-weight: 800;
+  line-height: 1;
+  box-shadow: 0 2px 8px var(--live-blue-glow);
+  pointer-events: none;
+  transition: top 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Linea orizzontale live del tempo:
+   Parte dall'interno del cursore orario e si estende a tutta larghezza.
+   - Esce dal pallino blu/orario come minima lignetta di raccordo collegandosi alla box.
+   - Quando c'è una box (lezione o ricreazione), passa dietro coperta dalla card senza tagliarla.
+   - Quando non ci sono box (slot vuoti, fuori orario), attraversa per intero la vista fino al bordo destro. */
+.live-timeline-line {
+  display: none;
+  position: absolute;
+  left: 20px;
+  right: 0;
+  height: 2px;
+  transform: translateY(-50%);
+  background: var(--live-line-color);
+  box-shadow: 0 0 8px rgba(56, 189, 248, 0.85);
+  z-index: 5;
+  pointer-events: none;
+  transition: top 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.cursor-dot {
+  width: var(--live-cursor-dot-size, 4.5px);
+  height: var(--live-cursor-dot-size, 4.5px);
+  border-radius: 50%;
+  background-color: #FFFFFF;
+  animation: pulse-dot 1.4s infinite;
+}
+
+@keyframes pulse-dot {
+  0% { transform: scale(0.9); opacity: 0.8; }
+  50% { transform: scale(1.25); opacity: 1; }
+  100% { transform: scale(0.9); opacity: 0.8; }
+}
+
+/* Lista Righe Lezioni nella Vista Giorno */
+.lessons-list {
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  width: 100%;
+  z-index: 10;
+}
+
+/* ==========================================================================
+   VISTA 1: GIORNO - Struttura a Timeline Continua con Linea Unica di Cambio Ora
+   Come nell'orario originale: 
+   - Sopra la linea: orario inizio cambio (08:54 / 09:48 / 10:48)
+   - Sotto la linea: orario fine cambio (08:58 / 09:58 / 10:52)
+   - Zero spazio vuoto / zero gap tra le ore
+   ========================================================================== */
+
+.daily-timeline-grid {
+  display: grid;
+  grid-template-columns: var(--timeline-axis-width) 1fr;
+  grid-template-rows: auto var(--timeline-slot-height) 0px var(--timeline-slot-height) var(--timeline-break-height) var(--timeline-slot-height) 0px var(--timeline-slot-height) auto;
+  position: relative;
+  width: 100%;
+}
+
+/* Asse Verticale Continuo tra Colonna Orari e Area Lezioni (richiesto dall'utente) */
+.daily-timeline-grid::after {
+  content: '';
+  position: absolute;
+  left: var(--timeline-axis-width);
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background-color: var(--border-guide-line);
+  z-index: 3;
+  pointer-events: none;
+}
+
+/* Riga Estremo Superiore (08:00) e Inferiore (11:42) con linee passanti continue */
+.timeline-edge-row.edge-top {
+  grid-row: 1;
+  grid-column: 1 / 3;
+  display: flex;
+  align-items: flex-end;
+  height: 0px;
+  z-index: 3;
+}
+
+.timeline-edge-row.edge-bottom {
+  grid-row: 9;
+  grid-column: 1 / 3;
+  display: flex;
+  align-items: flex-start;
+  height: 0px;
+  z-index: 3;
+}
+
+.edge-time-col {
+  width: var(--timeline-axis-width); /* 52px */
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  padding-right: 8px;
+  position: relative;
+  pointer-events: none;
+  box-sizing: border-box;
+}
+
+.edge-top .edge-time-col {
+  justify-content: flex-end;
+}
+
+.edge-bottom .edge-time-col {
+  justify-content: flex-start;
+}
+
+.edge-top .time-above {
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  line-height: 1;
+  margin-bottom: var(--timeline-time-spacing);
+}
+
+.edge-bottom .time-below {
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  line-height: 1;
+  margin-top: var(--timeline-time-spacing);
+}
+
+.edge-notch-line {
+  width: 100%;
+  height: 1px;
+  background-color: var(--border-guide-line);
+  margin-right: -8px;
+}
+
+.edge-line-col {
+  flex: 1;
+  display: flex;
+  align-items: center;
+}
+
+.edge-line {
+  width: 100%;
+  height: 1px;
+  background-color: var(--border-guide-line);
+}
+
+/* Linee di Base Sottostanti (raggiungono l'orario a sinistra e passano sotto ai blocchi uniti) */
+.timeline-divider {
+  grid-column: 1 / 3;
+  display: flex;
+  align-items: center;
+  height: 0px;
+  z-index: 1; /* nella base, sotto le card */
+}
+
+.timeline-divider.divider-1 {
+  transform: translateY(var(--timeline-divider1-offset, 0px));
+}
+
+.timeline-divider.divider-2 {
+  transform: translateY(var(--timeline-divider2-offset, 0px));
+}
+
+.timeline-divider.divider-3 {
+  transform: translateY(var(--timeline-divider3-offset, 0px));
+}
+
+.divider-time-col {
+  width: var(--timeline-axis-width); /* 52px */
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: center;
+  padding-right: 8px;
+  position: relative;
+  z-index: 5;
+  pointer-events: none;
+}
+
+/* Sopra la linea: orario di inizio del cambio (es. 08:54 / 10:48) */
+.divider-time-col .time-above {
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  line-height: 1;
+  margin-bottom: var(--timeline-time-spacing);
+}
+
+/* Linea divisoria che raggiunge la colonna oraria a sinistra */
+.divider-time-col .divider-notch-line {
+  width: 100%;
+  height: 1px;
+  background-color: var(--border-guide-line);
+  margin-right: -8px;
+}
+
+/* Sotto la linea: orario di fine del cambio (es. 08:58 / 10:52) */
+.divider-time-col .time-below {
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  line-height: 1;
+  margin-top: var(--timeline-time-spacing);
+}
+
+.divider-line-col {
+  flex: 1;
+  display: flex;
+  align-items: center;
+}
+
+.divider-line {
+  width: 100%;
+  height: 1px;
+  background-color: var(--border-guide-line);
+}
+
+/* Slot Lezioni Singole e Doppie (con 2px di stacco a sinistra dalla linea verticale continua) */
+.timeline-lesson-row {
+  grid-column: 2;
+  z-index: 2;
+  display: flex;
+  padding: 4px;
+  box-sizing: border-box;
+}
+
+.timeline-lesson-row.is-empty {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  pointer-events: none;
+}
+
+.timeline-lesson-row.lesson-h1 {
+  grid-row: 2;
+  grid-column: 2;
+  z-index: 2;
+  display: flex;
+}
+
+.timeline-lesson-row.lesson-h2 {
+  grid-row: 4;
+  grid-column: 2;
+  z-index: 2;
+  display: flex;
+}
+
+.timeline-lesson-row.lesson-h3 {
+  grid-row: 6;
+  grid-column: 2;
+  z-index: 2;
+  display: flex;
+}
+
+.timeline-lesson-row.lesson-h4 {
+  grid-row: 8;
+  grid-column: 2;
+  z-index: 2;
+  display: flex;
+}
+
+/* Slot Blocchi Uniti da 2 Ore: nessun taglio interno, coprono la linea nella base */
+.timeline-lesson-row.lesson-double-morning {
+  grid-row: 2 / 5;
+  grid-column: 2;
+  z-index: 2;
+  display: flex;
+}
+
+.timeline-lesson-row.lesson-double-afternoon {
+  grid-row: 6 / 9;
+  grid-column: 2;
+  z-index: 2;
+  display: flex;
+}
+
+.daily-timeline-grid .lesson-card {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  border-radius: 10px;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+  position: relative;
+  box-sizing: border-box;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+/* Arrotondamento uniforme per tutte le card lezioni (identico alla vista settimana: 10px su tutti i 4 angoli) */
+.lesson-h1 .lesson-card,
+.lesson-h2 .lesson-card,
+.lesson-h3 .lesson-card,
+.lesson-h4 .lesson-card,
+.lesson-double-morning .lesson-card,
+.lesson-double-afternoon .lesson-card,
+.lesson-slot-single .lesson-card,
+.lesson-slot-double .lesson-card {
+  border-radius: 10px;
+}
+
+/* Riga Ricreazione (09:48 - 09:58) con linee orizzontali continue sopra e sotto */
+.timeline-break-row {
+  grid-row: 5;
+  grid-column: 1 / 3;
+  display: flex;
+  align-items: stretch;
+  height: var(--timeline-break-height);
+  position: relative;
+  z-index: 3;
+  margin: 0;
+  border-top: 1px solid var(--border-guide-line);
+  border-bottom: 1px solid var(--border-guide-line);
+  box-sizing: border-box;
+}
+
+.break-time-col {
+  width: var(--timeline-axis-width);
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: flex-end;
+  padding: var(--timeline-time-spacing) 8px var(--timeline-time-spacing) 0;
+  box-sizing: border-box;
+}
+
+.break-time-col .time-above {
+  font-size: 0.74rem;
+  font-weight: 800;
+  color: var(--accent-amber);
+  line-height: 1;
+}
+
+.break-time-col .time-below {
+  font-size: 0.74rem;
+  font-weight: 800;
+  color: var(--accent-amber);
+  line-height: 1;
+}
+
+.timeline-break-row .timeline-break-bar {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 12px;
+  background-color: var(--bg-app);
+  background-image: linear-gradient(rgba(245, 158, 11, 0.08), rgba(245, 158, 11, 0.08));
+  border: none;
+  border-radius: 0;
+  font-size: 0.74rem;
+  font-weight: 800;
+  color: var(--accent-amber);
+  letter-spacing: 0.4px;
+  margin: 0 !important;
+  z-index: 2;
+}
+
+.timeline-break-bar.is-active-break {
+  background-color: var(--bg-app);
+  background-image: linear-gradient(rgba(245, 158, 11, 0.22), rgba(245, 158, 11, 0.22));
+  box-shadow: 0 0 12px rgba(245, 158, 11, 0.4);
+}
+
+.lesson-card-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.subject-title {
+  color: inherit;
+  font-size: 1.05rem;
+  font-weight: 800;
+  letter-spacing: -0.1px;
+  text-transform: uppercase;
+  line-height: 1.25;
+}
+
+.room-title {
+  color: inherit;
+  font-size: 0.92rem;
+  font-weight: 700;
+  opacity: 0.9;
+  letter-spacing: 0.3px;
+}
+
+/* Badge Lezione In Corso centrato sotto la classe */
+.card-active-footer {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 8px;
+  align-self: center;
+}
+
+.badge-in-corso {
+  background: #17375E;
+  color: #BFDBFE;
+  font-size: 0.68rem;
+  font-weight: 800;
+  padding: 3px 8px;
+  border-radius: var(--radius-pill);
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+}
+
+.time-left-text {
+  font-size: 0.76rem;
+  font-weight: 600;
+  opacity: 0.85;
+}
+
+.lesson-card.is-active .card-active-footer {
+  display: inline-flex;
+}
+
+.lesson-card.is-active {
+  box-shadow: 0 6px 20px rgba(37, 99, 235, 0.45);
+  border: 2px solid var(--live-line-color);
+}
+
+/* ==========================================================================
+   VISTA 2: SETTIMANA (GRIGLIA A MATRICE CON SLIDER LIVE E TUTTI GLI ORARI)
+   ========================================================================== */
+.weekly-scroll-wrapper {
+  overflow-x: auto;
+  padding: 10px 14px 20px 14px;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.weekly-scroll-wrapper::-webkit-scrollbar {
+  display: none;
+}
+
+.weekly-grid-container {
+  position: relative;
+  display: grid;
+  grid-template-columns: 48px repeat(5, minmax(105px, 1fr));
+  gap: 0;
+  min-width: 580px;
+  background-color: var(--bg-surface);
+  border-top: 1px solid var(--border-guide-line);
+  border-left: 1px solid var(--border-guide-line);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+/* Celle di sfondo per la griglia permanente con linee grigie sottili */
+.grid-slot-bg {
+  border-bottom: 1px solid var(--border-guide-line);
+  border-right: 1px solid var(--border-guide-line);
+  min-height: 68px;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.grid-slot-bg.slot-break {
+  min-height: 32px;
+  background: rgba(245, 158, 11, 0.04);
+}
+
+/* Cursore Live nella Modalità Settimanale */
+.weekly-live-cursor {
+  display: none;
+  position: absolute;
+  left: 0px;
+  transform: translateY(-50%);
+  z-index: 35;
+  align-items: center;
+  gap: 2.5px;
+  background: var(--live-blue);
+  color: #FFFFFF;
+  padding: var(--live-cursor-padding, 2px 5px);
+  border-radius: var(--radius-pill);
+  font-size: var(--live-cursor-font-size, 0.62rem);
+  font-weight: 800;
+  line-height: 1;
+  box-shadow: 0 2px 8px var(--live-blue-glow);
+  pointer-events: none;
+  transition: top 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.weekly-live-cursor .cursor-dot {
+  width: var(--live-cursor-dot-size, 4.5px);
+  height: var(--live-cursor-dot-size, 4.5px);
+  border-radius: 50%;
+  background-color: #FFFFFF;
+  animation: pulse-dot 1.4s infinite;
+}
+
+/* Linea temporale live nella vista Settimanale:
+   Si estende a tutta larghezza e collega l'ora al box materia/aula, passando dietro alle card */
+.weekly-live-line {
+  display: none;
+  position: absolute;
+  left: 20px;
+  right: 0;
+  height: 2px;
+  transform: translateY(-50%);
+  background: var(--live-line-color);
+  box-shadow: 0 0 8px rgba(56, 189, 248, 0.85);
+  z-index: 5;
+  pointer-events: none;
+  transition: top 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Angolo in alto a sinistra */
+.grid-header-corner {
+  border-bottom: 1px solid var(--border-guide-line);
+  border-right: 1px solid var(--border-guide-line);
+  background: var(--bg-app);
+  z-index: 2;
+}
+
+/* Intestazioni Colonne Giorni */
+.grid-header-day {
+  text-align: center;
+  padding: 6px 4px 8px 4px;
+  border-bottom: 1px solid var(--border-guide-line);
+  border-right: 1px solid var(--border-guide-line);
+  background: var(--bg-app);
+  transition: background 0.2s ease;
+  z-index: 2;
+}
+
+.grid-header-day.is-today {
+  background: #172233;
+}
+
+.grid-day-name {
+  font-size: 0.85rem;
+  font-weight: 800;
+  color: var(--text-main);
+  text-transform: uppercase;
+}
+
+.grid-day-date {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  margin-top: 1px;
+}
+
+.today-chip-badge {
+  display: inline-block;
+  background: var(--live-blue);
+  color: #FFFFFF;
+  font-size: 0.62rem;
+  font-weight: 800;
+  padding: 1px 5px;
+  border-radius: var(--radius-pill);
+  margin-top: 2px;
+  text-transform: uppercase;
+}
+
+/* Cella Orari a Sinistra nella Settimana (attaccata alla colonna, inizio e fine chiari) */
+.grid-time-slot-box {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: flex-end;
+  padding: 3px 5px 3px 0;
+  position: relative;
+  min-height: 68px;
+  border-bottom: 1px solid var(--border-guide-line);
+  border-right: 1px solid var(--border-guide-line);
+  background: var(--bg-app);
+  z-index: 2;
+}
+
+.grid-time-start {
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  line-height: 1;
+}
+
+.grid-time-end {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--text-dim);
+  line-height: 1;
+}
+
+/* Cella Ricreazione Settimanale */
+.grid-cell-break {
+  grid-column: 2 / span 5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 4px 12px;
+  border-bottom: 1px solid var(--border-guide-line);
+  border-right: 1px solid var(--border-guide-line);
+  background-color: var(--bg-surface);
+  background-image: linear-gradient(rgba(245, 158, 11, 0.08), rgba(245, 158, 11, 0.08));
+  border-radius: 4px;
+  margin: 2px 3px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: var(--accent-amber);
+  min-height: 28px;
+  z-index: 10;
+}
+
+.grid-cell-break.is-active-break {
+  background-color: var(--bg-surface);
+  background-image: linear-gradient(rgba(245, 158, 11, 0.22), rgba(245, 158, 11, 0.22));
+  box-shadow: 0 0 12px rgba(245, 158, 11, 0.4);
+}
+
+.grid-break-time-label {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: center;
+  padding-right: 5px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: var(--accent-amber);
+  min-height: 32px;
+  border-bottom: 1px solid var(--border-guide-line);
+  border-right: 1px solid var(--border-guide-line);
+  background: var(--bg-app);
+  z-index: 2;
+}
+
+/* Cella Materia della Griglia (Pastello AMOLED con spaziatura interna ottimale) */
+.grid-cell-lesson {
+  position: relative;
+  border-radius: 10px;
+  padding: 8px 6px;
+  margin: 3px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  min-height: 62px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  z-index: 10;
+}
+
+.grid-cell-lesson.span-2-hours {
+  grid-row: span 2;
+  min-height: 130px;
+  margin: 3px;
+}
+
+.grid-cell-lesson.is-active-lesson {
+  border: 2px solid var(--live-line-color) !important;
+  box-shadow: 0 0 14px rgba(56, 189, 248, 0.6) !important;
+}
+
+.grid-lesson-name {
+  color: inherit;
+  font-size: 0.74rem;
+  font-weight: 800;
+  line-height: 1.22;
+  text-transform: uppercase;
+}
+
+.grid-lesson-room {
+  color: inherit;
+  font-size: 0.7rem;
+  font-weight: 700;
+  opacity: 0.9;
+  margin-top: 3px;
+  letter-spacing: 0.2px;
+}
+
+.grid-active-badge {
+  background: #17375E;
+  color: #BFDBFE;
+  font-size: 0.6rem;
+  font-weight: 800;
+  padding: 2px 6px;
+  border-radius: var(--radius-pill);
+  margin-top: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.weekly-scroll-hint {
+  text-align: center;
+  padding: 14px 0 20px 0;
+  font-size: 0.78rem;
+  color: var(--text-dim);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+/* ==========================================================================
+   DRAWER LATERALE & MODALI
+   ========================================================================== */
+.drawer-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  z-index: 50;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
+.drawer-overlay.open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.sidebar-drawer {
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 82%;
+  max-width: 340px;
+  background: var(--bg-drawer);
+  border-right: 1px solid var(--border-subtle);
+  z-index: 60;
+  display: flex;
+  flex-direction: column;
+  transform: translateX(-100%);
+  transition: transform 0.32s cubic-bezier(0.16, 1, 0.3, 1);
+  padding: calc(20px + var(--safe-top)) 18px calc(24px + var(--safe-bottom)) 18px;
+  box-shadow: 12px 0 32px rgba(0, 0, 0, 0.65);
+  overflow-y: auto;
+}
+
+.sidebar-drawer.open {
+  transform: translateX(0);
+}
+
+.drawer-top {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.drawer-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.drawer-title {
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: var(--text-main);
+  letter-spacing: 0.5px;
+}
+
+.drawer-class-box {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.class-pill-dropdown {
+  flex: 1;
+  background: #181F2B;
+  border: 1px solid var(--border-pill);
+  border-radius: var(--radius-pill);
+  padding: 10px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text-main);
+  position: relative;
+  cursor: pointer;
+}
+
+.class-hidden-select {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  width: 100%;
+  height: 100%;
+  cursor: pointer;
+}
+
+.btn-search-circle {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: #1C2433;
+  border: 1px solid var(--border-pill);
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all 0.2s ease;
+}
+
+.btn-search-circle:active {
+  background: #2563EB;
+  color: #FFFFFF;
+}
+
+.drawer-menu-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 14px 0;
+  flex: 1;
+}
+
+.drawer-item {
+  background: transparent;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 13px 8px;
+  border-radius: var(--radius-sm);
+  color: var(--text-main);
+  cursor: pointer;
+  transition: background 0.15s ease;
+  width: 100%;
+  text-align: left;
+}
+
+.drawer-item:active {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.item-left {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.item-icon {
+  color: var(--text-main);
+  flex-shrink: 0;
+}
+
+.item-label {
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.item-arrow {
+  color: var(--text-dim);
+  font-size: 1.1rem;
+  font-weight: 400;
+}
+
+.drawer-footer {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.drawer-status-box {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.status-row-indicator {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.status-dot-green {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background-color: var(--accent-green);
+  box-shadow: 0 0 6px var(--accent-green);
+}
+
+.status-title-text {
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: var(--text-muted);
+  letter-spacing: 0.5px;
+}
+
+.status-date-text {
+  font-size: 0.75rem;
+  color: var(--text-dim);
+  padding-left: 15px;
+}
+
+.btn-drawer-sync {
+  background: #18202C;
+  border: 1px solid var(--border-pill);
+  color: var(--text-main);
+  padding: 12px 18px;
+  border-radius: var(--radius-pill);
+  font-size: 0.88rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  letter-spacing: 0.4px;
+  transition: all 0.2s ease;
+}
+
+.btn-drawer-sync:active {
+  transform: scale(0.98);
+  border-color: var(--live-blue);
+}
+
+.btn-drawer-sync.spinning svg {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  100% { transform: rotate(360deg); }
+}
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  z-index: 70;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.modal-backdrop.open {
+  display: flex;
+}
+
+.modal-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-card);
+  padding: 20px;
+  max-width: 420px;
+  width: 100%;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.modal-header h3 {
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+
+.modal-close-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-size: 1.1rem;
+  cursor: pointer;
+}
+
+.modal-body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.code-copy-row {
+  background: #080C12;
+  border: 1px solid var(--border-subtle);
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-family: monospace;
+}
+
+.btn-modal-action {
+  background: var(--live-blue);
+  color: #FFFFFF;
+  border: none;
+  padding: 4px 10px;
+  border-radius: var(--radius-sm);
+  font-size: 0.72rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.modal-tip {
+  font-size: 0.75rem;
+  color: var(--text-dim);
+}
+
+.modal-label {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.sim-buttons-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.sim-btn {
+  background: #1A212D;
+  border: 1px solid var(--border-subtle);
+  color: var(--text-muted);
+  padding: 8px;
+  border-radius: var(--radius-sm);
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.sim-btn.active {
+  border-color: var(--live-blue);
+  color: #FFFFFF;
+  background: #2563EB33;
+}
+
+/* ==========================================================================
+   Tutorial Widget Interattivo (Samsung S24 / Android Wizard)
+   ========================================================================== */
+.modal-card-tutorial {
+  max-width: 480px;
+  width: 100%;
+  max-height: 88vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 18px 20px;
+}
+
+.modal-title-with-icon {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-main);
+}
+
+.tutorial-stepper {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+  padding: 4px;
+  background: #0A0E15;
+  border-radius: var(--radius-pill);
+  margin-bottom: 14px;
+  border: 1px solid var(--border-subtle);
+}
+
+.step-indicator {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 6px 4px;
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-pill);
+  color: var(--text-dim);
+  font-size: 0.72rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.step-indicator.active {
+  background: var(--live-blue);
+  color: #FFFFFF;
+  font-weight: 700;
+}
+
+.step-indicator .step-num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 17px;
+  height: 17px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.12);
+  font-size: 0.65rem;
+  font-weight: 700;
+}
+
+.step-indicator.active .step-num {
+  background: rgba(255, 255, 255, 0.28);
+}
+
+.tutorial-body {
+  flex: 1;
+  overflow-y: auto;
+  padding-right: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.tutorial-step {
+  display: none;
+  animation: fadeIn 0.25s ease;
+}
+
+.tutorial-step.active {
+  display: block;
+}
+
+.step-badge {
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.8px;
+  color: var(--live-blue);
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+
+.step-heading {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--text-main);
+  margin-bottom: 6px;
+}
+
+.step-desc {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  line-height: 1.45;
+  margin-bottom: 12px;
+}
+
+.step-desc em {
+  color: var(--text-main);
+  font-style: normal;
+  font-weight: 600;
+}
+
+.tutorial-box {
+  background: #0E131C;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 12px;
+  margin-bottom: 12px;
+}
+
+.box-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.box-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  display: block;
+  margin-bottom: 6px;
+}
+
+.box-header-row .box-label {
+  margin-bottom: 0;
+}
+
+.formula-code-wrapper {
+  background: #070A0F;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: var(--radius-sm);
+  padding: 10px;
+  overflow-x: auto;
+  max-height: 110px;
+}
+
+.formula-code-wrapper pre {
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+.formula-code-wrapper code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.74rem;
+  color: #7DD3FC;
+  line-height: 1.45;
+}
+
+.steps-instruction-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.instr-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 0.82rem;
+  color: var(--text-main);
+  line-height: 1.35;
+}
+
+.instr-num {
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: #18202C;
+  color: #38BDF8;
+  border: 1px solid var(--border-pill);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.75rem;
+}
+
+.step-tip {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  background: rgba(37, 99, 235, 0.08);
+  border: 1px solid rgba(37, 99, 235, 0.2);
+  padding: 8px 10px;
+  border-radius: var(--radius-sm);
+  font-size: 0.78rem;
+  color: #93C5FD;
+}
+
+.step-tip .tip-icon {
+  font-size: 0.95rem;
+  line-height: 1.2;
+}
+
+.step-tip p {
+  margin: 0;
+  line-height: 1.35;
+}
+
+.step-tip.step-tip-success {
+  background: rgba(34, 197, 94, 0.08);
+  border-color: rgba(34, 197, 94, 0.25);
+  color: #86EFAC;
+}
+
+.tutorial-details {
+  margin-top: 6px;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+.tutorial-details summary {
+  font-weight: 600;
+  color: #38BDF8;
+  outline: none;
+  cursor: pointer;
+  user-select: none;
+  margin-bottom: 8px;
+}
+
+.mini-formulas-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.mini-formula-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  background: #080C12;
+  border: 1px solid var(--border-subtle);
+  padding: 6px 10px;
+  border-radius: var(--radius-sm);
+}
+
+.mini-formula-item .mf-title {
+  font-size: 0.72rem;
+  color: var(--text-dim);
+  min-width: 90px;
+  white-space: nowrap;
+}
+
+.mini-formula-item code {
+  font-family: monospace;
+  font-size: 0.7rem;
+  color: #E2E8F0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+}
+
+.btn-mini-copy {
+  background: #1E293B;
+  border: 1px solid var(--border-subtle);
+  color: #CBD5E1;
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s;
+}
+
+.btn-mini-copy:active {
+  transform: scale(0.95);
+  background: var(--live-blue);
+  color: #FFFFFF;
+}
+
+.tutorial-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding-top: 14px;
+  margin-top: 4px;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.btn-tutorial-nav {
+  background: #18202C;
+  border: 1px solid var(--border-pill);
+  color: var(--text-main);
+  padding: 8px 16px;
+  border-radius: var(--radius-pill);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-tutorial-nav:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.btn-tutorial-nav.btn-primary-nav {
+  background: var(--live-blue);
+  border-color: var(--live-blue);
+  color: #FFFFFF;
+  font-weight: 700;
+}
+
+.tutorial-dots {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.tutorial-dots .dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #263040;
+  transition: all 0.2s;
+  cursor: pointer;
+}
+
+.tutorial-dots .dot.active {
+  background: var(--live-blue);
+  width: 18px;
+  border-radius: var(--radius-pill);
+}
+
+/* ==========================================================================
+   VISTA 3: LABORATORIO GRIGLIA & CALIBRAZIONE AL MILLIMETRO
+   ========================================================================== */
+
+#view-grid-lab {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  position: relative;
+  overflow: hidden;
+  background-color: var(--bg-app);
+}
+
+.grid-lab-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background-color: var(--bg-header);
+  border-bottom: 1px solid var(--border-subtle);
+  flex-shrink: 0;
+  z-index: 20;
+}
+
+.lab-back-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--pill-container-bg);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-main);
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.lab-back-btn:hover {
+  background: var(--pill-active-bg);
+}
+
+.grid-lab-title {
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: var(--text-main);
+  letter-spacing: 0.6px;
+  margin: 0;
+}
+
+.lab-header-action {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.lab-header-action:hover {
+  color: var(--text-main);
+  border-color: var(--border-hover);
+}
+
+/* Pills Selezione Modalità Anteprima */
+.lab-preview-pills {
+  display: flex;
+  gap: 8px;
+  padding: 10px 16px;
+  background-color: var(--bg-surface);
+  border-bottom: 1px solid var(--border-subtle);
+  flex-shrink: 0;
+  overflow-x: auto;
+}
+
+.lab-pill-btn {
+  padding: 6px 14px;
+  border-radius: var(--radius-pill);
+  background-color: var(--pill-container-bg);
+  border: 1px solid var(--border-subtle);
+  color: var(--pill-inactive-text);
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+}
+
+.lab-pill-btn.active {
+  background-color: var(--live-blue);
+  border-color: var(--live-blue);
+  color: #FFFFFF;
+  box-shadow: 0 2px 8px var(--live-blue-glow);
+}
+
+/* Viewport Griglia nel Lab */
+.grid-lab-viewport {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px 16px 200px 16px;
+  -webkit-overflow-scrolling: touch;
+}
+
+.grid-lab-container {
+  max-width: 500px;
+  margin: 0 auto;
+  position: relative;
+}
+
+/* Wireframe per modalità Griglia Nuda */
+.bare-slot-wireframe {
+  width: 100%;
+  height: 100%;
+  border: 1px dashed rgba(255, 255, 255, 0.18);
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.02);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  box-sizing: border-box;
+  transition: border-color 0.2s;
+}
+
+.bare-slot-wireframe:hover {
+  border-color: rgba(56, 189, 248, 0.4);
+}
+
+.bare-slot-sub {
+  font-size: 0.68rem;
+  color: var(--text-dim);
+  font-weight: 500;
+  margin-top: 2px;
+}
+
+/* Badge Interattivi Diretti sulle Linee Divisorie */
+.lab-line-handle-tag {
+  position: absolute;
+  right: 12px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: #1E2533;
+  border: 1px solid var(--live-blue);
+  border-radius: 12px;
+  padding: 2px 8px;
+  font-size: 0.68rem;
+  font-weight: 800;
+  color: #38BDF8;
+  z-index: 15;
+  transform: translateY(-50%);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+  cursor: grab;
+  user-select: none;
+}
+
+.lab-line-handle-tag:active {
+  cursor: grabbing;
+}
+
+.lab-mini-step-btn {
+  background: #2B3448;
+  border: none;
+  color: #FFFFFF;
+  border-radius: 4px;
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.6rem;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.lab-mini-step-btn:hover {
+  background: var(--live-blue);
+}
+
+/* Pannello Controlli / Regolazione Millimetrica Floating in Basso */
+.grid-lab-panel {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: #111620;
+  border-top: 1px solid #2B3448;
+  border-top-left-radius: 16px;
+  border-top-right-radius: 16px;
+  box-shadow: 0 -8px 30px rgba(0, 0, 0, 0.7);
+  z-index: 100;
+  max-width: 520px;
+  margin: 0 auto;
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.grid-lab-panel.collapsed {
+  transform: translateY(calc(100% - 44px));
+}
+
+.lab-panel-handle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.panel-handle-bar {
+  width: 38px;
+  height: 4px;
+  background: #3E4B5E;
+  border-radius: 2px;
+  position: absolute;
+  top: 6px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.panel-handle-title {
+  font-size: 0.82rem;
+  font-weight: 800;
+  color: #FFFFFF;
+  letter-spacing: 0.4px;
+}
+
+.panel-handle-indicator {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  transition: transform 0.3s;
+}
+
+.grid-lab-panel.collapsed .panel-handle-indicator {
+  transform: rotate(180deg);
+}
+
+.lab-panel-content {
+  padding: 6px 16px 18px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: 280px;
+  overflow-y: auto;
+}
+
+.lab-control-row {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  background: rgba(255, 255, 255, 0.03);
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border-subtle);
+}
+
+.control-label-group {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.control-title {
+  font-size: 0.76rem;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.control-value {
+  font-size: 0.74rem;
+  font-weight: 800;
+  color: #38BDF8;
+  font-family: monospace;
+}
+
+.control-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.btn-lab-step {
+  background: #202838;
+  border: 1px solid var(--border-subtle);
+  color: var(--text-main);
+  border-radius: 6px;
+  padding: 4px 8px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s;
+}
+
+.btn-lab-step:hover {
+  background: var(--live-blue);
+  border-color: var(--live-blue);
+}
+
+.lab-slider {
+  flex: 1;
+  -webkit-appearance: none;
+  height: 4px;
+  background: #2C3648;
+  border-radius: 2px;
+  outline: none;
+  cursor: pointer;
+}
+
+.lab-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #38BDF8;
+  box-shadow: 0 0 8px rgba(56, 189, 248, 0.5);
+  cursor: pointer;
+  transition: transform 0.1s;
+}
+
+.lab-slider::-webkit-slider-thumb:hover {
+  transform: scale(1.25);
+}
+
+.lab-panel-buttons {
+  display: flex;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.btn-lab-primary {
+  flex: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: var(--live-blue);
+  border: none;
+  color: #FFFFFF;
+  padding: 10px;
+  border-radius: 8px;
+  font-size: 0.84rem;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 4px 12px var(--live-blue-glow);
+  transition: opacity 0.2s;
+}
+
+.btn-lab-primary:hover {
+  opacity: 0.92;
+}
+
+.btn-lab-secondary {
+  flex: 1;
+  background: #1C2433;
+  border: 1px solid var(--border-subtle);
+  color: var(--text-main);
+  padding: 10px 8px;
+  border-radius: 8px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: center;
+}
+
+.btn-lab-secondary:hover {
+  background: #273347;
+  border-color: var(--border-hover);
+}

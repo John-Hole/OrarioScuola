@@ -1,0 +1,103 @@
+name: Synchronize School Timetable (Gemini Vision)
+
+on:
+  schedule:
+    # Esecuzione programmata ogni Lunedì mattina alle 06:30 Italian Time (04:30 o 05:30 UTC)
+    - cron: '30 4 * * 1'
+  workflow_dispatch:
+    inputs:
+      force_refresh:
+        description: 'Forza la rielaborazione anche se l\'immagine è immutata'
+        required: false
+        default: false
+        type: boolean
+      target_class:
+        description: 'Nome della classe'
+        required: false
+        default: '4 BINF'
+        type: string
+      scan_mode:
+        description: 'Modalità di scansione: single (manuale) o double (doppia scansione mattutina)'
+        required: false
+        default: 'single'
+        type: choice
+        options:
+          - single
+          - double
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Verifica Scadenza Automatismo (Fino al 31 Gennaio)
+        id: check-date
+        run: |
+          # Controlla se siamo oltre il 31 Gennaio 2027
+          CURRENT_DATE=$(date +%Y%m%d)
+          EXPIRY_DATE=20270131
+          IS_MANUAL="${{ github.event_name == 'workflow_dispatch' }}"
+          
+          if [ "$CURRENT_DATE" -gt "$EXPIRY_DATE" ] && [ "$IS_MANUAL" != "true" ]; then
+            echo "::notice ::Automazione programmata in standby dopo il 31 Gennaio. Sincronizzazione automatica saltata."
+            echo "should_run=false" >> $GITHUB_OUTPUT
+          else
+            echo "should_run=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Configura Python
+        if: steps.check-date.outputs.should_run == 'true'
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Installa Dipendenze
+        if: steps.check-date.outputs.should_run == 'true'
+        run: |
+          pip install -r scripts/requirements.txt
+
+      - name: Esegui Sincronizzazione Orario (Gemini 3.8 Flash / 3.5 Flash Lite)
+        if: steps.check-date.outputs.should_run == 'true'
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          TIMETABLE_URL: ${{ secrets.TIMETABLE_IMAGE_URL }}
+        run: |
+          EXTRA_FLAGS=""
+          if [ "${{ inputs.force_refresh }}" = "true" ]; then
+            EXTRA_FLAGS="--force"
+          fi
+          
+          CLASS_NAME="${{ inputs.target_class || '4 BINF' }}"
+          
+          # Se automatico (cron mattutino): doppia scansione di verifica
+          # Se manuale (workflow_dispatch): singola scansione (o scelta dell'utente)
+          if [ "${{ github.event_name }}" = "schedule" ]; then
+            SCAN_MODE="double"
+          else
+            SCAN_MODE="${{ inputs.scan_mode || 'single' }}"
+          fi
+          
+          echo "Modalità scansione selezionata: $SCAN_MODE"
+          
+          if [ -z "$TIMETABLE_URL" ]; then
+            echo "[WARN] TIMETABLE_IMAGE_URL secret non configurato. Esecuzione in fallback."
+            python scripts/sync_timetable.py --class-name "$CLASS_NAME" --scan-mode "$SCAN_MODE" $EXTRA_FLAGS
+          else
+            python scripts/sync_timetable.py --url "$TIMETABLE_URL" --class-name "$CLASS_NAME" --scan-mode "$SCAN_MODE" $EXTRA_FLAGS
+          fi
+
+      - name: Commit e Push degli Aggiornamenti (se presenti)
+        if: steps.check-date.outputs.should_run == 'true'
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add public/data/
+          if git diff --staged --quiet; then
+            echo "Nessuna variazione nell'orario scolastico. Commit non necessario."
+          else
+            git commit -m "chore(timetable): orario aggiornato automaticamente da Spaggiari EDT [skip ci]"
+            git push
+          fi

@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#2563EB" />
+      <stop offset="100%" stop-color="#1D4ED8" />
+    </linearGradient>
+    <linearGradient id="accent" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#10B981" />
+      <stop offset="100%" stop-color="#059669" />
+    </linearGradient>
+  </defs>
+  <!-- Background Rounded Rect -->
+  <rect width="512" height="512" rx="112" fill="url(#grad)" />
+  <!-- Inner Calendar / Timetable Sheet -->
+  <rect x="76" y="86" width="360" height="340" rx="36" fill="#FFFFFF" opacity="0.95" />
+  <!-- Header Bar -->
+  <path d="M 76 122 C 76 102, 92 86, 112 86 L 400 86 C 420 86, 436 102, 436 122 L 436 156 L 76 156 Z" fill="#1E40AF" />
+  <!-- Binder Rings -->
+  <rect x="140" y="68" width="24" height="38" rx="8" fill="#F3F4F6" stroke="#1E40AF" stroke-width="4" />
+  <rect x="244" y="68" width="24" height="38" rx="8" fill="#F3F4F6" stroke="#1E40AF" stroke-width="4" />
+  <rect x="348" y="68" width="24" height="38" rx="8" fill="#F3F4F6" stroke="#1E40AF" stroke-width="4" />
+  <!-- Clock / Timeline Badge -->
+  <circle cx="256" cy="276" r="86" fill="#EFF6FF" stroke="#3B82F6" stroke-width="12" />
+  <polyline points="256,220 256,276 298,298" fill="none" stroke="#2563EB" stroke-width="12" stroke-linecap="round" stroke-linejoin="round" />
+  <circle cx="256" cy="276" r="10" fill="#2563EB" />
+  <!-- Live Pulse Dot -->
+  <circle cx="316" cy="216" r="16" fill="url(#accent)" />
+  <circle cx="316" cy="216" r="24" fill="none" stroke="#10B981" stroke-width="4" opacity="0.6" />
+</svg>

@@ -1,0 +1,294 @@
+{
+  "classe": "4 BINF",
+  "stato_orario": "Orario Provvisorio",
+  "data_decorrenza": "In vigore dal 14 Settembre 2026",
+  "data_aggiornamento": "2026-09-15 19:52",
+  "classi_disponibili": [
+    "4 BINF",
+    "4 AINF",
+    "3 BINF",
+    "5 BINF",
+    "4 AELT",
+    "4 AMEC"
+  ],
+  "giorni": [
+    {
+      "giorno": "Lunedì",
+      "lezioni": [
+        {
+          "ora": 1,
+          "inizio": "08:00",
+          "fine": "08:54",
+          "materia": "SISTEMI E RETI LAB",
+          "docenti": [
+            "MANCINO R.",
+            "RIGHI A."
+          ],
+          "aula": "B 010",
+          "is_lab": true,
+          "note": ""
+        },
+        {
+          "ora": 2,
+          "inizio": "08:58",
+          "fine": "09:48",
+          "materia": "SISTEMI E RETI LAB",
+          "docenti": [
+            "MANCINO R.",
+            "RIGHI A."
+          ],
+          "aula": "B 010",
+          "is_lab": true,
+          "note": ""
+        },
+        {
+          "ora": 3,
+          "inizio": "09:58",
+          "fine": "10:48",
+          "materia": "INFORMATICA LAB",
+          "docenti": [
+            "BATOCCHI M.",
+            "GIAPPICHINI A."
+          ],
+          "aula": "C 170",
+          "is_lab": true,
+          "note": ""
+        },
+        {
+          "ora": 4,
+          "inizio": "10:52",
+          "fine": "11:42",
+          "materia": "INFORMATICA LAB",
+          "docenti": [
+            "BATOCCHI M.",
+            "GIAPPICHINI A."
+          ],
+          "aula": "C 170",
+          "is_lab": true,
+          "note": ""
+        }
+      ]
+    },
+    {
+      "giorno": "Martedì",
+      "lezioni": [
+        {
+          "ora": 1,
+          "inizio": "08:00",
+          "fine": "08:54",
+          "materia": "ITALIANO",
+          "docenti": [
+            "TOMASSONI V."
+          ],
+          "aula": "B 115",
+          "is_lab": false,
+          "note": ""
+        },
+        {
+          "ora": 2,
+          "inizio": "08:58",
+          "fine": "09:48",
+          "materia": "ITALIANO",
+          "docenti": [
+            "TOMASSONI V."
+          ],
+          "aula": "B 115",
+          "is_lab": false,
+          "note": ""
+        },
+        {
+          "ora": 3,
+          "inizio": "09:58",
+          "fine": "10:48",
+          "materia": "RELIGIONE",
+          "docenti": [
+            "VIOLA A."
+          ],
+          "aula": "B 115",
+          "is_lab": false,
+          "note": ""
+        },
+        {
+          "ora": 4,
+          "inizio": "10:52",
+          "fine": "11:42",
+          "materia": "INGLESE",
+          "docenti": [
+            "GUERCINI C."
+          ],
+          "aula": "B 115",
+          "is_lab": false,
+          "note": ""
+        }
+      ]
+    },
+    {
+      "giorno": "Mercoledì",
+      "lezioni": [
+        {
+          "ora": 1,
+          "inizio": "08:00",
+          "fine": "08:54",
+          "materia": "TPSIT LAB",
+          "docenti": [
+            "CIUCHETTI M.",
+            "CRISPOLTI M."
+          ],
+          "aula": "B 045",
+          "is_lab": true,
+          "note": ""
+        },
+        {
+          "ora": 2,
+          "inizio": "08:58",
+          "fine": "09:48",
+          "materia": "TPSIT LAB",
+          "docenti": [
+            "CIUCHETTI M.",
+            "CRISPOLTI M."
+          ],
+          "aula": "B 045",
+          "is_lab": true,
+          "note": ""
+        },
+        {
+          "ora": 3,
+          "inizio": "09:58",
+          "fine": "10:48",
+          "materia": "MATEMATICA",
+          "docenti": [
+            "POGGIONI M."
+          ],
+          "aula": "C 180",
+          "is_lab": false,
+          "note": ""
+        },
+        {
+          "ora": 4,
+          "inizio": "10:52",
+          "fine": "11:42",
+          "materia": "MATEMATICA",
+          "docenti": [
+            "POGGIONI M."
+          ],
+          "aula": "C 180",
+          "is_lab": false,
+          "note": ""
+        }
+      ]
+    },
+    {
+      "giorno": "Giovedì",
+      "lezioni": [
+        {
+          "ora": 1,
+          "inizio": "08:00",
+          "fine": "08:54",
+          "materia": "ITALIANO",
+          "docenti": [
+            "TOMASSONI V."
+          ],
+          "aula": "B 060",
+          "is_lab": false,
+          "note": ""
+        },
+        {
+          "ora": 2,
+          "inizio": "08:58",
+          "fine": "09:48",
+          "materia": "INGLESE",
+          "docenti": [
+            "GUERCINI C."
+          ],
+          "aula": "B 060",
+          "is_lab": false,
+          "note": ""
+        },
+        {
+          "ora": 3,
+          "inizio": "09:58",
+          "fine": "10:48",
+          "materia": "MATEMATICA",
+          "docenti": [
+            "POGGIONI M."
+          ],
+          "aula": "C 220",
+          "is_lab": false,
+          "note": ""
+        },
+        {
+          "ora": 4,
+          "inizio": "10:52",
+          "fine": "11:42",
+          "materia": "SISTEMI E RETI",
+          "docenti": [
+            "MANCINO R."
+          ],
+          "aula": "C 220",
+          "is_lab": false,
+          "note": ""
+        }
+      ]
+    },
+    {
+      "giorno": "Venerdì",
+      "lezioni": [
+        {
+          "ora": 1,
+          "inizio": "08:00",
+          "fine": "08:54",
+          "materia": "SCIENZE MOTORIE",
+          "docenti": [
+            "PAPINI S."
+          ],
+          "aula": "Palestra ITTS",
+          "is_lab": true,
+          "note": ""
+        },
+        {
+          "ora": 2,
+          "inizio": "08:58",
+          "fine": "09:48",
+          "materia": "SCIENZE MOTORIE",
+          "docenti": [
+            "PAPINI S."
+          ],
+          "aula": "Palestra ITTS",
+          "is_lab": true,
+          "note": ""
+        },
+        {
+          "ora": 3,
+          "inizio": "09:58",
+          "fine": "10:48",
+          "materia": "TELECOMUNICAZIONI",
+          "docenti": [
+            "PERICOLINI A."
+          ],
+          "aula": "L 030",
+          "is_lab": true,
+          "note": ""
+        },
+        {
+          "ora": 4,
+          "inizio": "10:52",
+          "fine": "11:42",
+          "materia": "ITALIANO",
+          "docenti": [
+            "TOMASSONI V."
+          ],
+          "aula": "B 030",
+          "is_lab": false,
+          "note": ""
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "verified": true,
+    "scan_mode": "single",
+    "consensus": 1.0,
+    "status": "DEMO_FALLBACK",
+    "verified_at": "2026-09-15 19:52:47"
+  }
+}

@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Smart School Timetable - 4 BINF</title>
+  
+  <!-- PWA & Mobile Settings -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0E1218">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="icon" type="image/svg+xml" href="icons/icon.svg">
+
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div id="app" class="app-layout">
+    
+    <!-- Top Bar Navigation (Sleek Dark Theme) -->
+    <header class="app-header">
+      <div class="header-left">
+        <button id="btn-open-drawer" class="icon-button" aria-label="Apri menu laterale">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+            <line x1="3" y1="6" x2="21" y2="6"></line>
+            <line x1="3" y1="12" x2="21" y2="12"></line>
+            <line x1="3" y1="18" x2="21" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+
+      <div class="header-center">
+        <!-- Switcher a Capsula: Giorno vs Settimana -->
+        <div class="view-switch-pill" role="tablist">
+          <button id="btn-view-daily" class="pill-btn active" role="tab" aria-selected="true">Giorno</button>
+          <button id="btn-view-weekly" class="pill-btn" role="tab" aria-selected="false">Settimana</button>
+        </div>
+      </div>
+
+      <div class="header-right">
+        <!-- Spazio bilanciato -->
+        <div class="header-spacer"></div>
+      </div>
+    </header>
+
+    <!-- ==========================================================================
+         VISTA 1: GIORNO (TIMELINE CON CARD PASTELLO E CURSORE DINAMICO)
+         ========================================================================== -->
+    <main id="view-daily" class="view-container active-view">
+      
+      <!-- Intestazione Data (es. LUNEDÌ 14 SETTEMBRE) -->
+      <section class="daily-header-bar">
+        <button id="btn-prev-day" class="day-nav-arrow" aria-label="Giorno precedente">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="15 18 9 12 15 6"></polyline>
+          </svg>
+        </button>
+        <h1 id="daily-date-title" class="daily-date-title">LUNEDÌ 14 SETTEMBRE</h1>
+        <button id="btn-next-day" class="day-nav-arrow" aria-label="Giorno successivo">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="9 18 15 12 9 6"></polyline>
+          </svg>
+        </button>
+      </section>
+
+      <!-- Selettore rapido compatto giorni (Lunedì - Venerdì) -->
+      <nav class="days-nav" aria-label="Selettore rapido giorno">
+        <button class="day-chip" data-day="Lunedì">LUN</button>
+        <button class="day-chip" data-day="Martedì">MAR</button>
+        <button class="day-chip" data-day="Mercoledì">MER</button>
+        <button class="day-chip" data-day="Giovedì">GIO</button>
+        <button class="day-chip" data-day="Venerdì">VEN</button>
+      </nav>
+
+      <!-- Contenitore Timeline Verticale -->
+      <div class="timeline-viewport" id="timeline-viewport">
+        <div class="timeline-container" id="timeline-container">
+          
+          <!-- Asse Orario Verticale (popolato dinamicamente con ore 08:00, 08:58, ecc.) -->
+          <div class="timeline-time-column" id="timeline-time-column">
+            <!-- I marker orari sono generati da JS -->
+          </div>
+
+          <!-- Cursore Dinamico Live (Badge blu + Raggio Laser Orizzontale) -->
+          <div class="live-timeline-line" id="live-timeline-line"></div>
+          <div class="live-cursor" id="live-cursor">
+            <span class="cursor-dot"></span>
+            <span class="cursor-time" id="cursor-time">09:23</span>
+          </div>
+
+          <!-- Lista Card Lezioni Pastello -->
+          <div class="lessons-list" id="lessons-list">
+            <!-- Popolato dinamicamente da JS -->
+          </div>
+
+        </div>
+      </div>
+    </main>
+
+    <!-- ==========================================================================
+         VISTA 2: SETTIMANA (GRIGLIA A MATRICE CON CELLE COLORATE PASTELLO)
+         ========================================================================== -->
+    <main id="view-weekly" class="view-container hidden-view">
+      <div class="weekly-scroll-wrapper" id="weekly-scroll-wrapper">
+        <div class="weekly-grid-container" id="weekly-grid-container">
+          <!-- Cursore e Raggio Live anche nella Settimana -->
+          <div class="weekly-live-line" id="weekly-live-line"></div>
+          <div class="weekly-live-cursor" id="weekly-live-cursor">
+            <span class="cursor-dot"></span>
+            <span class="cursor-time" id="weekly-cursor-time">--:--</span>
+          </div>
+          <!-- Popolato dinamicamente con griglia a 5 colonne (LUN-VEN) e righe orarie -->
+        </div>
+      </div>
+      <div class="weekly-scroll-hint">
+        <span>‹</span> Scorri per vedere la settimana <span>›</span>
+      </div>
+    </main>
+
+    <!-- ==========================================================================
+         VISTA 3: LABORATORIO GRIGLIA & CALIBRAZIONE AL MILLIMETRO (TEST MODE)
+         Permette di visualizzare la griglia base senza materie,
+         e spostare/calibrare interattivamente ogni linea e orario al millimetro.
+         ========================================================================== -->
+    <main id="view-grid-lab" class="view-container hidden-view">
+      
+      <!-- Intestazione Laboratorio -->
+      <section class="grid-lab-header">
+        <button id="btn-close-grid-lab" class="lab-back-btn" aria-label="Torna all'orario">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="15 18 9 12 15 6"></polyline>
+          </svg>
+          <span>Orario</span>
+        </button>
+        <h2 class="grid-lab-title">LABORATORIO GRIGLIA</h2>
+        <button id="btn-reset-lab-header" class="lab-header-action" title="Ripristina valori predefiniti" aria-label="Ripristina default">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
+            <path d="M3 3v5h5"></path>
+          </svg>
+        </button>
+      </section>
+
+      <!-- Selettore Modalità Anteprima: Griglia Nuda vs Con Materie -->
+      <div class="lab-preview-pills" role="tablist">
+        <button class="lab-pill-btn active" data-mode="bare">Solo Griglia Base</button>
+        <button class="lab-pill-btn" data-mode="single">Ore Singole (GIO)</button>
+        <button class="lab-pill-btn" data-mode="double">Blocchi Doppi (MER)</button>
+      </div>
+
+      <!-- Area Canvas Griglia Live -->
+      <div class="grid-lab-viewport">
+        <div class="grid-lab-container" id="grid-lab-canvas">
+          <!-- Popolato dinamicamente con griglia ed elementi interattivi -->
+        </div>
+      </div>
+
+      <!-- Pannello Controlli / Regolazione Millimetrica Floating in Basso -->
+      <section class="grid-lab-panel" id="grid-lab-panel">
+        <div class="lab-panel-handle" id="lab-panel-toggle">
+          <div class="panel-handle-bar"></div>
+          <span class="panel-handle-title">Regolazione al Millimetro</span>
+          <span class="panel-handle-indicator">▲</span>
+        </div>
+
+        <div class="lab-panel-content" id="lab-panel-content">
+          <!-- Gruppo 1: Spostamento Cambio 1 (08:54 / 08:58) -->
+          <div class="lab-control-row">
+            <div class="control-label-group">
+              <span class="control-title">Cambio 1 (08:54 / 08:58)</span>
+              <span class="control-value" id="val-d1-offset">0 px (0.0 mm)</span>
+            </div>
+            <div class="control-actions">
+              <button class="btn-lab-step" data-target="d1" data-step="-1">▲ -1px</button>
+              <input type="range" id="range-d1-offset" min="-30" max="30" value="0" class="lab-slider">
+              <button class="btn-lab-step" data-target="d1" data-step="1">▼ +1px</button>
+            </div>
+          </div>
+
+          <!-- Gruppo 2: Spostamento Cambio 2 (10:48 / 10:52) -->
+          <div class="lab-control-row">
+            <div class="control-label-group">
+              <span class="control-title">Cambio 2 (10:48 / 10:52)</span>
+              <span class="control-value" id="val-d2-offset">0 px (0.0 mm)</span>
+            </div>
+            <div class="control-actions">
+              <button class="btn-lab-step" data-target="d2" data-step="-1">▲ -1px</button>
+              <input type="range" id="range-d2-offset" min="-30" max="30" value="0" class="lab-slider">
+              <button class="btn-lab-step" data-target="d2" data-step="1">▼ +1px</button>
+            </div>
+          </div>
+
+          <!-- Gruppo 3: Spaziatura Testo Orari dalla Linea -->
+          <div class="lab-control-row">
+            <div class="control-label-group">
+              <span class="control-title">Distanza Orario dalla Linea</span>
+              <span class="control-value" id="val-spacing">1.5 px</span>
+            </div>
+            <div class="control-actions">
+              <button class="btn-lab-step" data-target="spacing" data-step="-0.5">-0.5</button>
+              <input type="range" id="range-spacing" min="0" max="10" step="0.5" value="1.5" class="lab-slider">
+              <button class="btn-lab-step" data-target="spacing" data-step="0.5">+0.5</button>
+            </div>
+          </div>
+
+          <!-- Gruppo 4: Altezza di Ciascuna Ora -->
+          <div class="lab-control-row">
+            <div class="control-label-group">
+              <span class="control-title">Altezza Slot Ora</span>
+              <span class="control-value" id="val-slot-height">74 px</span>
+            </div>
+            <div class="control-actions">
+              <button class="btn-lab-step" data-target="slotHeight" data-step="-2">-2px</button>
+              <input type="range" id="range-slot-height" min="56" max="100" value="74" class="lab-slider">
+              <button class="btn-lab-step" data-target="slotHeight" data-step="2">+2px</button>
+            </div>
+          </div>
+
+          <!-- Gruppo 5: Larghezza Asse Orari Sinistra -->
+          <div class="lab-control-row">
+            <div class="control-label-group">
+              <span class="control-title">Larghezza Asse Orari</span>
+              <span class="control-value" id="val-axis-width">52 px</span>
+            </div>
+            <div class="control-actions">
+              <button class="btn-lab-step" data-target="axisWidth" data-step="-2">-2px</button>
+              <input type="range" id="range-axis-width" min="40" max="75" value="52" class="lab-slider">
+              <button class="btn-lab-step" data-target="axisWidth" data-step="2">+2px</button>
+            </div>
+          </div>
+
+          <!-- Azioni di Salvataggio e Copia -->
+          <div class="lab-panel-buttons">
+            <button id="btn-lab-apply" class="btn-lab-primary">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+              <span>Applica all'Orario</span>
+            </button>
+            <button id="btn-lab-copy" class="btn-lab-secondary">
+              <span>Copia Valori</span>
+            </button>
+            <button id="btn-lab-reset" class="btn-lab-secondary">
+              <span>Ripristina</span>
+            </button>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- ==========================================================================
+         DRAWER LATERALE A SCOMPARSA (MENU NERO IN STILE MOCKUP SCREEN 3)
+         ========================================================================== -->
+    <div id="drawer-overlay" class="drawer-overlay"></div>
+    <aside id="sidebar-drawer" class="sidebar-drawer" aria-hidden="true">
+      
+      <!-- Intestazione Menu -->
+      <div class="drawer-top">
+        <div class="drawer-header-row">
+          <h2 class="drawer-title">MENU</h2>
+          <button id="btn-close-drawer" class="icon-button" aria-label="Chiudi menu">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+        </div>
+
+        <!-- Selettore Classe a Capsula con Ricerca -->
+        <div class="drawer-class-box">
+          <div class="class-pill-dropdown" id="btn-toggle-class-menu">
+            <span id="drawer-class-name">4 BINF</span>
+            <svg class="chevron-down" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+              <polyline points="6 9 12 15 18 9"></polyline>
+            </svg>
+            <select id="class-select" class="class-hidden-select">
+              <option value="4 BINF" selected>4 BINF</option>
+              <option value="4 AINF">4 AINF</option>
+              <option value="3 BINF">3 BINF</option>
+              <option value="5 BINF">5 BINF</option>
+              <option value="4 AELT">4 AELT</option>
+              <option value="4 AMEC">4 AMEC</option>
+            </select>
+          </div>
+          <button id="btn-search-class" class="btn-search-circle" aria-label="Cerca classe">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+              <circle cx="11" cy="11" r="7"></circle>
+              <line x1="21" y1="21" x2="16" y2="16"></line>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Elenco Voci di Navigazione con Icone Outline -->
+      <nav class="drawer-menu-list">
+        
+        <button class="drawer-item" id="nav-item-schedule">
+          <div class="item-left">
+            <svg class="item-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+              <line x1="16" y1="2" x2="16" y2="6"></line>
+              <line x1="8" y1="2" x2="8" y2="6"></line>
+              <line x1="3" y1="10" x2="21" y2="10"></line>
+            </svg>
+            <span class="item-label">Orario</span>
+          </div>
+          <span class="item-arrow">›</span>
+        </button>
+
+        <button class="drawer-item" id="nav-item-change-class">
+          <div class="item-left">
+            <svg class="item-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+              <circle cx="9" cy="7" r="4"></circle>
+              <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+              <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+            </svg>
+            <span class="item-label">Cambia classe</span>
+          </div>
+          <span class="item-arrow">›</span>
+        </button>
+
+        <button class="drawer-item" id="nav-item-grid-lab">
+          <div class="item-left">
+            <svg class="item-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+              <line x1="3" y1="9" x2="21" y2="9"></line>
+              <line x1="3" y1="15" x2="21" y2="15"></line>
+              <line x1="9" y1="3" x2="9" y2="21"></line>
+            </svg>
+            <span class="item-label">Laboratorio Griglia (Test)</span>
+          </div>
+          <span class="item-arrow">›</span>
+        </button>
+
+        <button class="drawer-item" id="nav-item-sync">
+          <div class="item-left">
+            <svg class="item-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="23 4 23 10 17 10"></polyline>
+              <polyline points="1 20 1 14 7 14"></polyline>
+              <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+            </svg>
+            <span class="item-label">Sincronizza orario</span>
+          </div>
+          <span class="item-arrow">›</span>
+        </button>
+
+        <button class="drawer-item" id="nav-item-widget">
+          <div class="item-left">
+            <svg class="item-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="3" width="7" height="7"></rect>
+              <rect x="14" y="3" width="7" height="7"></rect>
+              <rect x="14" y="14" width="7" height="7"></rect>
+              <rect x="3" y="14" width="7" height="7"></rect>
+            </svg>
+            <span class="item-label">Widget</span>
+          </div>
+          <span class="item-arrow">›</span>
+        </button>
+
+        <button class="drawer-item" id="nav-item-notifications">
+          <div class="item-left">
+            <svg class="item-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+              <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+            </svg>
+            <span class="item-label">Notifiche</span>
+          </div>
+          <span class="item-arrow">›</span>
+        </button>
+
+        <button class="drawer-item" id="nav-item-settings">
+          <div class="item-left">
+            <svg class="item-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="3"></circle>
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+            </svg>
+            <span class="item-label">Impostazioni</span>
+          </div>
+          <span class="item-arrow">›</span>
+        </button>
+
+      </nav>
+
+      <!-- Sezione Stato e Pulsante Sincronizza in Basso -->
+      <div class="drawer-footer">
+        <div class="drawer-status-box">
+          <div class="status-row-indicator">
+            <span class="status-dot-green"></span>
+            <span class="status-title-text" id="drawer-status-text">ORARIO AGGIORNATO</span>
+          </div>
+          <div class="status-date-text" id="drawer-status-date">- 14 SETTEMBRE 2026</div>
+        </div>
+
+        <button id="btn-sync-now" class="btn-drawer-sync">
+          <svg id="sync-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="23 4 23 10 17 10"></polyline>
+            <polyline points="1 20 1 14 7 14"></polyline>
+            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+          </svg>
+          <span id="sync-btn-label">SINCRONIZZA ORARIO</span>
+        </button>
+      </div>
+
+    </aside>
+
+    <!-- Modale Widget & Tutorial Guida S24 / Android -->
+    <div id="modal-widget" class="modal-backdrop">
+      <div class="modal-card modal-card-tutorial">
+        <div class="modal-header">
+          <div class="modal-title-with-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="3" width="7" height="7"></rect>
+              <rect x="14" y="3" width="7" height="7"></rect>
+              <rect x="14" y="14" width="7" height="7"></rect>
+              <rect x="3" y="14" width="7" height="7"></rect>
+            </svg>
+            <h3>Tutorial Widget S24 / Android</h3>
+          </div>
+          <button class="modal-close-btn" id="btn-close-modal-widget" aria-label="Chiudi tutorial">✕</button>
+        </div>
+
+        <!-- Indicatore Passaggi (Stepper) -->
+        <div class="tutorial-stepper" id="tutorial-stepper">
+          <button class="step-indicator active" data-step="0" aria-label="Passo 1: Feed JSON">
+            <span class="step-num">1</span>
+            <span class="step-text">Feed JSON</span>
+          </button>
+          <button class="step-indicator" data-step="1" aria-label="Passo 2: App KWGT">
+            <span class="step-num">2</span>
+            <span class="step-text">KWGT</span>
+          </button>
+          <button class="step-indicator" data-step="2" aria-label="Passo 3: Formula">
+            <span class="step-num">3</span>
+            <span class="step-text">Formula</span>
+          </button>
+          <button class="step-indicator" data-step="3" aria-label="Passo 4: AOD / Blocco">
+            <span class="step-num">4</span>
+            <span class="step-text">AOD / Blocco</span>
+          </button>
+        </div>
+
+        <div class="modal-body tutorial-body">
+          
+          <!-- Passo 1: Feed JSON -->
+          <div class="tutorial-step active" id="tutorial-step-0">
+            <div class="step-badge">PASSO 1 DI 4</div>
+            <h4 class="step-heading">Il tuo Feed in Tempo Reale</h4>
+            <p class="step-desc">L'applicazione genera un feed JSON leggero (&lt;1 KB) che risponde in tempo reale a <em>"Dove devo andare adesso?"</em> aggiornando materia, aula, countdown e cambio ora.</p>
+            
+            <div class="tutorial-box">
+              <span class="box-label">Indirizzo del feed JSON:</span>
+              <div class="code-copy-row">
+                <code id="widget-url-display">data/widget_data.json</code>
+                <button id="btn-copy-widget-url" class="btn-modal-action">Copia Link</button>
+              </div>
+            </div>
+
+            <div class="step-tip">
+              <span class="tip-icon">💡</span>
+              <p>Questo link è l'origine dati da cui il widget riceve gli aggiornamenti ogni minuto.</p>
+            </div>
+          </div>
+
+          <!-- Passo 2: KWGT Setup -->
+          <div class="tutorial-step" id="tutorial-step-1">
+            <div class="step-badge">PASSO 2 DI 4</div>
+            <h4 class="step-heading">Installa KWGT e crea il Widget</h4>
+            <p class="step-desc">KWGT (Kustom Widget Maker) è l'app più potente su Android per creare widget perfettamente integrati nello stile One UI di Samsung.</p>
+            
+            <div class="steps-instruction-list">
+              <div class="instr-item">
+                <span class="instr-num">1</span>
+                <div>Scarica <strong>KWGT Kustom Widget Maker</strong> dal Google Play Store.</div>
+              </div>
+              <div class="instr-item">
+                <span class="instr-num">2</span>
+                <div>Sulla Home del Galaxy S24, tieni premuto su uno spazio vuoto e tocca <strong>Widget</strong>.</div>
+              </div>
+              <div class="instr-item">
+                <span class="instr-num">3</span>
+                <div>Scegli <strong>KWGT</strong> e seleziona il formato <strong>4x2</strong> (oppure <strong>2x2</strong>).</div>
+              </div>
+              <div class="instr-item">
+                <span class="instr-num">4</span>
+                <div>Tocca il riquadro del widget vuoto per aprire l'editor.</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Passo 3: Inserisci la Formula -->
+          <div class="tutorial-step" id="tutorial-step-2">
+            <div class="step-badge">PASSO 3 DI 4</div>
+            <h4 class="step-heading">Incolla la Formula One UI</h4>
+            <p class="step-desc">Nell'editor KWGT, tocca <strong>`+`</strong> in alto &rarr; aggiungi un blocco <strong>Testo</strong> &rarr; tocca il testo inserito e incolla questa formula già configurata con il tuo link:</p>
+            
+            <div class="tutorial-box">
+              <div class="box-header-row">
+                <span class="box-label">Formula Dinamica Completa:</span>
+                <button id="btn-copy-formula-full" class="btn-modal-action">Copia Formula</button>
+              </div>
+              <div class="formula-code-wrapper">
+                <pre><code id="widget-formula-full">$if(wg("...", json, .status) = "IN_CLASS", "🟢 " + wg("...", json, .title) + " (" + wg("...", json, .room) + ") - " + wg("...", json, .time_left), "🔔 " + wg("...", json, .title) + " - " + wg("...", json, .subtitle))$</code></pre>
+              </div>
+            </div>
+
+            <!-- Accordion Formule Alternative -->
+            <details class="tutorial-details">
+              <summary>Mostra formule per singoli valori</summary>
+              <div class="mini-formulas-grid">
+                <div class="mini-formula-item">
+                  <span class="mf-title">Materia + Aula:</span>
+                  <code id="mf-code-sub">...</code>
+                  <button class="btn-mini-copy" data-target="mf-code-sub">Copia</button>
+                </div>
+                <div class="mini-formula-item">
+                  <span class="mf-title">Tempo rimanente:</span>
+                  <code id="mf-code-time">...</code>
+                  <button class="btn-mini-copy" data-target="mf-code-time">Copia</button>
+                </div>
+                <div class="mini-formula-item">
+                  <span class="mf-title">Prossima lezione:</span>
+                  <code id="mf-code-next">...</code>
+                  <button class="btn-mini-copy" data-target="mf-code-next">Copia</button>
+                </div>
+              </div>
+            </details>
+          </div>
+
+          <!-- Passo 4: Schermata Blocco e AOD -->
+          <div class="tutorial-step" id="tutorial-step-3">
+            <div class="step-badge">PASSO 4 DI 4</div>
+            <h4 class="step-heading">Schermata di Blocco & Always On Display</h4>
+            <p class="step-desc">Su Samsung Galaxy S24 (One UI 6.1+) puoi visualizzare aula e countdown anche a schermo bloccato o spento.</p>
+            
+            <div class="steps-instruction-list">
+              <div class="instr-item">
+                <span class="instr-num">1</span>
+                <div>Vai in <strong>Impostazioni</strong> &rarr; <strong>Schermata di blocco e AOD</strong>.</div>
+              </div>
+              <div class="instr-item">
+                <span class="instr-num">2</span>
+                <div>Tocca <strong>Modifica schermata di blocco</strong>.</div>
+              </div>
+              <div class="instr-item">
+                <span class="instr-num">3</span>
+                <div>Sotto l'orologio, tocca l'area <strong>+ Widget</strong> e scegli il widget compatto KWGT.</div>
+              </div>
+              <div class="instr-item">
+                <span class="instr-num">4</span>
+                <div>Abilita l'opzione <strong>"Mostra widget su Always On Display"</strong> nelle impostazioni AOD.</div>
+              </div>
+            </div>
+
+            <div class="step-tip step-tip-success">
+              <span class="tip-icon">✅</span>
+              <p>Configurazione completata! Nelle impostazioni di KWGT imposta la modalità di aggiornamento su <strong>"Intelligente"</strong> per azzerare i consumi della batteria.</p>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Footer con Navigazione Wizard -->
+        <div class="tutorial-footer">
+          <button id="btn-tutorial-prev" class="btn-tutorial-nav" disabled>‹ Indietro</button>
+          <div class="tutorial-dots" id="tutorial-dots">
+            <span class="dot active" data-step="0"></span>
+            <span class="dot" data-step="1"></span>
+            <span class="dot" data-step="2"></span>
+            <span class="dot" data-step="3"></span>
+          </div>
+          <button id="btn-tutorial-next" class="btn-tutorial-nav btn-primary-nav">Avanti ›</button>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Modale Impostazioni & Simulatore -->
+    <div id="modal-settings" class="modal-backdrop">
+      <div class="modal-card">
+        <div class="modal-header">
+          <h3>Impostazioni & Simulatore</h3>
+          <button class="modal-close-btn" id="btn-close-modal-settings">✕</button>
+        </div>
+        <div class="modal-body">
+          <label class="modal-label">Simula orario per collaudo:</label>
+          <div class="sim-buttons-grid">
+            <button class="sim-btn" data-sim-time="08:30" data-sim-day="Lunedì">08:30 (In Classe)</button>
+            <button class="sim-btn" data-sim-time="09:52" data-sim-day="Lunedì">09:52 (Ricreazione)</button>
+            <button class="sim-btn" data-sim-time="12:15" data-sim-day="Lunedì">12:15 (Finito)</button>
+            <button class="sim-btn active" data-sim-time="real">Ora Reale</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
