@@ -136,10 +136,10 @@ export const STANDARD_SCHOOL_HOURS = [
  * Estrae la sequenza cronologica globale degli slot orari e delle ricreazioni (1 o 2 ricreazioni).
  * Garantisce sempre una griglia completa a 6 ore (minHours = 6) lasciando vuoti gli slot non assegnati.
  */
-export function extractTimetableStructure(timetable, minHours = 6) {
+export function extractTimetableStructure(timetable, minHours = null) {
   const hourMap = new Map(); // ora -> { ora, start, end, startMin, endMin }
 
-  // 1. Raccogli tutti gli orari tipici per ciascuna ora (1, 2, ..., N) presenti nell'orario
+  // 1. Raccogli tutti gli orari effettivi per ciascuna ora presenti nell'orario
   if (timetable && timetable.giorni) {
     timetable.giorni.forEach(day => {
       (day.lezioni || []).forEach(lesson => {
@@ -158,23 +158,37 @@ export function extractTimetableStructure(timetable, minHours = 6) {
     });
   }
 
-  // 2. Assicura che la griglia mostri sempre la struttura completa delle 6 ore
+  // 2. Determina il massimo numero di ore effettivo (es. 5, 6, 7 o 8)
   const maxExisting = hourMap.size > 0 ? Math.max(...hourMap.keys()) : 0;
-  const targetMax = Math.max(minHours, maxExisting, 6);
+  const targetMax = minHours !== null ? Math.max(minHours, maxExisting) : (maxExisting > 0 ? maxExisting : 6);
 
   for (let h = 1; h <= targetMax; h++) {
     if (!hourMap.has(h)) {
-      const std = STANDARD_SCHOOL_HOURS.find(x => x.ora === h) || {
-        ora: h,
-        start: '00:00',
-        end: '00:00'
-      };
+      const prev = hourMap.get(h - 1);
+      let calculatedStart = '00:00';
+      let calculatedEnd = '00:00';
+
+      if (prev) {
+        // Se abbiamo l'ora precedente, deduciamo lo stacco orario tipico (circa 50-60 min)
+        const dur = prev.endMin - prev.startMin || 55;
+        const newStartMin = prev.endMin + 5;
+        const newEndMin = newStartMin + dur;
+        calculatedStart = minutesToTime(newStartMin);
+        calculatedEnd = minutesToTime(newEndMin);
+      } else {
+        const std = STANDARD_SCHOOL_HOURS.find(x => x.ora === h);
+        if (std) {
+          calculatedStart = std.start;
+          calculatedEnd = std.end;
+        }
+      }
+
       hourMap.set(h, {
         ora: h,
-        start: std.start,
-        end: std.end,
-        startMin: timeToMinutes(std.start),
-        endMin: timeToMinutes(std.end)
+        start: calculatedStart,
+        end: calculatedEnd,
+        startMin: timeToMinutes(calculatedStart),
+        endMin: timeToMinutes(calculatedEnd)
       });
     }
   }

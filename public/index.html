@@ -289,6 +289,19 @@
             </svg>
           </button>
         </div>
+
+        <!-- Sezione I Miei Orari con Supporto Preferiti ⭐ -->
+        <div class="drawer-timetables-section">
+          <div class="section-subtitle-row">
+            <span class="drawer-section-title">I MIEI ORARI</span>
+            <button id="btn-open-add-timetable" class="btn-add-timetable-mini" title="Aggiungi o carica un altro orario">
+              + Aggiungi
+            </button>
+          </div>
+          <div class="saved-timetables-list" id="saved-timetables-list">
+            <!-- Popolato dinamicamente da JS: classi salvate con stellina preferito -->
+          </div>
+        </div>
       </div>
 
       <!-- Elenco Voci di Navigazione con Icone Outline -->
@@ -590,6 +603,131 @@
             <button class="sim-btn" data-sim-time="12:15" data-sim-day="Lunedì">12:15 (Finito)</button>
             <button class="sim-btn active" data-sim-time="real">Ora Reale</button>
           </div>
+        </div>
+    </div>
+
+    <!-- ==========================================================================
+         MODALE GESTIONE ORARIO / ONBOARDING (ARCHIVIO VOLTA, DA URL, FOTO/PDF)
+         ========================================================================== -->
+    <div id="modal-manage-timetables" class="modal-backdrop">
+      <div class="modal-card modal-card-timetable">
+        <div class="modal-header">
+          <div class="modal-title-with-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+              <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+            </svg>
+            <h3 id="modal-timetable-title">Scegli o Aggiungi Orario</h3>
+          </div>
+          <button class="modal-close-btn" id="btn-close-modal-timetable" aria-label="Chiudi finestra">✕</button>
+        </div>
+
+        <!-- Selettore Tab: 1. Archivio Scuola | 2. Carica da URL | 3. Carica File Foto/PDF -->
+        <div class="timetable-tab-pills" role="tablist">
+          <button class="tt-tab-btn active" data-tab="preset" role="tab" aria-selected="true">
+            <span>🏛️ Scuola Volta</span>
+          </button>
+          <button class="tt-tab-btn" data-tab="url" role="tab" aria-selected="false">
+            <span>🔗 Da URL</span>
+          </button>
+          <button class="tt-tab-btn" data-tab="file" role="tab" aria-selected="false">
+            <span>📷 Foto / PDF</span>
+          </button>
+        </div>
+
+        <div class="modal-body timetable-modal-body">
+          
+          <!-- TAB 1: ARCHIVIO SCUOLA (VOLTA) -->
+          <div class="tt-tab-content active" id="tab-content-preset">
+            <div class="preset-school-header">
+              <span class="school-tag">ISTITUTO TECNICO A. VOLTA</span>
+              <p class="preset-school-desc">Orario integrato e sincronizzato automaticamente con Gemini Vision.</p>
+            </div>
+
+            <!-- Card In Primo Piano 4 BINF con Stellina ⭐ -->
+            <div class="preset-card-featured" id="preset-card-4binf">
+              <div class="featured-top">
+                <span class="featured-badge">⭐ PREDEFINITO / CONSIGLIATO</span>
+                <button class="star-toggle-btn active" id="star-btn-4binf" title="Preferito">★</button>
+              </div>
+              <div class="featured-main">
+                <div class="featured-title">4 BINF</div>
+                <div class="featured-sub">Informatica e Telecomunicazioni • Sez. B</div>
+              </div>
+              <div class="featured-footer">
+                <span class="status-pill-green">● Pronto</span>
+                <button class="btn-select-preset" id="btn-select-4binf">Seleziona e Apri</button>
+              </div>
+            </div>
+
+            <!-- Altre Classi della Scuola (selezionabili) -->
+            <div class="preset-other-classes">
+              <div class="other-classes-title">Oppure scegli un'altra classe:</div>
+              <div class="classes-chip-list" id="preset-other-chips">
+                <button class="class-chip" data-class="4 AINF">4 AINF</button>
+                <button class="class-chip" data-class="3 BINF">3 BINF</button>
+                <button class="class-chip" data-class="5 BINF">5 BINF</button>
+                <button class="class-chip" data-class="4 AELT">4 AELT</button>
+                <button class="class-chip" data-class="4 AMEC">4 AMEC</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- TAB 2: CARICA DA URL -->
+          <div class="tt-tab-content" id="tab-content-url">
+            <p class="tab-instruction">Incolla il link pubblico all'immagine (PNG/JPG) o al PDF dell'orario della tua scuola o classe (es. Spaggiari, Argo, circolare):</p>
+            <div class="input-group">
+              <label for="input-timetable-url">URL Immagine o PDF</label>
+              <input type="url" id="input-timetable-url" placeholder="https://scuola.edu.it/orario_classe.png" />
+            </div>
+            <div class="input-group">
+              <label for="input-url-classname">Nome Classe (opzionale)</label>
+              <input type="text" id="input-url-classname" placeholder="Es. 3 ALS, 5 AINF, 2 B..." />
+            </div>
+            <button id="btn-extract-from-url" class="btn-primary-action">
+              <span>✨ Analizza con Gemini ed Estrai</span>
+            </button>
+          </div>
+
+          <!-- TAB 3: CARICA FOTO O PDF -->
+          <div class="tt-tab-content" id="tab-content-file">
+            <p class="tab-instruction">Carica uno screenshot, una foto della tabella orario o un documento PDF salvato sul tuo telefono o PC:</p>
+            
+            <div class="file-dropzone" id="file-dropzone">
+              <input type="file" id="input-timetable-file" accept="image/png, image/jpeg, image/webp, application/pdf" />
+              <div class="dropzone-inner">
+                <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                  <polyline points="17 8 12 3 7 8"></polyline>
+                  <line x1="12" y1="3" x2="12" y2="15"></line>
+                </svg>
+                <span class="dropzone-text" id="dropzone-text">Tocca per scegliere o trascina qui il file</span>
+                <span class="dropzone-sub">Formati supportati: Foto (PNG, JPG) o PDF</span>
+              </div>
+            </div>
+
+            <div class="input-group" style="margin-top: 12px;">
+              <label for="input-file-classname">Nome Classe (opzionale)</label>
+              <input type="text" id="input-file-classname" placeholder="Es. 3 ALS, 4 CINF..." />
+            </div>
+
+            <button id="btn-extract-from-file" class="btn-primary-action" disabled>
+              <span>✨ Analizza con Gemini ed Estrai</span>
+            </button>
+          </div>
+
+          <!-- STATO DI ESTRAZIONE GEMINI (SPINNER / PROGRESS) -->
+          <div class="extraction-loading-overlay hidden" id="extraction-loading">
+            <div class="loading-spinner"></div>
+            <div class="loading-title">Gemini Vision sta analizzando l'orario...</div>
+            <div class="loading-sub">Rilevamento orari di inizio/fine specifici, pause e materie</div>
+          </div>
+
+          <!-- MESSAGGIO DI ERRORE -->
+          <div class="extraction-error-banner hidden" id="extraction-error">
+            <span id="extraction-error-msg">Errore durante l'elaborazione</span>
+          </div>
+
         </div>
       </div>
     </div>

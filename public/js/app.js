@@ -19,6 +19,19 @@ import {
   computeClientWidgetState
 } from './widget_helper.js';
 
+import {
+  getActiveTimetableId,
+  setActiveTimetableId,
+  getAllSavedTimetables,
+  getTimetableById,
+  saveOrUpdateTimetable,
+  deleteTimetable,
+  toggleFavoriteTimetable,
+  loadPresetVolta4Binf,
+  getFavoriteTimetable,
+  VOLTA_PRESET_ID
+} from './timetable_store.js';
+
 // Parametri di calibrazione predefiniti (misure geometriche al millimetro)
 const DEFAULT_CALIBRATION = {
   d1Offset: 0,
@@ -155,7 +168,29 @@ const elements = {
 
   modalSettings: document.getElementById('modal-settings'),
   btnCloseModalSettings: document.getElementById('btn-close-modal-settings'),
-  simButtons: document.querySelectorAll('.sim-btn')
+  simButtons: document.querySelectorAll('.sim-btn'),
+
+  // Modale Gestione Orari & Onboarding Multi-Orario
+  modalManageTimetables: document.getElementById('modal-manage-timetables'),
+  btnCloseModalTimetable: document.getElementById('btn-close-modal-timetable'),
+  btnOpenAddTimetable: document.getElementById('btn-open-add-timetable'),
+  savedTimetablesList: document.getElementById('saved-timetables-list'),
+  ttTabButtons: document.querySelectorAll('.tt-tab-btn'),
+  ttTabContents: document.querySelectorAll('.tt-tab-content'),
+  btnSelect4binf: document.getElementById('btn-select-4binf'),
+  starBtn4binf: document.getElementById('star-btn-4binf'),
+  presetOtherChips: document.querySelectorAll('.class-chip'),
+  inputTimetableUrl: document.getElementById('input-timetable-url'),
+  inputUrlClassname: document.getElementById('input-url-classname'),
+  btnExtractFromUrl: document.getElementById('btn-extract-from-url'),
+  inputTimetableFile: document.getElementById('input-timetable-file'),
+  inputFileClassname: document.getElementById('input-file-classname'),
+  btnExtractFromFile: document.getElementById('btn-extract-from-file'),
+  fileDropzone: document.getElementById('file-dropzone'),
+  dropzoneText: document.getElementById('dropzone-text'),
+  extractionLoading: document.getElementById('extraction-loading'),
+  extractionError: document.getElementById('extraction-error'),
+  extractionErrorMsg: document.getElementById('extraction-error-msg')
 };
 
 let currentTutorialStep = 0;
@@ -231,7 +266,21 @@ async function init() {
   applyCalibration(state.calibration);
   updateCalibrationReadout();
 
-  await loadTimetableData();
+  renderSavedTimetablesList();
+
+  const activeId = getActiveTimetableId();
+  if (activeId) {
+    await loadTimetableById(activeId);
+  } else {
+    // Se non c'è un ID attivo esplicito, verifichiamo se c'è un preferito salvato
+    const fav = getFavoriteTimetable();
+    if (fav) {
+      await loadTimetableById(fav.id);
+    } else {
+      // PRIMO AVVIO O NESSUN ORARIO: l'app non mostra un orario a caso ma apre il selettore
+      openTimetableModal('preset');
+    }
+  }
 
   // Tick real-time ogni 5 secondi
   setInterval(tick, 5000);
@@ -249,24 +298,45 @@ function registerServiceWorker() {
 }
 
 /**
- * Caricamento dati da timetable.json con fallback su cache
+ * Caricamento orario attivo per ID (preset Volta o orario custom)
  */
-async function loadTimetableData() {
-  try {
-    const response = await fetch('data/timetable.json?t=' + Date.now());
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    state.timetable = await response.json();
-    localStorage.setItem('cached_timetable', JSON.stringify(state.timetable));
-  } catch (err) {
-    console.warn('[DATI] Caricamento rete fallito, uso cache:', err);
-    const cached = localStorage.getItem('cached_timetable');
-    if (cached) {
-      state.timetable = JSON.parse(cached);
-    } else {
-      console.error('[DATI] Nessun dato disponibile.');
-      return;
+async function loadTimetableById(id) {
+  if (!id) return;
+
+  let item = getTimetableById(id);
+  if (!item && id === VOLTA_PRESET_ID) {
+    try {
+      item = await loadPresetVolta4Binf();
+    } catch (e) {
+      console.warn('[DATI] Errore caricamento preset:', e);
     }
   }
+
+  if (item && item.type === 'preset') {
+    try {
+      const response = await fetch('data/timetable.json?t=' + Date.now());
+      if (response.ok) {
+        state.timetable = await response.json();
+        item.data = state.timetable;
+        saveOrUpdateTimetable(item, false);
+      } else if (item.data) {
+        state.timetable = item.data;
+      }
+    } catch (e) {
+      if (item.data) state.timetable = item.data;
+    }
+  } else if (item && item.data) {
+    state.timetable = item.data;
+  }
+
+  if (!state.timetable) {
+    console.warn('[DATI] Nessun dato orario per ID:', id);
+    openTimetableModal('preset');
+    return;
+  }
+
+  setActiveTimetableId(id);
+  state.currentClass = item.name || state.timetable.classe || '4 BINF';
 
   if (elements.drawerClassName) {
     elements.drawerClassName.textContent = state.currentClass;
@@ -277,10 +347,10 @@ async function loadTimetableData() {
 
   if (state.timetable) {
     if (elements.drawerStatusText) {
-      elements.drawerStatusText.textContent = (state.timetable.stato_orario || 'ORARIO AGGIORNATO').toUpperCase();
+      elements.drawerStatusText.textContent = (state.timetable.stato_orario || 'ORARIO ATTIVO').toUpperCase();
     }
     if (elements.drawerStatusDate) {
-      elements.drawerStatusDate.textContent = `- ${state.timetable.data_aggiornamento || '14 SETTEMBRE 2026'}`.toUpperCase();
+      elements.drawerStatusDate.textContent = `- ${state.timetable.data_aggiornamento || new Date().toLocaleDateString('it-IT')}`.toUpperCase();
     }
   }
 
@@ -288,6 +358,153 @@ async function loadTimetableData() {
   const now = getCurrentDate();
   state.lastCalendarDay = now.toDateString();
   state.selectedDay = getSmartDefaultDay(state.timetable.giorni, now);
+
+  renderSavedTimetablesList();
+  render();
+
+  setTimeout(() => {
+    autoScrollToActiveLesson(elements.timelineContainer);
+    state.hasAutoScrolled = true;
+  }, 350);
+}
+
+/**
+ * Caricamento dati da timetable.json (mantenuto per compatibilità sincronizzazione)
+ */
+async function loadTimetableData() {
+  const activeId = getActiveTimetableId();
+  if (activeId) {
+    await loadTimetableById(activeId);
+  } else {
+    const fav = getFavoriteTimetable();
+    if (fav) {
+      await loadTimetableById(fav.id);
+    } else {
+      openTimetableModal('preset');
+    }
+  }
+}
+
+/**
+ * Renderizza l'elenco degli orari salvati nel Drawer laterale
+ */
+function renderSavedTimetablesList() {
+  if (!elements.savedTimetablesList) return;
+  elements.savedTimetablesList.innerHTML = '';
+
+  const list = getAllSavedTimetables();
+  const activeId = getActiveTimetableId();
+
+  if (list.length === 0) {
+    const emptyNotice = document.createElement('div');
+    emptyNotice.style.fontSize = '0.74rem';
+    emptyNotice.style.color = 'var(--text-dim)';
+    emptyNotice.style.padding = '6px 4px';
+    emptyNotice.textContent = 'Nessun orario salvato. Tocca + Aggiungi.';
+    elements.savedTimetablesList.appendChild(emptyNotice);
+    return;
+  }
+
+  list.forEach((item) => {
+    const card = document.createElement('div');
+    const isActive = item.id === activeId;
+    card.className = `saved-tt-item ${isActive ? 'is-active' : ''}`;
+
+    const infoDiv = document.createElement('div');
+    infoDiv.className = 'saved-tt-info';
+
+    const nameSpan = document.createElement('div');
+    nameSpan.className = 'saved-tt-name';
+    nameSpan.innerHTML = `<span>${item.name}</span> ${isActive ? '<span class="active-tag">ATTIVO</span>' : ''}`;
+
+    const schoolSpan = document.createElement('div');
+    schoolSpan.className = 'saved-tt-school';
+    schoolSpan.textContent = item.school || (item.type === 'preset' ? 'Istituto A. Volta' : 'Orario Personale');
+
+    infoDiv.appendChild(nameSpan);
+    infoDiv.appendChild(schoolSpan);
+
+    const actionsDiv = document.createElement('div');
+    actionsDiv.className = 'saved-tt-actions';
+
+    // Bottone Stellina Preferito ⭐
+    const starBtn = document.createElement('button');
+    starBtn.className = `btn-tt-star ${item.isFavorite ? 'active' : ''}`;
+    starBtn.title = item.isFavorite ? 'Rimuovi dai preferiti' : 'Imposta come preferito';
+    starBtn.innerHTML = '★';
+    starBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      toggleFavoriteTimetable(item.id);
+      renderSavedTimetablesList();
+    });
+    actionsDiv.appendChild(starBtn);
+
+    // Bottone Cestino se personalizzato
+    if (item.type !== 'preset') {
+      const delBtn = document.createElement('button');
+      delBtn.className = 'btn-tt-delete';
+      delBtn.title = 'Elimina questo orario';
+      delBtn.innerHTML = '🗑️';
+      delBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (confirm(`Vuoi rimuovere l'orario "${item.name}"?`)) {
+          deleteTimetable(item.id);
+          renderSavedTimetablesList();
+          const newActive = getActiveTimetableId();
+          if (newActive) {
+            loadTimetableById(newActive);
+          } else {
+            state.timetable = null;
+            openTimetableModal('preset');
+          }
+        }
+      });
+      actionsDiv.appendChild(delBtn);
+    }
+
+    card.appendChild(infoDiv);
+    card.appendChild(actionsDiv);
+
+    // Click per selezionare e attivare l'orario
+    card.addEventListener('click', async () => {
+      toggleDrawer(false);
+      await loadTimetableById(item.id);
+    });
+
+    elements.savedTimetablesList.appendChild(card);
+  });
+}
+
+/**
+ * Gestione Modale Seleziona / Aggiungi Orario
+ */
+function openTimetableModal(initialTab = 'preset') {
+  if (!elements.modalManageTimetables) return;
+  setTimetableModalTab(initialTab);
+  if (elements.extractionLoading) elements.extractionLoading.classList.add('hidden');
+  if (elements.extractionError) elements.extractionError.classList.add('hidden');
+  elements.modalManageTimetables.classList.add('open');
+}
+
+function closeTimetableModal() {
+  if (!elements.modalManageTimetables) return;
+  elements.modalManageTimetables.classList.remove('open');
+}
+
+function setTimetableModalTab(tabName) {
+  if (elements.ttTabButtons) {
+    elements.ttTabButtons.forEach(btn => {
+      const isSel = btn.getAttribute('data-tab') === tabName;
+      btn.classList.toggle('active', isSel);
+      btn.setAttribute('aria-selected', isSel ? 'true' : 'false');
+    });
+  }
+  if (elements.ttTabContents) {
+    elements.ttTabContents.forEach(content => {
+      content.classList.toggle('active', content.id === `tab-content-${tabName}`);
+    });
+  }
+}
 
   render();
 
@@ -623,30 +840,40 @@ function renderDailyTimeline() {
   grid.appendChild(edgeBottom);
 
   // 4. Inserimento Card per il giorno selezionato:
-  // Valuta blocchi a coppie (1-2, 3-4, 5-6)
+  // Valuta dinamicamente blocchi a ore doppie o singole per qualsiasi numero di ore (es. 4, 5, 6, 7 o 8)
   const dayLessons = dayData.lezioni || [];
-  const hourPairs = [[1, 2], [3, 4], [5, 6]];
+  const lessonSlots = structure.filter(s => s.type === 'lesson');
+  const handledHours = new Set();
 
-  hourPairs.forEach(([hA, hB]) => {
+  for (let i = 0; i < lessonSlots.length; i++) {
+    const slotA = lessonSlots[i];
+    const hA = slotA.ora;
+    if (handledHours.has(hA)) continue;
+
+    const slotB = lessonSlots[i + 1];
+    const hB = slotB ? slotB.ora : null;
     const lA = dayLessons.find(l => l.ora === hA);
-    const lB = dayLessons.find(l => l.ora === hB);
+    const lB = hB ? dayLessons.find(l => l.ora === hB) : null;
     const rA = hourRowMap.get(hA);
-    const rB = hourRowMap.get(hB);
-    const slotA = structure.find(s => s.ora === hA);
-    const slotB = structure.find(s => s.ora === hB);
+    const rB = hB ? hourRowMap.get(hB) : null;
 
-    if (lA && lB && lA.materia === lB.materia && lA.aula === lB.aula && rA && rB) {
+    // Controlla se c'è una ricreazione tra slotA e slotB
+    const hasBreakBetween = structure.some(s => s.type === 'break' && s.gridRow > rA && s.gridRow < rB);
+
+    if (slotB && !hasBreakBetween && lA && lB && lA.materia === lB.materia && lA.aula === lB.aula && rA && rB) {
       // Blocco doppio continuo (stessa materia e aula)
       const slot = createDailyLessonSlot(lA, lA.inizio, lB.fine, 'lesson-slot-double');
       slot.style.gridRow = `${rA} / ${rB + 1}`;
       grid.appendChild(slot);
+      handledHours.add(hA);
+      handledHours.add(hB);
     } else {
       if (lA && rA) {
         const slot = createDailyLessonSlot(lA, lA.inizio, lA.fine, 'lesson-slot-single');
         slot.style.gridRow = String(rA);
         grid.appendChild(slot);
       } else if (rA && slotA) {
-        // Slot non riempito: elemento trasparente senza card per non mostrare nulla come richiesto dall'utente
+        // Slot non riempito: elemento trasparente senza card per non mostrare nulla
         const emptySlot = document.createElement('div');
         emptySlot.className = 'timeline-lesson-row is-empty';
         emptySlot.setAttribute('data-start', slotA.start);
@@ -654,22 +881,9 @@ function renderDailyTimeline() {
         emptySlot.style.gridRow = String(rA);
         grid.appendChild(emptySlot);
       }
-
-      if (lB && rB) {
-        const slot = createDailyLessonSlot(lB, lB.inizio, lB.fine, 'lesson-slot-single');
-        slot.style.gridRow = String(rB);
-        grid.appendChild(slot);
-      } else if (rB && slotB) {
-        // Slot non riempito: elemento trasparente senza card
-        const emptySlot = document.createElement('div');
-        emptySlot.className = 'timeline-lesson-row is-empty';
-        emptySlot.setAttribute('data-start', slotB.start);
-        emptySlot.setAttribute('data-end', slotB.end);
-        emptySlot.style.gridRow = String(rB);
-        grid.appendChild(emptySlot);
-      }
+      handledHours.add(hA);
     }
-  });
+  }
 
   elements.lessonsList.appendChild(grid);
 
@@ -934,7 +1148,16 @@ function setupEventListeners() {
 
   // Voci Drawer
   elements.navItemSchedule.addEventListener('click', () => toggleDrawer(false));
-  elements.navItemChangeClass.addEventListener('click', () => elements.classSelect.focus());
+  elements.navItemChangeClass.addEventListener('click', () => {
+    toggleDrawer(false);
+    openTimetableModal('preset');
+  });
+  if (elements.btnOpenAddTimetable) {
+    elements.btnOpenAddTimetable.addEventListener('click', () => {
+      toggleDrawer(false);
+      openTimetableModal('preset');
+    });
+  }
   elements.navItemSync.addEventListener('click', () => triggerSync());
   elements.navItemWidget.addEventListener('click', () => {
     toggleDrawer(false);
@@ -952,6 +1175,228 @@ function setupEventListeners() {
   // Chiusura Modali
   elements.btnCloseModalWidget.addEventListener('click', () => elements.modalWidget.classList.remove('open'));
   elements.btnCloseModalSettings.addEventListener('click', () => elements.modalSettings.classList.remove('open'));
+
+  // Gestione Modale Orari & Onboarding
+  if (elements.btnCloseModalTimetable) {
+    elements.btnCloseModalTimetable.addEventListener('click', closeTimetableModal);
+  }
+  if (elements.modalManageTimetables) {
+    elements.modalManageTimetables.addEventListener('click', (e) => {
+      if (e.target === elements.modalManageTimetables) closeTimetableModal();
+    });
+  }
+
+  // Switch Tab Modale Orari
+  if (elements.ttTabButtons) {
+    elements.ttTabButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const tab = btn.getAttribute('data-tab');
+        setTimetableModalTab(tab);
+      });
+    });
+  }
+
+  // Tab 1: Selezione Preset Volta 4 BINF
+  if (elements.btnSelect4binf) {
+    elements.btnSelect4binf.addEventListener('click', async () => {
+      try {
+        elements.btnSelect4binf.textContent = 'Caricamento...';
+        const preset = await loadPresetVolta4Binf();
+        closeTimetableModal();
+        await loadTimetableById(preset.id);
+      } catch (err) {
+        console.error('[PRESET LOAD ERROR]', err);
+        alert('Impossibile caricare l\'orario 4 BINF: ' + err.message);
+      } finally {
+        if (elements.btnSelect4binf) elements.btnSelect4binf.textContent = 'Seleziona e Apri';
+      }
+    });
+  }
+
+  if (elements.starBtn4binf) {
+    elements.starBtn4binf.addEventListener('click', () => {
+      elements.starBtn4binf.classList.toggle('active');
+    });
+  }
+
+  // Chip altre classi della scuola Volta
+  if (elements.presetOtherChips) {
+    elements.presetOtherChips.forEach(chip => {
+      chip.addEventListener('click', async () => {
+        const clsName = chip.getAttribute('data-class');
+        const customItem = {
+          id: 'volta_' + clsName.toLowerCase().replace(/\s+/g, '_'),
+          name: clsName,
+          school: 'Istituto Tecnico A. Volta',
+          type: 'preset_other',
+          isFavorite: false,
+          lastUpdated: new Date().toLocaleDateString('it-IT'),
+          data: state.timetable || {}
+        };
+        saveOrUpdateTimetable(customItem, true);
+        closeTimetableModal();
+        await loadTimetableById(customItem.id);
+      });
+    });
+  }
+
+  // Tab 2: Estrazione da URL con Gemini
+  if (elements.btnExtractFromUrl) {
+    elements.btnExtractFromUrl.addEventListener('click', async () => {
+      const url = elements.inputTimetableUrl?.value.trim();
+      const className = elements.inputUrlClassname?.value.trim();
+
+      if (!url) {
+        alert('Inserisci l\'URL dell\'immagine o del PDF dell\'orario');
+        return;
+      }
+
+      try {
+        if (elements.extractionLoading) elements.extractionLoading.classList.remove('hidden');
+        if (elements.extractionError) elements.extractionError.classList.add('hidden');
+
+        const res = await fetch('/api/extract', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ imageUrl: url, targetClass: className })
+        });
+
+        const json = await res.json();
+        if (!res.ok || !json.success) {
+          throw new Error(json.error || json.details || 'Estrazione fallita');
+        }
+
+        const extracted = json.timetable;
+        const customItem = {
+          id: 'custom_url_' + Date.now(),
+          name: extracted.classe || className || 'Mio Orario',
+          school: extracted.istituto || 'Scuola',
+          type: 'custom_url',
+          isFavorite: true,
+          sourceUrl: url,
+          lastUpdated: extracted.data_aggiornamento || new Date().toLocaleDateString('it-IT'),
+          data: extracted
+        };
+
+        saveOrUpdateTimetable(customItem, true);
+        closeTimetableModal();
+        await loadTimetableById(customItem.id);
+      } catch (err) {
+        console.error('[EXTRACT URL ERROR]', err);
+        if (elements.extractionError) {
+          elements.extractionError.classList.remove('hidden');
+          if (elements.extractionErrorMsg) {
+            elements.extractionErrorMsg.textContent = 'Errore Gemini: ' + err.message;
+          }
+        }
+      } finally {
+        if (elements.extractionLoading) elements.extractionLoading.classList.add('hidden');
+      }
+    });
+  }
+
+  // Tab 3: Estrazione da Foto o PDF con Gemini
+  let selectedFileBase64 = null;
+  let selectedFileMime = null;
+
+  if (elements.inputTimetableFile) {
+    elements.inputTimetableFile.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      if (elements.dropzoneText) {
+        elements.dropzoneText.textContent = `Selezionato: ${file.name} (${(file.size / 1024).toFixed(0)} KB)`;
+      }
+      if (elements.btnExtractFromFile) {
+        elements.btnExtractFromFile.disabled = false;
+      }
+
+      selectedFileMime = file.type || (file.name.endsWith('.pdf') ? 'application/pdf' : 'image/png');
+      const reader = new FileReader();
+      reader.onload = () => {
+        selectedFileBase64 = reader.result;
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+
+  if (elements.fileDropzone) {
+    ['dragenter', 'dragover'].forEach(eventName => {
+      elements.fileDropzone.addEventListener(eventName, (e) => {
+        e.preventDefault();
+        elements.fileDropzone.classList.add('dragover');
+      });
+    });
+    ['dragleave', 'drop'].forEach(eventName => {
+      elements.fileDropzone.addEventListener(eventName, (e) => {
+        e.preventDefault();
+        elements.fileDropzone.classList.remove('dragover');
+      });
+    });
+    elements.fileDropzone.addEventListener('drop', (e) => {
+      const file = e.dataTransfer.files[0];
+      if (file && elements.inputTimetableFile) {
+        elements.inputTimetableFile.files = e.dataTransfer.files;
+        elements.inputTimetableFile.dispatchEvent(new Event('change'));
+      }
+    });
+  }
+
+  if (elements.btnExtractFromFile) {
+    elements.btnExtractFromFile.addEventListener('click', async () => {
+      if (!selectedFileBase64) {
+        alert('Seleziona prima una foto o un documento PDF.');
+        return;
+      }
+
+      const className = elements.inputFileClassname?.value.trim();
+
+      try {
+        if (elements.extractionLoading) elements.extractionLoading.classList.remove('hidden');
+        if (elements.extractionError) elements.extractionError.classList.add('hidden');
+
+        const res = await fetch('/api/extract', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            imageBase64: selectedFileBase64,
+            mimeType: selectedFileMime,
+            targetClass: className
+          })
+        });
+
+        const json = await res.json();
+        if (!res.ok || !json.success) {
+          throw new Error(json.error || json.details || 'Estrazione fallita');
+        }
+
+        const extracted = json.timetable;
+        const customItem = {
+          id: 'custom_file_' + Date.now(),
+          name: extracted.classe || className || 'Mio Orario',
+          school: extracted.istituto || 'Scuola',
+          type: 'custom_file',
+          isFavorite: true,
+          lastUpdated: extracted.data_aggiornamento || new Date().toLocaleDateString('it-IT'),
+          data: extracted
+        };
+
+        saveOrUpdateTimetable(customItem, true);
+        closeTimetableModal();
+        await loadTimetableById(customItem.id);
+      } catch (err) {
+        console.error('[EXTRACT FILE ERROR]', err);
+        if (elements.extractionError) {
+          elements.extractionError.classList.remove('hidden');
+          if (elements.extractionErrorMsg) {
+            elements.extractionErrorMsg.textContent = 'Errore Gemini: ' + err.message;
+          }
+        }
+      } finally {
+        if (elements.extractionLoading) elements.extractionLoading.classList.add('hidden');
+      }
+    });
+  }
 
   // Navigazione Wizard Tutorial Widget
   if (elements.btnTutorialPrev) {
