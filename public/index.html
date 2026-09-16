@@ -353,6 +353,22 @@
             </svg>
           </button>
         </div>
+
+        <!-- Selettore Elenco Orari a Capsula (sotto MENU, prima della linea di Orario) -->
+        <div class="drawer-class-box">
+          <div class="class-pill-dropdown" id="btn-toggle-class-menu" title="Tocca per cambiare orario">
+            <div class="class-pill-left">
+              <span class="class-pill-dot"></span>
+              <span id="drawer-class-name">4 BINF</span>
+            </div>
+            <svg class="chevron-down" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+              <polyline points="6 9 12 15 18 9"></polyline>
+            </svg>
+            <select id="class-select" class="class-hidden-select" aria-label="Seleziona orario">
+              <option value="volta_4_binf">4 BINF (Volta Predefinito)</option>
+            </select>
+          </div>
+        </div>
       </div>
 
       <!-- Elenco Voci di Navigazione con Icone Outline -->
@@ -431,22 +447,6 @@
         </button>
 
       </nav>
-
-      <!-- Sezione I Miei Orari (Elegante Selettore Sotto il Menu) -->
-      <div class="drawer-timetables-section">
-        <div class="drawer-section-header">
-          <div class="section-title-with-badge">
-            <span class="drawer-section-title">I MIEI ORARI</span>
-            <span class="saved-count-badge" id="drawer-timetables-count">1</span>
-          </div>
-          <button id="btn-open-add-timetable" class="btn-add-timetable-mini" title="Aggiungi o carica un altro orario">
-            + Aggiungi
-          </button>
-        </div>
-        <div class="saved-timetables-list" id="saved-timetables-list">
-          <!-- Popolato dinamicamente con gli orari salvati / caricati -->
-        </div>
-      </div>
 
       <!-- Sezione Stato e Pulsante Sincronizza in Basso -->
       <div class="drawer-footer">

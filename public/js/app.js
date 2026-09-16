@@ -80,6 +80,9 @@ const elements = {
   sidebarDrawer: document.getElementById('sidebar-drawer'),
   drawerOverlay: document.getElementById('drawer-overlay'),
   btnCloseDrawer: document.getElementById('btn-close-drawer'),
+  drawerClassName: document.getElementById('drawer-class-name'),
+  classSelect: document.getElementById('class-select'),
+  btnToggleClassMenu: document.getElementById('btn-toggle-class-menu'),
   navItemSchedule: document.getElementById('nav-item-schedule'),
   navItemChangeClass: document.getElementById('nav-item-change-class'),
   navItemSync: document.getElementById('nav-item-sync'),
@@ -331,8 +334,8 @@ async function loadTimetableById(id) {
 
   setActiveTimetableId(id || VOLTA_PRESET_ID);
   state.currentClass = (item && item.name) || state.timetable.classe || '4 BINF';
-  if (elements.headerClassName) {
-    elements.headerClassName.textContent = state.currentClass;
+  if (elements.drawerClassName) {
+    elements.drawerClassName.textContent = state.currentClass;
   }
 
   if (state.timetable) {
@@ -350,6 +353,7 @@ async function loadTimetableById(id) {
   state.selectedDay = getSmartDefaultDay(state.timetable.giorni, now);
 
   renderSavedTimetablesList();
+  updateClassSelectOptions();
   renderVoltaClassesGrid();
 
   if (state.currentView === 'change-schedule') {
@@ -475,41 +479,58 @@ async function loadTimetableData() {
 }
 
 /**
- * Renderizza l'elenco degli orari salvati nel Drawer laterale e nel Modale
+ * Popola il selettore a capsula (elenco orari salvati) nel drawer in alto sotto MENU
+ */
+function updateClassSelectOptions() {
+  if (!elements.classSelect) return;
+  elements.classSelect.innerHTML = '';
+
+  const list = getAllSavedTimetables();
+  const activeId = getActiveTimetableId();
+
+  // Gruppo Orari Salvati
+  const group = document.createElement('optgroup');
+  group.label = '— ORARI SALVATI —';
+
+  list.forEach(item => {
+    const opt = document.createElement('option');
+    opt.value = item.id;
+    const isAct = item.id === activeId;
+    opt.textContent = `${isAct ? '✓ ' : ''}${item.name} (${item.school || 'Orario'})`;
+    if (isAct) {
+      opt.selected = true;
+    }
+    group.appendChild(opt);
+  });
+  elements.classSelect.appendChild(group);
+
+  // Azione per caricare un altro orario
+  const actionGroup = document.createElement('optgroup');
+  actionGroup.label = '— AZIONI —';
+  const newOpt = document.createElement('option');
+  newOpt.value = '__new__';
+  newOpt.textContent = '➕ Carica un altro orario...';
+  actionGroup.appendChild(newOpt);
+  elements.classSelect.appendChild(actionGroup);
+
+  // Aggiorna etichetta sul selettore pill a capsula
+  const activeItem = getTimetableById(activeId);
+  if (elements.drawerClassName) {
+    elements.drawerClassName.textContent = (activeItem && activeItem.name) || state.currentClass || '4 BINF';
+  }
+}
+
+/**
+ * Renderizza l'elenco degli orari salvati e aggiorna il selettore
  */
 function renderSavedTimetablesList() {
   const list = getAllSavedTimetables();
   const activeId = getActiveTimetableId();
 
-  // Aggiorna badge contatore nel drawer
-  const countBadge = document.getElementById('drawer-timetables-count');
-  if (countBadge) {
-    countBadge.textContent = list.length;
-  }
+  // Aggiorna il selettore a capsula in cima sotto MENU
+  updateClassSelectOptions();
 
-  // 1. Popolamento Lista nel Drawer
-  if (elements.savedTimetablesList) {
-    elements.savedTimetablesList.innerHTML = '';
-
-    if (list.length === 0) {
-      const emptyNotice = document.createElement('div');
-      emptyNotice.style.fontSize = '0.74rem';
-      emptyNotice.style.color = 'var(--text-dim)';
-      emptyNotice.style.padding = '8px 4px';
-      emptyNotice.textContent = 'Nessun orario salvato. Tocca + Aggiungi.';
-      elements.savedTimetablesList.appendChild(emptyNotice);
-    } else {
-      list.forEach((item) => {
-        const card = createTimetableCardElement(item, activeId, () => {
-          toggleDrawer(false);
-          loadTimetableById(item.id);
-        });
-        elements.savedTimetablesList.appendChild(card);
-      });
-    }
-  }
-
-  // 2. Popolamento Lista nella Pagina Dedicata "Cambia Orario" (Tab 4: Orari Salvati)
+  // Popolamento Lista nella Pagina Dedicata "Cambia Orario" (Tab 4: Orari Salvati)
   if (elements.modalSavedTimetablesList && elements.modalCustomTimetablesSection) {
     elements.modalSavedTimetablesList.innerHTML = '';
     const customList = list.filter(item => item.id !== VOLTA_PRESET_ID);
@@ -1347,10 +1368,21 @@ function setupEventListeners() {
     openChangeScheduleView('image');
   });
 
-  if (elements.btnOpenAddTimetable) {
-    elements.btnOpenAddTimetable.addEventListener('click', () => {
-      toggleDrawer(false);
-      openChangeScheduleView('preset');
+  // Selettore Orario / Elenco a Capsula in drawer-top
+  if (elements.classSelect) {
+    elements.classSelect.addEventListener('change', async (e) => {
+      const selectedVal = e.target.value;
+      if (selectedVal === '__new__') {
+        toggleDrawer(false);
+        openChangeScheduleView('image');
+        elements.classSelect.value = getActiveTimetableId();
+        return;
+      }
+
+      if (selectedVal && selectedVal !== getActiveTimetableId()) {
+        toggleDrawer(false);
+        await loadTimetableById(selectedVal);
+      }
     });
   }
 

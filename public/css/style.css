@@ -1177,6 +1177,83 @@ body {
   letter-spacing: 0.5px;
 }
 
+/* Selettore Elenco Orario a Capsula in drawer-top */
+.drawer-class-box {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+
+.class-pill-dropdown {
+  flex: 1;
+  background: #151C28;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: var(--radius-pill);
+  padding: 10px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: relative;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+.class-pill-dropdown:hover, .class-pill-dropdown:focus-within {
+  background: #1B2433;
+  border-color: var(--live-line-color);
+  box-shadow: 0 0 12px rgba(56, 189, 248, 0.25);
+}
+
+.class-pill-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: var(--text-main);
+  letter-spacing: 0.2px;
+}
+
+.class-pill-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--live-line-color);
+  box-shadow: 0 0 8px var(--live-line-color);
+  flex-shrink: 0;
+}
+
+.chevron-down {
+  color: var(--text-dim);
+  transition: transform 0.2s ease;
+  flex-shrink: 0;
+}
+
+.class-pill-dropdown:focus-within .chevron-down {
+  transform: rotate(180deg);
+  color: var(--live-line-color);
+}
+
+.class-hidden-select {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  width: 100%;
+  height: 100%;
+  cursor: pointer;
+  font-size: 16px;
+  -webkit-appearance: menulist;
+}
+
+.class-hidden-select option, .class-hidden-select optgroup {
+  background-color: #0E131B;
+  color: #FFFFFF;
+  padding: 8px 10px;
+  font-size: 0.95rem;
+}
+
 
 .drawer-menu-list {
   display: flex;
