@@ -354,7 +354,11 @@ def compute_flight_payload(timetable: Dict[str, Any], ref_dt: Optional[datetime]
         "flight_dest_sub": "",
         "flight_dest_room": "",
         "flight_single_line": "",
-        "flight_multiline": ""
+        "flight_multiline": "",
+        "flight_left_col": "",
+        "flight_center_col": "",
+        "flight_right_col": "",
+        "flight_board_2lines": ""
     }
 
     if ref_dt.weekday() in (5, 6):
@@ -441,7 +445,10 @@ def compute_flight_payload(timetable: Dict[str, Any], ref_dt: Optional[datetime]
             dest_room = ""
 
     single_line = f"{origin_sub} [{origin_room}]  ── {flight_time} ✈ ──>  {dest_sub} [{dest_room}]"
-    multiline = f"{origin_sub} ({origin_room})\n────── {flight_time} ✈ ──────>\n{dest_sub} ({dest_room})"
+    left_col = f"{origin_sub}\n{origin_room}"
+    center_col = f"────── ✈ ──────>\n{flight_time}"
+    right_col = f"{dest_sub}\n{dest_room}"
+    board_2lines = f"{origin_sub}    ────── ✈ ──────>    {dest_sub}\n{origin_room}              {flight_time}              {dest_room}"
 
     return {
         "flight_visible": 1,
@@ -452,7 +459,11 @@ def compute_flight_payload(timetable: Dict[str, Any], ref_dt: Optional[datetime]
         "flight_dest_sub": dest_sub,
         "flight_dest_room": dest_room,
         "flight_single_line": single_line,
-        "flight_multiline": multiline
+        "flight_multiline": board_2lines,
+        "flight_board_2lines": board_2lines,
+        "flight_left_col": left_col,
+        "flight_center_col": center_col,
+        "flight_right_col": right_col
     }
 
 

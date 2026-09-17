@@ -13,5 +13,9 @@
   "flight_dest_sub": "SISTEMI",
   "flight_dest_room": "Lab B 010",
   "flight_single_line": "TPSIT [B 045]  ── 08:52 ✈ ──>  SISTEMI [Lab B 010]",
-  "flight_multiline": "TPSIT (B 045)\n────── 08:52 ✈ ──────>\nSISTEMI (Lab B 010)"
+  "flight_multiline": "TPSIT    ────── ✈ ──────>    SISTEMI\nB 045              08:52              Lab B 010",
+  "flight_left_col": "TPSIT\nB 045",
+  "flight_center_col": "────── ✈ ──────>\n08:52",
+  "flight_right_col": "SISTEMI\nLab B 010",
+  "flight_board_2lines": "TPSIT    ────── ✈ ──────>    SISTEMI\nB 045              08:52              Lab B 010"
 }

@@ -45,7 +45,11 @@ export function computeFlightWidgetState(timetable, simulatedDate = new Date()) 
     flight_dest_sub: "",
     flight_dest_room: "",
     flight_single_line: "",
-    flight_multiline: ""
+    flight_multiline: "",
+    flight_left_col: "",
+    flight_center_col: "",
+    flight_right_col: "",
+    flight_board_2lines: ""
   };
 
   // Weekend
@@ -147,7 +151,10 @@ export function computeFlightWidgetState(timetable, simulatedDate = new Date()) 
   }
 
   const singleLine = `${originSub} [${originRoom}]  ── ${flightTime} ✈ ──>  ${destSub} [${destRoom}]`;
-  const multiline = `${originSub} (${originRoom})\n────── ${flightTime} ✈ ──────>\n${destSub} (${destRoom})`;
+  const leftCol = `${originSub}\n${originRoom}`;
+  const centerCol = `────── ✈ ──────>\n${flightTime}`;
+  const rightCol = `${destSub}\n${destRoom}`;
+  const board2lines = `${originSub}    ────── ✈ ──────>    ${destSub}\n${originRoom}              ${flightTime}              ${destRoom}`;
 
   return {
     flight_visible: 1,
@@ -158,7 +165,11 @@ export function computeFlightWidgetState(timetable, simulatedDate = new Date()) 
     flight_dest_sub: destSub,
     flight_dest_room: destRoom,
     flight_single_line: singleLine,
-    flight_multiline: multiline
+    flight_multiline: board2lines,
+    flight_board_2lines: board2lines,
+    flight_left_col: leftCol,
+    flight_center_col: centerCol,
+    flight_right_col: rightCol
   };
 }
 

@@ -18,5 +18,9 @@
   "flight_dest_sub": "ITALIANO",
   "flight_dest_room": "B 060",
   "flight_single_line": "Casa [Partenza]  ── 08:00 ✈ ──>  ITALIANO [B 060]",
-  "flight_multiline": "Casa (Partenza)\n────── 08:00 ✈ ──────>\nITALIANO (B 060)"
+  "flight_multiline": "Casa    ────── ✈ ──────>    ITALIANO\nPartenza              08:00              B 060",
+  "flight_left_col": "Casa\nPartenza",
+  "flight_center_col": "────── ✈ ──────>\n08:00",
+  "flight_right_col": "ITALIANO\nB 060",
+  "flight_board_2lines": "Casa    ────── ✈ ──────>    ITALIANO\nPartenza              08:00              B 060"
 }

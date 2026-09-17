@@ -13,5 +13,9 @@
   "flight_dest_sub": "Casa",
   "flight_dest_room": "Uscita",
   "flight_single_line": "INGLESE [B 045]  ── 11:42 ✈ ──>  Casa [Uscita]",
-  "flight_multiline": "INGLESE (B 045)\n────── 11:42 ✈ ──────>\nCasa (Uscita)"
+  "flight_multiline": "INGLESE    ────── ✈ ──────>    Casa\nB 045              11:42              Uscita",
+  "flight_left_col": "INGLESE\nB 045",
+  "flight_center_col": "────── ✈ ──────>\n11:42",
+  "flight_right_col": "Casa\nUscita",
+  "flight_board_2lines": "INGLESE    ────── ✈ ──────>    Casa\nB 045              11:42              Uscita"
 }
