@@ -3067,51 +3067,44 @@ body {
 /* ==========================================================================
    VISTA 4: ORARIO ORIGINALE SCUOLA (EDT EMBEDDED VIEW)
    ========================================================================== */
+/* ==========================================================================
+   VISTA 4: ORARIO ORIGINALE SCUOLA (EDT EMBEDDED VIEW)
+   ========================================================================== */
 .original-schedule-view {
-  min-height: 100vh;
-  padding: calc(14px + var(--safe-top)) 16px calc(20px + var(--safe-bottom)) 16px;
-  background: var(--bg-app);
-  position: relative;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100vw;
+  height: 100vh;
+  padding: 0;
+  margin: 0;
+  background: #ffffff;
   display: flex;
   flex-direction: column;
+  z-index: 100;
+  overflow: hidden;
+}
+
+.original-schedule-view.hidden-view {
+  display: none !important;
 }
 
 .original-page-top-bar {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 14px;
-  padding-bottom: 12px;
-  border-bottom: 1px solid var(--border-subtle);
+  padding: calc(6px + var(--safe-top)) 12px 6px 12px;
+  background: #0E1218;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  flex-shrink: 0;
+  height: calc(48px + var(--safe-top));
+  box-sizing: border-box;
 }
 
-.original-page-title-wrap {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2px;
-}
-
-.original-page-title {
-  font-size: 1.1rem;
-  font-weight: 900;
-  color: #FFFFFF;
-  letter-spacing: 0.5px;
-  text-align: center;
-  margin: 0;
-}
-
-.original-page-badge {
-  display: inline-block;
-  font-size: 0.65rem;
-  font-weight: 800;
-  color: #38bdf8;
-  background: rgba(56, 189, 248, 0.12);
-  border: 1px solid rgba(56, 189, 248, 0.25);
-  padding: 1px 6px;
-  border-radius: var(--radius-pill);
-  letter-spacing: 0.5px;
+.original-top-spacer {
+  flex: 1;
 }
 
 .original-top-actions {
@@ -3124,54 +3117,34 @@ body {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 38px;
-  height: 38px;
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
-  background: #141A24;
-  border: 1px solid var(--border-subtle);
-  color: var(--text-muted);
+  background: #161D2B;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--text-main);
   text-decoration: none;
   cursor: pointer;
   transition: all 0.18s ease;
 }
 
 .icon-button-subtle:hover, .icon-button-subtle:active {
-  background: #1E2636;
+  background: #222C3E;
   border-color: var(--live-line-color);
   color: #FFFFFF;
 }
 
-.original-iframe-container {
+.original-fullscreen-iframe {
   flex: 1;
   width: 100%;
-  height: calc(100vh - 120px - var(--safe-top) - var(--safe-bottom));
-  min-height: 580px;
-  background: #ffffff;
-  border-radius: var(--radius-lg);
-  border: 1px solid var(--border-subtle);
-  overflow: hidden;
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.35);
-  position: relative;
-}
-
-.original-iframe-container iframe {
-  width: 100%;
-  height: 100%;
+  height: calc(100% - 48px - var(--safe-top));
   border: none;
+  margin: 0;
+  padding: 0;
+  background: #ffffff;
   display: block;
-}
-
-@media (max-width: 600px) {
-  .original-schedule-view {
-    padding: calc(10px + var(--safe-top)) 10px calc(14px + var(--safe-bottom)) 10px;
-  }
-  .original-page-title {
-    font-size: 0.95rem;
-  }
-  .original-iframe-container {
-    height: calc(100vh - 110px - var(--safe-top) - var(--safe-bottom));
-    border-radius: var(--radius-md);
-  }
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 

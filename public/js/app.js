@@ -124,9 +124,13 @@ const elements = {
   btnCopyWidgetUrl: document.getElementById('btn-copy-widget-url'),
   widgetFormulaFull: document.getElementById('widget-formula-full'),
   btnCopyFormulaFull: document.getElementById('btn-copy-formula-full'),
+  widgetFormulaFlight: document.getElementById('widget-formula-flight'),
+  btnCopyFormulaFlight: document.getElementById('btn-copy-formula-flight'),
   mfCodeSub: document.getElementById('mf-code-sub'),
   mfCodeTime: document.getElementById('mf-code-time'),
   mfCodeNext: document.getElementById('mf-code-next'),
+  mfCodeFlightSingle: document.getElementById('mf-code-flight-single'),
+  mfCodeFlightLayer: document.getElementById('mf-code-flight-layer'),
   btnMiniCopies: document.querySelectorAll('.btn-mini-copy'),
   btnCopyScriptableCode: document.getElementById('btn-copy-scriptable-code'),
   iosCodeSnippetPreview: document.getElementById('ios-code-snippet-preview'),
@@ -372,6 +376,9 @@ async function init() {
   if (elements.widgetFormulaFull) {
     elements.widgetFormulaFull.textContent = `$if(wg("${widgetFullPath}", json, .status) = "IN_CLASS", "🟢 " + wg("${widgetFullPath}", json, .title) + " (" + wg("${widgetFullPath}", json, .room) + ") - " + wg("${widgetFullPath}", json, .time_left), "🔔 " + wg("${widgetFullPath}", json, .title) + " - " + wg("${widgetFullPath}", json, .subtitle))$`;
   }
+  if (elements.widgetFormulaFlight) {
+    elements.widgetFormulaFlight.textContent = `$if(wg("${widgetFullPath}", json, .flight_visible) = 1, wg("${widgetFullPath}", json, .flight_multiline), "")$`;
+  }
   if (elements.mfCodeSub) {
     elements.mfCodeSub.textContent = `$wg("${widgetFullPath}", json, .title)$ ($wg("${widgetFullPath}", json, .room)$)`;
   }
@@ -380,6 +387,12 @@ async function init() {
   }
   if (elements.mfCodeNext) {
     elements.mfCodeNext.textContent = `$wg("${widgetFullPath}", json, .next_title)$ ($wg("${widgetFullPath}", json, .next_room)$)`;
+  }
+  if (elements.mfCodeFlightSingle) {
+    elements.mfCodeFlightSingle.textContent = `$if(wg("${widgetFullPath}", json, .flight_visible) = 1, wg("${widgetFullPath}", json, .flight_single_line), "")$`;
+  }
+  if (elements.mfCodeFlightLayer) {
+    elements.mfCodeFlightLayer.textContent = `$if(wg("${widgetFullPath}", json, .flight_visible) = 1, ALWAYS, NEVER)$`;
   }
   if (elements.iosCodeSnippetPreview) {
     elements.iosCodeSnippetPreview.textContent = `// OrarioScuola - Scriptable Widget iPhone
@@ -429,8 +442,19 @@ const TIMETABLE_URL = \`\${BASE_URL}/data/timetable.json\`;
 function registerServiceWorker() {
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('sw.js')
-      .then((reg) => console.log('[PWA] Service Worker attivo:', reg.scope))
+      .then((reg) => {
+        console.log('[PWA] Service Worker attivo:', reg.scope);
+        reg.update().catch(() => {});
+      })
       .catch((err) => console.warn('[PWA] Errore Service Worker:', err));
+
+    let refreshing = false;
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if (!refreshing) {
+        refreshing = true;
+        window.location.reload();
+      }
+    });
   }
 }
 
@@ -2190,6 +2214,19 @@ function setupEventListeners() {
         elements.btnCopyFormulaFull.textContent = 'Copiato!';
         setTimeout(() => {
           elements.btnCopyFormulaFull.textContent = 'Copia Formula';
+        }, 2000);
+      });
+    });
+  }
+
+  // Copia Preset Scalo Aereo KWGT (Android)
+  if (elements.btnCopyFormulaFlight && elements.widgetFormulaFlight) {
+    elements.btnCopyFormulaFlight.addEventListener('click', () => {
+      const formulaText = elements.widgetFormulaFlight.textContent;
+      navigator.clipboard.writeText(formulaText).then(() => {
+        elements.btnCopyFormulaFlight.textContent = 'Copiato!';
+        setTimeout(() => {
+          elements.btnCopyFormulaFlight.textContent = 'Copia Preset Volo';
         }, 2000);
       });
     });

@@ -333,15 +333,140 @@ def get_sample_mock_data(classe: str = "4 BINF") -> Dict[str, Any]:
     }
 
 
+def compute_flight_payload(timetable: Dict[str, Any], ref_dt: Optional[datetime] = None) -> Dict[str, Any]:
+    """
+    Calcola i campi per il widget 'Scalo / Volo Aereo':
+    - Trasparente (< 07:00, > uscita + 60 min, weekend)
+    - 07:00 - prima ora: Casa [Partenza] ── 08:00 ✈ ──> Prima Materia [Aula]
+    - Lezioni: Materia [Aula] ── Cambio ✈ ──> Prossima [Aula]
+    - Ultima ora (4ª, 6ª o 8ª ora): Materia [Aula] ── Uscita ✈ ──> Casa [Uscita]
+    - Fino a 1h da uscita: Scuola [Terminata] ── Uscita ✈ ──> Casa [Rientro]
+    """
+    if ref_dt is None:
+        ref_dt = datetime.now()
+
+    empty_flight = {
+        "flight_visible": 0,
+        "flight_origin_sub": "",
+        "flight_origin_room": "",
+        "flight_arrow": "────── ✈ ──────>",
+        "flight_time": "",
+        "flight_dest_sub": "",
+        "flight_dest_room": "",
+        "flight_single_line": "",
+        "flight_multiline": ""
+    }
+
+    if ref_dt.weekday() in (5, 6):
+        return empty_flight
+
+    it_days = {0: "Lunedì", 1: "Martedì", 2: "Mercoledì", 3: "Giovedì", 4: "Venerdì", 5: "Sabato", 6: "Domenica"}
+    current_day_name = it_days.get(ref_dt.weekday(), "Lunedì")
+    day_data = next((d for d in timetable.get("giorni", []) if d.get("giorno") == current_day_name), None)
+
+    if not day_data or not day_data.get("lezioni"):
+        return empty_flight
+
+    lessons = day_data["lezioni"]
+    def to_min(t_str: str) -> int:
+        p = t_str.split(":")
+        return int(p[0]) * 60 + int(p[1])
+
+    first_start = to_min(lessons[0]["inizio"])
+    last_end = to_min(lessons[-1]["fine"])
+    current_minutes = ref_dt.hour * 60 + ref_dt.minute
+
+    # Prima delle 07:00 (420 min) -> invisibile / trasparente
+    if current_minutes < 420:
+        return empty_flight
+
+    # Oltre 1 ora dall'uscita -> invisibile / trasparente
+    if current_minutes >= last_end + 60:
+        return empty_flight
+
+    origin_sub = ""
+    origin_room = ""
+    flight_time = ""
+    dest_sub = ""
+    dest_room = ""
+
+    # Dalle 07:00 all'inizio della prima ora
+    if current_minutes < first_start:
+        origin_sub = "Casa"
+        origin_room = "Partenza"
+        flight_time = lessons[0]["inizio"]
+        dest_sub = lessons[0]["materia"]
+        dest_room = lessons[0]["aula"]
+    # Entro 1 ora dall'uscita scolastica
+    elif current_minutes >= last_end:
+        origin_sub = "Scuola"
+        origin_room = lessons[-1].get("aula", "Terminata")
+        flight_time = lessons[-1]["fine"]
+        dest_sub = "Casa"
+        dest_room = "Rientro"
+    # Durante l'orario scolastico
+    else:
+        found = False
+        for i, lesson in enumerate(lessons):
+            s = to_min(lesson["inizio"])
+            e = to_min(lesson["fine"])
+            if s <= current_minutes < e:
+                origin_sub = lesson["materia"]
+                origin_room = lesson["aula"]
+                if i == len(lessons) - 1:
+                    flight_time = lesson["fine"]  # Orario di uscita esatto (es. 11:42, 13:36, 15:34)
+                    dest_sub = "Casa"
+                    dest_room = "Uscita"
+                else:
+                    flight_time = lesson["fine"]  # Orario del cambio ora
+                    dest_sub = lessons[i + 1]["materia"]
+                    dest_room = lessons[i + 1]["aula"]
+                found = True
+                break
+            if i + 1 < len(lessons):
+                next_s = to_min(lessons[i + 1]["inizio"])
+                if e <= current_minutes < next_s:
+                    origin_sub = lesson["materia"]
+                    origin_room = lesson["aula"]
+                    flight_time = lessons[i + 1]["inizio"]
+                    dest_sub = lessons[i + 1]["materia"]
+                    dest_room = lessons[i + 1]["aula"]
+                    found = True
+                    break
+        if not found:
+            origin_sub = lessons[0]["materia"]
+            origin_room = lessons[0]["aula"]
+            flight_time = lessons[0]["inizio"]
+            dest_sub = "Scuola"
+            dest_room = ""
+
+    single_line = f"{origin_sub} [{origin_room}]  ── {flight_time} ✈ ──>  {dest_sub} [{dest_room}]"
+    multiline = f"{origin_sub} ({origin_room})\n────── {flight_time} ✈ ──────>\n{dest_sub} ({dest_room})"
+
+    return {
+        "flight_visible": 1,
+        "flight_origin_sub": origin_sub,
+        "flight_origin_room": origin_room,
+        "flight_arrow": "────── ✈ ──────>",
+        "flight_time": flight_time,
+        "flight_dest_sub": dest_sub,
+        "flight_dest_room": dest_room,
+        "flight_single_line": single_line,
+        "flight_multiline": multiline
+    }
+
+
 # --- CALCOLO FEED WIDGET PER GALAXY S24 ---
 def compute_widget_payload(timetable: Dict[str, Any], ref_dt: Optional[datetime] = None) -> Dict[str, Any]:
     """
     Calcola istantaneamente lo stato esatto per il Galaxy S24:
     - Risponde a 'Dove devo andare adesso?'
-    - Mostra stato 1 (in classe), 2 (cambio/intervallo), 3 (giornata terminata/anteprima domani), 4 (weekend)
+    - Include campi 'flight_*' per il layout scalo aereo con visibilità programmata
     """
     if ref_dt is None:
         ref_dt = datetime.now()
+
+    flight = compute_flight_payload(timetable, ref_dt)
 
     it_days = {
         0: "Lunedì",
@@ -367,13 +492,17 @@ def compute_widget_payload(timetable: Dict[str, Any], ref_dt: Optional[datetime]
             return target_day["lezioni"][0]
         return None
 
+    def with_flight(payload: Dict[str, Any]) -> Dict[str, Any]:
+        payload.update(flight)
+        return payload
+
     # Verifica se siamo nel weekend
     if ref_dt.weekday() in (5, 6):  # Sabato o Domenica
         monday_first = get_first_lesson_of_day("Lunedì")
         preview = "Lunedì riposo"
         if monday_first:
             preview = f"Lunedì ore {monday_first['inizio']}: {monday_first['materia']} ({monday_first['aula']})"
-        return {
+        return with_flight({
             "status": "WEEKEND",
             "badge": "WEEKEND",
             "title": "Buon Fine Settimana",
@@ -385,11 +514,11 @@ def compute_widget_payload(timetable: Dict[str, Any], ref_dt: Optional[datetime]
             "next_time": monday_first["inizio"] if monday_first else "",
             "updated_at": ref_dt.strftime("%H:%M"),
             "class_name": timetable.get("classe", "4 BINF")
-        }
+        })
 
     # Se è un giorno feriale ma non ci sono lezioni
     if not day_data or not day_data.get("lezioni"):
-        return {
+        return with_flight({
             "status": "NO_LESSONS",
             "badge": "LIBERO",
             "title": "Nessuna lezione oggi",
@@ -401,7 +530,7 @@ def compute_widget_payload(timetable: Dict[str, Any], ref_dt: Optional[datetime]
             "next_time": "",
             "updated_at": ref_dt.strftime("%H:%M"),
             "class_name": timetable.get("classe", "4 BINF")
-        }
+        })
 
     lessons = day_data["lezioni"]
 
@@ -424,7 +553,7 @@ def compute_widget_payload(timetable: Dict[str, Any], ref_dt: Optional[datetime]
     # Stato A: Prima dell'inizio delle lezioni (es. mattina presto)
     if current_minutes < first_start:
         minutes_to_start = first_start - current_minutes
-        return {
+        return with_flight({
             "status": "BEFORE_SCHOOL",
             "badge": "PRIMA ORA",
             "title": f"Prima ora: {lessons[0]['materia']}",
@@ -436,11 +565,11 @@ def compute_widget_payload(timetable: Dict[str, Any], ref_dt: Optional[datetime]
             "next_time": lessons[0]["inizio"],
             "updated_at": ref_dt.strftime("%H:%M"),
             "class_name": timetable.get("classe", "4 BINF")
-        }
+        })
 
     # Stato B: Dopo l'orario scolastico (Pomeriggio / Sera)
     if current_minutes >= last_end:
-        return {
+        return with_flight({
             "status": "FINISHED",
             "badge": "FINITO",
             "title": "Giornata terminata!",
@@ -452,7 +581,7 @@ def compute_widget_payload(timetable: Dict[str, Any], ref_dt: Optional[datetime]
             "next_time": next_day_first["inizio"] if next_day_first else "",
             "updated_at": ref_dt.strftime("%H:%M"),
             "class_name": timetable.get("classe", "4 BINF")
-        }
+        })
 
     # Stato C: Durante la giornata scolastica (tra prima ora e ultima ora)
     # Controlliamo se siamo in una lezione o in un cambio d'ora / ricreazione
@@ -465,7 +594,7 @@ def compute_widget_payload(timetable: Dict[str, Any], ref_dt: Optional[datetime]
             mins_left = end_min - current_minutes
             next_lesson = lessons[i + 1] if (i + 1) < len(lessons) else None
             next_info = f"Poi: {next_lesson['materia']} in {next_lesson['aula']}" if next_lesson else "Ultima ora!"
-            return {
+            return with_flight({
                 "status": "IN_CLASS",
                 "badge": "IN CORSO",
                 "title": lesson["materia"],
@@ -477,7 +606,7 @@ def compute_widget_payload(timetable: Dict[str, Any], ref_dt: Optional[datetime]
                 "next_time": next_lesson["inizio"] if next_lesson else lesson["fine"],
                 "updated_at": ref_dt.strftime("%H:%M"),
                 "class_name": timetable.get("classe", "4 BINF")
-            }
+            })
 
         # Cambio d'ora / intervallo tra lezione i e lezione i+1
         if (i + 1) < len(lessons):
@@ -487,7 +616,7 @@ def compute_widget_payload(timetable: Dict[str, Any], ref_dt: Optional[datetime]
                 gap = next_start - end_min
                 is_recess = gap >= 8
                 next_l = lessons[i + 1]
-                return {
+                return with_flight({
                     "status": "BREAK",
                     "badge": "RICREAZIONE" if is_recess else "CAMBIO ORA",
                     "title": "Ricreazione in corso" if is_recess else f"Prossima: {next_l['materia']}",
@@ -499,9 +628,9 @@ def compute_widget_payload(timetable: Dict[str, Any], ref_dt: Optional[datetime]
                     "next_time": next_l["inizio"],
                     "updated_at": ref_dt.strftime("%H:%M"),
                     "class_name": timetable.get("classe", "4 BINF")
-                }
+                })
 
-    return {
+    return with_flight({
         "status": "UNKNOWN",
         "badge": "SCUOLA",
         "title": "Orario scolastico",
@@ -513,7 +642,7 @@ def compute_widget_payload(timetable: Dict[str, Any], ref_dt: Optional[datetime]
         "next_time": "",
         "updated_at": ref_dt.strftime("%H:%M"),
         "class_name": timetable.get("classe", "4 BINF")
-    }
+    })
 
 
 STANDARD_SCHOOL_HOURS = [

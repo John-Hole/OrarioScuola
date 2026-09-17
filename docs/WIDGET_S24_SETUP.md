@@ -51,14 +51,93 @@ $if(wg("[URL_JSON]", json, .status) = "IN_CLASS",
 
 ---
 
+## ✈️ 3. Preset "Scalo Aereo / Volo" (Novità)
+
+Questo preset trasforma il widget in una **carta d'imbarco / scalo aereo dinamico**:
+`[MATERIA / AULA ATTUALE]  ─── ORARIO CAMBIO ✈ ───>  [PROSSIMA MATERIA / AULA]`
+
+### ⏰ Comportamento Orario Intelligente (Trasparenza Automatica)
+- **Prima delle 07:00 del mattino**: il widget è **100% trasparente / invisibile**.
+- **Dalle 07:00 all'inizio della 1ª ora (es. 08:00)**:  
+  `Casa [Partenza]  ── 08:00 ✈ ──>  1ª Materia [Aula]`
+- **Durante le lezioni**:  
+  `Materia Attuale [Aula]  ── Orario Cambio ✈ ──>  Prossima Materia [Aula]`
+- **All'ultima ora di lezione (qualunque sia: 4ª ora alle 11:42, 6ª ora alle 13:36, 8ª ora alle 15:34)**:  
+  `Ultima Materia [Aula]  ── Orario Uscita ✈ ──>  Casa [Uscita]`
+- **Fino a 1 ora dopo l'uscita (es. fino alle 12:42)**:  
+  `Scuola [Terminata]  ── Orario Uscita ✈ ──>  Casa [Rientro]`
+- **Dopo 1 ora dall'uscita e nel weekend**:  
+  Il widget si disattiva e torna automaticamente **trasparente / invisibile** fino alle 07:00 del giorno di scuola successivo!
+
+---
+
+### Opzione A: Formula Unica Compatta (Copia & Incolla su un Testo KWGT)
+
+Crea un elemento **Testo** in KWGT e incolla:
+
+```
+$if(wg("[URL_JSON]", json, .flight_visible) = 1,
+    wg("[URL_JSON]", json, .flight_multiline),
+    ""
+)$
+```
+
+Oppure in formato su **singola riga orizzontale**:
+```
+$if(wg("[URL_JSON]", json, .flight_visible) = 1,
+    wg("[URL_JSON]", json, .flight_single_line),
+    ""
+)$
+```
+
+---
+
+### Opzione B: Layout Grafico a 3 Colonne "Boarding Pass" (Raccomandato)
+
+Per creare un widget spettacolare in KWGT diviso in 3 aree (Origine, Freccia centrale con orario sotto, Destinazione):
+
+1. **Crea un Gruppo Sovrapposto (Overlap Group)** in KWGT.
+2. Nella scheda **Livello** (Layer) &rarr; **Visibilità**, imposta la formula:
+   ```
+   $if(wg("[URL_JSON]", json, .flight_visible) = 1, ALWAYS, NEVER)$
+   ```
+   *(In questo modo, prima delle 07:00 o dopo 1 ora dall'uscita, l'intero widget sparisce automaticamente dallo schermo!)*
+3. All'interno del gruppo, aggiungi un **Gruppo Lineare Orizzontale** con 3 blocchi:
+
+| Colonna | Elemento | Formula KWGT |
+| :--- | :--- | :--- |
+| **1. Sinistra (Origine)** | **Materia/Titolo (sopra)** | `$wg("[URL_JSON]", json, .flight_origin_sub)$` |
+| | **Aula/Classe (sotto)** | `$wg("[URL_JSON]", json, .flight_origin_room)$` |
+| **2. Centro (Scalo)** | **Simbolo Volo (sopra)** | `────── ✈ ──────>` (oppure `✈ ➔`) |
+| | **Orario Cambio (sotto)** | `$wg("[URL_JSON]", json, .flight_time)$` |
+| **3. Destra (Arrivo)** | **Materia/Titolo (sopra)** | `$wg("[URL_JSON]", json, .flight_dest_sub)$` |
+| | **Aula/Classe (sotto)** | `$wg("[URL_JSON]", json, .flight_dest_room)$` |
+
+---
+
 ## 3. Widget su Schermata di Blocco & Always On Display (Galaxy S24 / One UI 6.1+)
 
-Il Galaxy S24 supporta i **Lock Screen Widgets**:
-1. Vai in **Impostazioni** sul Galaxy S24 &rarr; **Schermata di blocco e AOD**.
-2. Tocca **Modifica schermata di blocco**.
-3. Sotto l'orologio, tocca l'area **+ Aggiungi Widget**.
-4. Seleziona **KWGT** e scegli il preset compatto (1x1 o 2x1) contenente la sola aula e materia corrente (es. `Sistemi - Lab B010`).
-5. Abilita la visualizzazione dei widget anche su **Always On Display** nelle impostazioni AOD.
+> ⚠️ **Perché KWGT non appare direttamente nella schermata di blocco standard?**
+> Su Samsung One UI 6.1 (Galaxy S24), l'area nativa "+ Widget" posta direttamente sotto l'orologio è limitata da Samsung **solo alle proprie app di sistema** (Meteo, Batteria, Calendario, Sveglia). Le app di terze parti come KWGT non compaiono in quella lista predefinita.
+
+Per posizionare **KWGT** sulla Schermata di Blocco e sull'Always On Display del Galaxy S24 esistono due metodi:
+
+### Metodo 1: Samsung Good Lock + LockStar (Consigliato, Ufficiale Samsung)
+Samsung mette a disposizione sul **Galaxy Store** la suite ufficiale **Good Lock** che sblocca i widget di terze parti sulla schermata di blocco:
+1. Apri il **Galaxy Store** sul tuo Galaxy S24 e cerca **Good Lock** (app gratuita ufficiale Samsung).
+2. All'interno di Good Lock, trova e scarica il modulo **LockStar** (nella scheda *Make up*).
+3. Apri **LockStar** e attiva l'interruttore in alto.
+4. Tocca l'anteprima della **Schermata di Blocco** per entrare nell'editor.
+5. Tocca un punto vuoto o l'icona **Aggiungi Widget**: qui comparirà l'elenco completo di tutte le app del telefono, incluso **KWGT**!
+6. Scegli il widget KWGT (es. 2x1 o 4x1), posizionalo dove preferisci (sotto l'orologio o in basso) e tocca **Salva**.
+7. Tocca il widget aggiunto sulla schermata di blocco per aprire KWGT e incollare la formula desiderata (es. Preset Volo).
+8. *(Opzionale)* In LockStar puoi ripetere la stessa procedura anche per l'**Always On Display (AOD)**.
+
+### Metodo 2: Widget Nativo Calendario Samsung (Senza Good Lock)
+Se non vuoi installare Good Lock, puoi sfruttare il widget nativo di Samsung:
+1. Nella web app OrarioScuola, esporta l'orario scolastico in formato **iCalendar (.ics)** o sincronizzalo con il tuo account Google/Samsung Calendar.
+2. In **Impostazioni** &rarr; **Schermata di blocco** &rarr; **Modifica schermata di blocco** &rarr; tocca **+ Widget** sotto l'orologio.
+3. Seleziona il widget nativo **Calendario (Prossimo evento)** di Samsung: mostrerà la materia, l'orario e l'aula direttamente sotto l'orologio.
 
 ---
 

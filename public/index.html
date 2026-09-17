@@ -9,10 +9,11 @@
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#0E1218">
   <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <link rel="icon" type="image/svg+xml" href="icons/icon.svg">
 
-  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/style.css?v=35">
 </head>
 <body>
   <div id="app" class="app-layout">
@@ -358,18 +359,14 @@
          ========================================================================== -->
     <main id="view-original-schedule" class="view-container original-schedule-view hidden-view">
       
-      <!-- Barra Superiore Navigazione -->
+      <!-- Barra Superiore Navigazione Essenziale (Freccia a sinistra, azioni a destra, nessun titolo) -->
       <div class="original-page-top-bar">
-        <button id="btn-back-from-original" class="btn-back-nav" aria-label="Torna all'orario">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <button id="btn-back-from-original" class="icon-button-subtle" aria-label="Torna indietro" title="Torna all'orario">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
             <polyline points="15 18 9 12 15 6"></polyline>
           </svg>
-          <span>Torna all'orario</span>
         </button>
-        <div class="original-page-title-wrap">
-          <h2 class="original-page-title">ORARIO ORIGINALE</h2>
-          <span class="original-page-badge">PORTALE SCUOLA</span>
-        </div>
+        <div class="original-top-spacer"></div>
         <div class="original-top-actions">
           <button id="btn-reload-original-iframe" class="icon-button-subtle" title="Ricarica orario scuola" aria-label="Ricarica">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
@@ -388,10 +385,8 @@
         </div>
       </div>
 
-      <!-- Contenitore Iframe con Portale EDT -->
-      <div class="original-iframe-container" id="original-iframe-container">
-        <iframe id="iframe-original-schedule" src="about:blank" title="Orario scolastico originale"></iframe>
-      </div>
+      <!-- Iframe a Tutto Schermo (Senza Box Stondato) -->
+      <iframe id="iframe-original-schedule" class="original-fullscreen-iframe" src="about:blank" title="Orario scolastico originale"></iframe>
     </main>
 
 
@@ -684,9 +679,23 @@
                 </div>
               </div>
 
+              <!-- Preset Scalo Aereo / Volo -->
+              <div class="tutorial-box" style="margin-top: 12px; border-color: rgba(66, 133, 244, 0.35); background: rgba(66, 133, 244, 0.06);">
+                <div class="box-header-row">
+                  <span class="box-label" style="color: #64B2FF; font-weight: 700;">✈️ Preset Scalo Aereo (Tabellone Volo):</span>
+                  <button id="btn-copy-formula-flight" class="btn-modal-action" style="background: #2563eb; color: #fff;">Copia Preset Volo</button>
+                </div>
+                <div class="formula-code-wrapper">
+                  <pre><code id="widget-formula-flight">$if(wg("...", json, .flight_visible) = 1, wg("...", json, .flight_multiline), "")$</code></pre>
+                </div>
+                <div style="font-size: 0.76rem; color: var(--text-secondary); margin-top: 6px; line-height: 1.4;">
+                  ✨ <strong>Stile tabellone aereo:</strong> [Partenza / Aula] ── [Ora] ✈ ──&gt; [Arrivo / Aula]. Trasparente prima delle 07:00 e oltre 1h dopo l'uscita!
+                </div>
+              </div>
+
               <!-- Accordion Formule Alternative -->
               <details class="tutorial-details">
-                <summary>Mostra formule per singoli valori</summary>
+                <summary>Mostra formule per singoli valori e scalo aereo</summary>
                 <div class="mini-formulas-grid">
                   <div class="mini-formula-item">
                     <span class="mf-title">Materia + Aula:</span>
@@ -703,6 +712,16 @@
                     <code id="mf-code-next">...</code>
                     <button class="btn-mini-copy" data-target="mf-code-next">Copia</button>
                   </div>
+                  <div class="mini-formula-item">
+                    <span class="mf-title">✈️ Volo Riga Singola:</span>
+                    <code id="mf-code-flight-single">...</code>
+                    <button class="btn-mini-copy" data-target="mf-code-flight-single">Copia</button>
+                  </div>
+                  <div class="mini-formula-item">
+                    <span class="mf-title">✈️ Visibilità Livello (Layer):</span>
+                    <code id="mf-code-flight-layer">...</code>
+                    <button class="btn-mini-copy" data-target="mf-code-flight-layer">Copia</button>
+                  </div>
                 </div>
               </details>
             </div>
@@ -711,30 +730,30 @@
             <div class="tutorial-step" id="step-android-3">
               <div class="step-badge">PASSO 4 DI 4 • ANDROID</div>
               <h4 class="step-heading">Schermata di Blocco & Always On Display</h4>
-              <p class="step-desc">Su Samsung Galaxy S24 (One UI 6.1+) puoi visualizzare aula e countdown anche a schermo bloccato o spento.</p>
+              <p class="step-desc">Su Samsung Galaxy S24 (One UI 6.1+), i widget di terze parti come KWGT sulla schermata di blocco si sbloccano con <strong>Good Lock (LockStar)</strong>, la suite ufficiale gratuita di Samsung.</p>
               
               <div class="steps-instruction-list">
                 <div class="instr-item">
                   <span class="instr-num">1</span>
-                  <div>Vai in <strong>Impostazioni</strong> &rarr; <strong>Schermata di blocco e AOD</strong>.</div>
+                  <div>Apri il <strong>Galaxy Store</strong> sul tuo Galaxy S24 e installa <strong>Good Lock</strong> (app ufficiale Samsung).</div>
                 </div>
                 <div class="instr-item">
                   <span class="instr-num">2</span>
-                  <div>Tocca <strong>Modifica schermata di blocco</strong>.</div>
+                  <div>Apri Good Lock, tocca la scheda <em>Make up</em> e installa il modulo <strong>LockStar</strong>.</div>
                 </div>
                 <div class="instr-item">
                   <span class="instr-num">3</span>
-                  <div>Sotto l'orologio, tocca l'area <strong>+ Widget</strong> e scegli il widget compatto KWGT.</div>
+                  <div>Attiva LockStar, tocca l'anteprima della schermata di blocco, tocca lo schermo o l'icona <strong>+ Widget</strong> e scegli <strong>KWGT</strong>.</div>
                 </div>
                 <div class="instr-item">
                   <span class="instr-num">4</span>
-                  <div>Abilita l'opzione <strong>"Mostra widget su Always On Display"</strong> nelle impostazioni AOD.</div>
+                  <div>Posiziona il widget, tocca <strong>Salva</strong>, poi toccalo per aprirlo in KWGT e incollare la formula dello Scalo Aereo!</div>
                 </div>
               </div>
 
               <div class="step-tip step-tip-success">
-                <span class="tip-icon">✅</span>
-                <p>Configurazione completata! Nelle impostazioni di KWGT imposta la modalità di aggiornamento su <strong>"Intelligente"</strong> per azzerare i consumi della batteria.</p>
+                <span class="tip-icon">💡</span>
+                <p><strong>Alternativa senza Good Lock:</strong> Nella schermata di blocco standard puoi aggiungere il widget nativo Samsung <em>Calendario (Prossimo evento)</em> direttamente sotto l'orologio sincronizzando l'orario scolastico con il calendario!</p>
               </div>
             </div>
           </div>
@@ -924,6 +943,6 @@ const BASE_URL = "..."; // Configurato automaticamente
     </div>
   </div>
 
-  <script type="module" src="js/app.js"></script>
+  <script type="module" src="js/app.js?v=35"></script>
 </body>
 </html>

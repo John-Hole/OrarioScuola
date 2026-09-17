@@ -11,11 +11,159 @@ export function generateKWGTCodeSnippet(jsonUrl) {
     tempo_rimasto: `$wg("${jsonUrl}", json, .time_left)$`,
     prossima_materia: `$wg("${jsonUrl}", json, .next_title)$`,
     prossima_aula: `$wg("${jsonUrl}", json, .next_room)$`,
-    stato_generale: `$wg("${jsonUrl}", json, .badge)$`
+    stato_generale: `$wg("${jsonUrl}", json, .badge)$`,
+    scalo_aereo_multilinea: `$if(wg("${jsonUrl}", json, .flight_visible) = 1, wg("${jsonUrl}", json, .flight_multiline), "")$`,
+    scalo_aereo_riga_singola: `$if(wg("${jsonUrl}", json, .flight_visible) = 1, wg("${jsonUrl}", json, .flight_single_line), "")$`,
+    scalo_partenza_materia: `$wg("${jsonUrl}", json, .flight_origin_sub)$`,
+    scalo_partenza_aula: `$wg("${jsonUrl}", json, .flight_origin_room)$`,
+    scalo_orario_freccia: `$wg("${jsonUrl}", json, .flight_time)$`,
+    scalo_arrivo_materia: `$wg("${jsonUrl}", json, .flight_dest_sub)$`,
+    scalo_arrivo_aula: `$wg("${jsonUrl}", json, .flight_dest_room)$`,
+    scalo_visibilita_layer: `$if(wg("${jsonUrl}", json, .flight_visible) = 1, ALWAYS, NEVER)$`
+  };
+}
+
+/**
+ * Calcola i dati per il widget "Scalo / Volo Aereo":
+ * - Trasparente (<07:00 e >uscita + 1 ora e weekend)
+ * - Dalle 07:00: Casa [Partenza] ── 08:00 ✈ ──> Prima Materia [Aula]
+ * - Lezioni: Materia [Aula] ── Orario Cambio ✈ ──> Prossima Materia [Aula]
+ * - Ultima ora (4ª, 6ª o 8ª ora): Materia [Aula] ── Orario Uscita ✈ ──> Casa [Uscita]
+ * - Fino a 1h dopo uscita: Scuola [Terminata] ── Orario Uscita ✈ ──> Casa [Rientro]
+ */
+export function computeFlightWidgetState(timetable, simulatedDate = new Date()) {
+  const itDays = ["Domenica", "Lunedì", "Martedì", "Mercoledì", "Giovedì", "Venerdì", "Sabato"];
+  const dayIdx = simulatedDate.getDay();
+  const currentMinutes = simulatedDate.getHours() * 60 + simulatedDate.getMinutes();
+
+  const emptyFlight = {
+    flight_visible: 0,
+    flight_origin_sub: "",
+    flight_origin_room: "",
+    flight_arrow: "────── ✈ ──────>",
+    flight_time: "",
+    flight_dest_sub: "",
+    flight_dest_room: "",
+    flight_single_line: "",
+    flight_multiline: ""
+  };
+
+  // Weekend
+  if (dayIdx === 0 || dayIdx === 6) {
+    return emptyFlight;
+  }
+
+  const currentDayName = itDays[dayIdx];
+  const dayData = (timetable.giorni || []).find(d => d.giorno === currentDayName);
+
+  if (!dayData || !dayData.lezioni || dayData.lezioni.length === 0) {
+    return emptyFlight;
+  }
+
+  const lessons = dayData.lezioni;
+  const firstStart = timeToMinutes(lessons[0].inizio);
+  const lastEnd = timeToMinutes(lessons[lessons.length - 1].fine);
+
+  // Prima delle 07:00 (420 min) -> invisibile / trasparente
+  if (currentMinutes < 420) {
+    return emptyFlight;
+  }
+
+  // Oltre 1 ora dall'uscita (lastEnd + 60 min) -> invisibile / trasparente
+  if (currentMinutes >= lastEnd + 60) {
+    return emptyFlight;
+  }
+
+  let originSub = "";
+  let originRoom = "";
+  let flightTime = "";
+  let destSub = "";
+  let destRoom = "";
+
+  // Fascia 1: Dalle 07:00 alla prima ora
+  if (currentMinutes < firstStart) {
+    originSub = "Casa";
+    originRoom = "Partenza";
+    flightTime = lessons[0].inizio;
+    destSub = lessons[0].materia;
+    destRoom = lessons[0].aula;
+  }
+  // Fascia 2: Dopo l'uscita scolastica entro 1 ora
+  else if (currentMinutes >= lastEnd) {
+    originSub = "Scuola";
+    originRoom = lessons[lessons.length - 1].aula || "Terminata";
+    flightTime = lessons[lessons.length - 1].fine;
+    destSub = "Casa";
+    destRoom = "Rientro";
+  }
+  // Fascia 3: Durante la giornata scolastica
+  else {
+    let found = false;
+    for (let i = 0; i < lessons.length; i++) {
+      const s = timeToMinutes(lessons[i].inizio);
+      const e = timeToMinutes(lessons[i].fine);
+
+      // Durante la lezione i
+      if (currentMinutes >= s && currentMinutes < e) {
+        originSub = lessons[i].materia;
+        originRoom = lessons[i].aula;
+
+        // Se è l'ultima ora di oggi (dinamica: 4ª, 6ª o 8ª ora)
+        if (i === lessons.length - 1) {
+          flightTime = lessons[i].fine; // Orario di uscita! (es. 11:42, 13:36, 15:34)
+          destSub = "Casa";
+          destRoom = "Uscita";
+        } else {
+          flightTime = lessons[i].fine; // Orario del cambio ora
+          destSub = lessons[i + 1].materia;
+          destRoom = lessons[i + 1].aula;
+        }
+        found = true;
+        break;
+      }
+
+      // Durante intervallo o cambio ora
+      if (i + 1 < lessons.length) {
+        const nextS = timeToMinutes(lessons[i + 1].inizio);
+        if (currentMinutes >= e && currentMinutes < nextS) {
+          originSub = lessons[i].materia;
+          originRoom = lessons[i].aula;
+          flightTime = lessons[i + 1].inizio; // Orario inizio ora successiva
+          destSub = lessons[i + 1].materia;
+          destRoom = lessons[i + 1].aula;
+          found = true;
+          break;
+        }
+      }
+    }
+
+    if (!found) {
+      originSub = lessons[0].materia;
+      originRoom = lessons[0].aula;
+      flightTime = lessons[0].inizio;
+      destSub = "Scuola";
+      destRoom = "";
+    }
+  }
+
+  const singleLine = `${originSub} [${originRoom}]  ── ${flightTime} ✈ ──>  ${destSub} [${destRoom}]`;
+  const multiline = `${originSub} (${originRoom})\n────── ${flightTime} ✈ ──────>\n${destSub} (${destRoom})`;
+
+  return {
+    flight_visible: 1,
+    flight_origin_sub: originSub,
+    flight_origin_room: originRoom,
+    flight_arrow: "────── ✈ ──────>",
+    flight_time: flightTime,
+    flight_dest_sub: destSub,
+    flight_dest_room: destRoom,
+    flight_single_line: singleLine,
+    flight_multiline: multiline
   };
 }
 
 export function computeClientWidgetState(timetable, simulatedDate = new Date()) {
+  const flight = computeFlightWidgetState(timetable, simulatedDate);
   const itDays = ["Domenica", "Lunedì", "Martedì", "Mercoledì", "Giovedì", "Venerdì", "Sabato"];
   const dayIdx = simulatedDate.getDay();
   const currentMinutes = simulatedDate.getHours() * 60 + simulatedDate.getMinutes();
@@ -33,6 +181,7 @@ export function computeClientWidgetState(timetable, simulatedDate = new Date()) 
   if (dayIdx === 0 || dayIdx === 6) {
     const monFirst = getFirstOf("Lunedì");
     return {
+      ...flight,
       status: "WEEKEND",
       badge: "WEEKEND",
       title: "Buon Fine Settimana",
@@ -49,6 +198,7 @@ export function computeClientWidgetState(timetable, simulatedDate = new Date()) 
 
   if (!dayData || !dayData.lezioni || dayData.lezioni.length === 0) {
     return {
+      ...flight,
       status: "NO_LESSONS",
       badge: "LIBERO",
       title: "Nessuna lezione oggi",
@@ -75,6 +225,7 @@ export function computeClientWidgetState(timetable, simulatedDate = new Date()) 
   if (currentMinutes < firstStart) {
     const rem = firstStart - currentMinutes;
     return {
+      ...flight,
       status: "BEFORE_SCHOOL",
       badge: "PRIMA ORA",
       title: lessons[0].materia,
@@ -91,6 +242,7 @@ export function computeClientWidgetState(timetable, simulatedDate = new Date()) 
 
   if (currentMinutes >= lastEnd) {
     return {
+      ...flight,
       status: "FINISHED",
       badge: "FINITO",
       title: "Giornata terminata!",
@@ -113,6 +265,7 @@ export function computeClientWidgetState(timetable, simulatedDate = new Date()) 
       const left = e - currentMinutes;
       const nextL = lessons[i + 1];
       return {
+        ...flight,
         status: "IN_CLASS",
         badge: "IN CORSO",
         title: lessons[i].materia,
@@ -134,6 +287,7 @@ export function computeClientWidgetState(timetable, simulatedDate = new Date()) 
         const gap = nextS - e;
         const isRecess = gap >= 8;
         return {
+          ...flight,
           status: "BREAK",
           badge: isRecess ? "RICREAZIONE" : "CAMBIO ORA",
           title: isRecess ? "Ricreazione in corso" : `Prossima: ${lessons[i + 1].materia}`,
@@ -153,6 +307,7 @@ export function computeClientWidgetState(timetable, simulatedDate = new Date()) 
   }
 
   return {
+    ...flight,
     status: "UNKNOWN",
     badge: "SCUOLA",
     title: "Orario scolastico",

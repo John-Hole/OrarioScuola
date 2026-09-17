@@ -12,13 +12,17 @@
     <link rel="stylesheet" type="text/css" href="/orario-originale/_style.css">
     <style>
       /* Ottimizzazioni touch & responsive per mobile senza alterare lo stile originale EDT */
-      body {
+      html, body {
         margin: 0;
         padding: 0;
+        width: 100%;
+        min-height: 100%;
         font-family: Arial, Helvetica, sans-serif;
         background-color: #ffffff;
         -webkit-text-size-adjust: 100%;
         overflow-x: auto;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
       }
       .fondBleuMarine {
         background-color: #006699;
@@ -52,7 +56,7 @@
       #grille {
         overflow-x: auto;
         -webkit-overflow-scrolling: touch;
-        padding: 10px 4px 20px 4px;
+        padding: 10px 4px 80px 4px;
         text-align: center;
       }
       #grille table {
