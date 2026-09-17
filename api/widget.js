@@ -141,7 +141,37 @@ export default async function handler(req, res) {
     const firstStart = timeToMinutes(lessons[0].inizio);
     const lastEnd = timeToMinutes(lessons[lessons.length - 1].fine);
 
-    const isVisible = (currentMinutes >= 420 && currentMinutes < lastEnd + 60) ? 1 : 0;
+    // Prima delle 07:00 (420 min) -> widget 100% invisibile / testo vuoto
+    if (currentMinutes < 420) {
+      return res.status(200).json({
+        ...emptyFlight,
+        status: 'BEFORE_SCHOOL',
+        badge: 'PRIMA DELLE 07:00',
+        title: 'Buon riposo',
+        subtitle: `Oggi inizio ore ${lessons[0].inizio}: ${lessons[0].materia}`,
+        room: '',
+        time_left: '',
+        updated_at: timeStr,
+        class_name: timetable?.classe || '4 BINF'
+      });
+    }
+
+    // Oltre 1 ora dall'uscita scolastica -> widget 100% invisibile / testo vuoto
+    if (currentMinutes >= lastEnd + 60) {
+      return res.status(200).json({
+        ...emptyFlight,
+        status: 'FINISHED',
+        badge: 'FINITO',
+        title: 'Giornata terminata!',
+        subtitle: 'A domani!',
+        room: '',
+        time_left: '',
+        updated_at: timeStr,
+        class_name: timetable?.classe || '4 BINF'
+      });
+    }
+
+    const isVisible = 1;
 
     let originSub = '';
     let originRoom = '';
