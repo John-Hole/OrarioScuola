@@ -3,7 +3,7 @@
   "badge": "IN CORSO",
   "flight_origin_sub": "TPSIT",
   "flight_origin_room": "B 045",
-  "flight_arrow": "──── ✈ ────>",
+  "flight_arrow": "───>",
   "flight_time": "08:52",
   "flight_dest_sub": "SISTEMI",
   "flight_dest_room": "Lab B 010",
@@ -12,7 +12,9 @@
   "flight_left_col": "TPSIT\nB 045",
   "flight_center_col": "──── ✈ ────>\n08:52",
   "flight_right_col": "SISTEMI\nLab B 010",
-  "flight_bbcode": "[b]TPSIT[/b]       [c=#38bdf8]──── ✈ ────>[/c]       [b]SISTEMI[/b]\n[c=#38bdf8]📍 B 045[/c]             [b][c=#f59e0b]08:52[/c][/b]             [c=#4ade80]📍 Lab B 010[/c]",
+  "flight_bbcode": "[b]TPSIT[/b]   [c=#38bdf8]───>[/c]   [b]SISTEMI[/b]\n[c=#38bdf8]📍 B 045[/c]   [b][c=#f59e0b]08:52[/c][/b]   [c=#4ade80]📍 Lab B 010[/c]",
   "flight_bbcode_1line": "[b]TPSIT[/b] [c=#38bdf8][B 045][/c]  [c=#38bdf8]──[/c] [b][c=#f59e0b]08:52[/c][/b] [c=#38bdf8]✈ ──>[/c]  [b]SISTEMI[/b] [c=#4ade80][Lab B 010][/c]",
-  "flight_glance": "🟢 [b]TPSIT[/b] [c=#38bdf8](B 045)[/c] [c=#94a3b8]• Fine tra 12m[/c]\n[c=#f59e0b]✈️ Ore 08:52 ➔[/c] [b]SISTEMI[/b] [c=#4ade80](Lab B 010)[/c]"
+  "flight_glance": "🟢 [b]TPSIT[/b] [c=#38bdf8](B 045)[/c] [c=#94a3b8]• Fine tra 12m[/c]\n[c=#f59e0b]✈️ Ore 08:52 ➔[/c] [b]SISTEMI[/b] [c=#4ade80](Lab B 010)[/c]",
+  "flight_compact": "[b]TPSIT[/b]   [c=#38bdf8]───>[/c]   [b]SISTEMI[/b]\n[c=#38bdf8]📍 B 045[/c]   [b][c=#f59e0b]08:52[/c][/b]   [c=#4ade80]📍 Lab B 010[/c]",
+  "flight_compact_plain": "TPSIT      ───>      SISTEMI\nB 045      08:52    Lab B 010"
 }
