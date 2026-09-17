@@ -333,6 +333,23 @@ def get_sample_mock_data(classe: str = "4 BINF") -> Dict[str, Any]:
     }
 
 
+def shorten_subject(name: str) -> str:
+    if not name:
+        return ""
+    mapping = {
+        "TELECOMUNICAZIONI": "TELECOM.",
+        "SCIENZE MOTORIE": "SC. MOTORIE",
+        "SISTEMI E RETI LAB": "SISTEMI LAB",
+        "SISTEMI E RETI": "SISTEMI",
+        "INFORMATICA LAB": "INFORMATICA",
+        "TPSIT LAB": "TPSIT",
+        "DIRITTO ED ECONOMIA": "DIRITTO",
+        "TECNOLOGIE E PROGETTAZIONE": "TPSIT"
+    }
+    cleaned = name.strip().upper()
+    return mapping.get(cleaned, name.strip())
+
+
 def compute_flight_payload(timetable: Dict[str, Any], ref_dt: Optional[datetime] = None) -> Dict[str, Any]:
     """
     Calcola i campi per il widget 'Scalo / Volo Aereo':
@@ -444,24 +461,29 @@ def compute_flight_payload(timetable: Dict[str, Any], ref_dt: Optional[datetime]
             dest_sub = "Scuola"
             dest_room = ""
 
-    single_line = f"{origin_sub} [{origin_room}]  ── {flight_time} ✈ ──>  {dest_sub} [{dest_room}]"
-    left_col = f"{origin_sub}\n{origin_room}"
-    center_col = f"──── ✈ ────>\n{flight_time}"
-    right_col = f"{dest_sub}\n{dest_room}"
-    board_2lines = f"{origin_sub}       ──── ✈ ────>       {dest_sub}\n{origin_room}             {flight_time}             {dest_room}"
+    s1 = shorten_subject(origin_sub)
+    s2 = shorten_subject(dest_sub)
+    single_line = f"{s1} [{origin_room}]  ── {flight_time} ✈ ──>  {s2} [{dest_room}]"
+    left_col = f"{s1}\n{origin_room}"
+    center_col = f"───>\n{flight_time}"
+    right_col = f"{s2}\n{dest_room}"
+    board_2lines = f"{s1}      ───>      {s2}\n{origin_room}      {flight_time}    {dest_room}"
+    flight_compact = f"[b]{s1}[/b]   [c=#38bdf8]───>[/c]   [b]{s2}[/b]\n[c=#38bdf8]📍 {origin_room}[/c]   [b][c=#f59e0b]{flight_time}[/c][/b]   [c=#4ade80]📍 {dest_room}[/c]"
 
     return {
         "flight_visible": 1,
-        "flight_origin_sub": origin_sub,
+        "flight_origin_sub": s1,
         "flight_origin_room": origin_room,
-        "flight_arrow": "──── ✈ ────>",
+        "flight_arrow": "───>",
         "flight_time": flight_time,
-        "flight_dest_sub": dest_sub,
+        "flight_dest_sub": s2,
         "flight_dest_room": dest_room,
         "flight_single_line": single_line,
         "flight_multiline": board_2lines,
         "flight_board": board_2lines,
         "flight_board_2lines": board_2lines,
+        "flight_compact": flight_compact,
+        "flight_bbcode": flight_compact,
         "flight_left_col": left_col,
         "flight_center_col": center_col,
         "flight_right_col": right_col

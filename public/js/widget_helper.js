@@ -150,27 +150,49 @@ export function computeFlightWidgetState(timetable, simulatedDate = new Date()) 
     }
   }
 
-  const singleLine = `${originSub} [${originRoom}]  ── ${flightTime} ✈ ──>  ${destSub} [${destRoom}]`;
-  const leftCol = `${originSub}\n${originRoom}`;
-  const centerCol = `────── ✈ ──────>\n${flightTime}`;
-  const rightCol = `${destSub}\n${destRoom}`;
-  const board2lines = `${originSub}    ────── ✈ ──────>    ${destSub}\n${originRoom}              ${flightTime}              ${destRoom}`;
+  const s1 = shortenSubject(originSub);
+  const s2 = shortenSubject(destSub);
+  const singleLine = `${s1} [${originRoom}]  ── ${flightTime} ✈ ──>  ${s2} [${destRoom}]`;
+  const leftCol = `${s1}\n${originRoom}`;
+  const centerCol = `───>\n${flightTime}`;
+  const rightCol = `${s2}\n${destRoom}`;
+  const board2lines = `${s1}      ───>      ${s2}\n${originRoom}      ${flightTime}    ${destRoom}`;
+  const flightCompact = `[b]${s1}[/b]   [c=#38bdf8]───>[/c]   [b]${s2}[/b]\n[c=#38bdf8]📍 ${originRoom}[/c]   [b][c=#f59e0b]${flightTime}[/c][/b]   [c=#4ade80]📍 ${destRoom}[/c]`;
 
   return {
     flight_visible: 1,
-    flight_origin_sub: originSub,
+    flight_origin_sub: s1,
     flight_origin_room: originRoom,
-    flight_arrow: "────── ✈ ──────>",
+    flight_arrow: "───>",
     flight_time: flightTime,
-    flight_dest_sub: destSub,
+    flight_dest_sub: s2,
     flight_dest_room: destRoom,
     flight_single_line: singleLine,
     flight_multiline: board2lines,
+    flight_board: board2lines,
     flight_board_2lines: board2lines,
+    flight_compact: flightCompact,
+    flight_bbcode: flightCompact,
     flight_left_col: leftCol,
     flight_center_col: centerCol,
     flight_right_col: rightCol
   };
+}
+
+export function shortenSubject(name) {
+  if (!name) return "";
+  const mapping = {
+    "TELECOMUNICAZIONI": "TELECOM.",
+    "SCIENZE MOTORIE": "SC. MOTORIE",
+    "SISTEMI E RETI LAB": "SISTEMI LAB",
+    "SISTEMI E RETI": "SISTEMI",
+    "INFORMATICA LAB": "INFORMATICA",
+    "TPSIT LAB": "TPSIT",
+    "DIRITTO ED ECONOMIA": "DIRITTO",
+    "TECNOLOGIE E PROGETTAZIONE": "TPSIT"
+  };
+  const clean = name.trim().toUpperCase();
+  return mapping[clean] || name.trim();
 }
 
 export function computeClientWidgetState(timetable, simulatedDate = new Date()) {

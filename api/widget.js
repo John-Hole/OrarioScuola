@@ -12,6 +12,22 @@ function timeToMinutes(str) {
   return h * 60 + m;
 }
 
+function shortenSubject(name) {
+  if (!name) return '';
+  const mapping = {
+    'TELECOMUNICAZIONI': 'TELECOM.',
+    'SCIENZE MOTORIE': 'SC. MOTORIE',
+    'SISTEMI E RETI LAB': 'SISTEMI LAB',
+    'SISTEMI E RETI': 'SISTEMI',
+    'INFORMATICA LAB': 'INFORMATICA',
+    'TPSIT LAB': 'TPSIT',
+    'DIRITTO ED ECONOMIA': 'DIRITTO',
+    'TECNOLOGIE E PROGETTAZIONE': 'TPSIT'
+  };
+  const clean = name.trim().toUpperCase();
+  return mapping[clean] || name.trim();
+}
+
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
@@ -30,7 +46,6 @@ export default async function handler(req, res) {
       timetable = JSON.parse(fs.readFileSync(timetablePath, 'utf-8'));
     }
 
-    // Ora corrente italiana (Europe/Rome)
     const now = new Date();
     const romeTimeStr = now.toLocaleString('en-US', { timeZone: 'Europe/Rome' });
     const romeDate = new Date(romeTimeStr);
@@ -44,13 +59,15 @@ export default async function handler(req, res) {
       flight_visible: 0,
       flight_origin_sub: '',
       flight_origin_room: '',
-      flight_arrow: '──── ✈ ────>',
+      flight_arrow: '───>',
       flight_time: '',
       flight_dest_sub: '',
       flight_dest_room: '',
       flight_single_line: '',
       flight_multiline: '',
       flight_board: '',
+      flight_compact: '',
+      flight_bbcode: '',
       flight_left_col: '',
       flight_center_col: '',
       flight_right_col: ''
@@ -91,7 +108,6 @@ export default async function handler(req, res) {
     const firstStart = timeToMinutes(lessons[0].inizio);
     const lastEnd = timeToMinutes(lessons[lessons.length - 1].fine);
 
-    // Trasparenza prima delle 07:00 o oltre 1h dall'uscita
     const isVisible = (currentMinutes >= 420 && currentMinutes < lastEnd + 60) ? 1 : 0;
 
     let originSub = '';
@@ -157,26 +173,31 @@ export default async function handler(req, res) {
       }
     }
 
-    const singleLine = ${originSub} []  ──  ✈ ──>   [];
-    const board = ${originSub}       ──── ✈ ────>       \n                          ;
+    const s1 = shortenSubject(originSub);
+    const s2 = shortenSubject(destSub);
+    const singleLine = ${s1} []  ──  ✈ ──>   [];
+    const board = ${s1}      ───>      \n          ;
+    const flightCompact = [b][/b]   [c=#38bdf8]───>[/c]   [b][/b]\n[c=#38bdf8]📍 [/c]   [b][c=#f59e0b][/c][/b]   [c=#4ade80]📍 [/c];
 
     return res.status(200).json({
       flight_visible: isVisible,
-      flight_origin_sub: originSub,
+      flight_origin_sub: s1,
       flight_origin_room: originRoom,
-      flight_arrow: '──── ✈ ────>',
+      flight_arrow: '───>',
       flight_time: flightTime,
-      flight_dest_sub: destSub,
+      flight_dest_sub: s2,
       flight_dest_room: destRoom,
       flight_single_line: singleLine,
       flight_multiline: board,
       flight_board: board,
-      flight_left_col: ${originSub}\n,
-      flight_center_col: ──── ✈ ────>\n,
-      flight_right_col: ${destSub}\n,
+      flight_compact: flightCompact,
+      flight_bbcode: flightCompact,
+      flight_left_col: ${s1}\n,
+      flight_center_col: ───>\n,
+      flight_right_col: ${s2}\n,
       status: currentMinutes < firstStart ? 'BEFORE_SCHOOL' : (currentMinutes >= lastEnd ? 'FINISHED' : 'IN_CLASS'),
       updated_at: timeStr,
-      class_name: timetable.classe || '4 BINF'
+      class_name: timetable?.classe || '4 BINF'
     });
   } catch (err) {
     console.error('[API WIDGET ERROR]', err);
