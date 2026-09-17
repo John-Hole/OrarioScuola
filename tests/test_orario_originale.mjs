@@ -14,6 +14,7 @@ const files = [
   '_periode.js',
   '_grille.js',
   '_signature.js',
+  '_panzoom.js',
   'classi/edc0000119p00001s3fffffffffffffff_4_binf_ac.png'
 ];
 

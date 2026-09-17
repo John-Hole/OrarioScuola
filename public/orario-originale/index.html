@@ -16,13 +16,13 @@
         margin: 0;
         padding: 0;
         width: 100%;
-        min-height: 100%;
+        height: 100%;
         font-family: Arial, Helvetica, sans-serif;
         background-color: #ffffff;
         -webkit-text-size-adjust: 100%;
-        overflow-x: auto;
-        overflow-y: auto;
-        -webkit-overflow-scrolling: touch;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
       }
       .fondBleuMarine {
         background-color: #006699;
@@ -53,28 +53,116 @@
         cursor: pointer;
         max-width: 90vw;
       }
+      #bandeaux-container {
+        flex-shrink: 0;
+        width: 100%;
+        z-index: 10;
+        background-color: #ffffff;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+      }
+      .zoom-viewport {
+        flex: 1;
+        min-height: 0;
+        width: 100%;
+        position: relative;
+        overflow: hidden;
+        touch-action: none;
+        cursor: grab;
+        user-select: none;
+        -webkit-user-select: none;
+        background: #f8fafc;
+      }
+      .zoom-viewport.is-dragging {
+        cursor: grabbing;
+      }
+      .zoom-stage {
+        transform-origin: 0 0;
+        will-change: transform;
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        max-width: 1025px;
+        padding: 8px 6px 70px 6px;
+        box-sizing: border-box;
+      }
+      .zoom-stage.animating {
+        transition: transform 0.22s cubic-bezier(0.25, 1, 0.5, 1);
+      }
       #grille {
-        overflow-x: auto;
-        -webkit-overflow-scrolling: touch;
-        padding: 10px 4px 80px 4px;
+        width: 100%;
         text-align: center;
+        margin: 0 auto;
       }
       #grille table {
         margin: 0 auto;
       }
       #grille img {
         display: block;
-        max-width: 100%;
+        width: 100%;
+        max-width: 1025px;
         height: auto;
         margin: 0 auto;
-        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+        box-shadow: 0 4px 18px rgba(0, 0, 0, 0.12);
         border-radius: 4px;
-        cursor: zoom-in;
-        transition: max-width 0.2s ease;
       }
-      #grille img.zoomed {
-        max-width: none !important;
-        cursor: zoom-out;
+      #signature {
+        text-align: center;
+        margin-top: 10px;
+      }
+      /* Floating Zoom Toolbar */
+      .floating-zoom-bar {
+        position: fixed;
+        bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+        right: 16px;
+        z-index: 1000;
+        display: inline-flex;
+        align-items: center;
+        gap: 2px;
+        background: rgba(14, 18, 24, 0.90);
+        backdrop-filter: blur(14px);
+        -webkit-backdrop-filter: blur(14px);
+        border: 1px solid rgba(255, 255, 255, 0.16);
+        border-radius: 32px;
+        padding: 4px;
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.45);
+        user-select: none;
+        -webkit-user-select: none;
+      }
+      .zoom-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 36px;
+        height: 36px;
+        padding: 0 8px;
+        border-radius: 24px;
+        background: transparent;
+        border: none;
+        color: #FFFFFF;
+        cursor: pointer;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        font-size: 13px;
+        font-weight: 700;
+        transition: background-color 0.15s ease, transform 0.1s ease;
+      }
+      .zoom-btn:hover {
+        background: rgba(255, 255, 255, 0.15);
+      }
+      .zoom-btn:active {
+        background: rgba(255, 255, 255, 0.25);
+        transform: scale(0.92);
+      }
+      .zoom-btn.zoom-level {
+        min-width: 52px;
+        font-variant-numeric: tabular-nums;
+        letter-spacing: 0.2px;
+        color: #38bdf8;
+      }
+      .zoom-btn-fit {
+        border-left: 1px solid rgba(255, 255, 255, 0.14);
+        margin-left: 2px;
+        padding-left: 10px;
       }
       @media (max-width: 600px) {
         .espaceGauche {
@@ -92,38 +180,53 @@
     <script type="text/javascript" src="/orario-originale/_grille.js"></script>
     <script type="text/javascript" src="/orario-originale/_signature.js"></script>
     <script type="text/javascript" src="/orario-originale/_affichage.js"></script>
+    <script type="text/javascript" src="/orario-originale/_panzoom.js"></script>
 </head>
 <body onload="AfficherPage()">
-  <table width="100%" border="0" cellspacing="0" cellpadding="0">
-    <tr class="nePasImprimer fondBleuMarine">
-      <td id="bandeauPage"></td>
-    </tr>
-    <tr class="nePasImprimer fondBleuMarine">
-      <td id="bandeauGenre"></td>
-    </tr>
-    <tr class="nePasImprimer fondBleuVert">
-      <td>
-        <table border="0" cellspacing="0" cellpadding="0">
-          <tr>
-            <td id="bandeauRessource"></td>
-            <td id="bandeauPeriode"></td>
-          </tr>
-        </table>
-      </td>
-    </tr>
-    <tr>
-      <td id="grille"></td>
-    </tr>
-    <tr class="nePasImprimer">
-      <td id="signature"></td>
-    </tr>
-  </table>
-  <script>
-    document.addEventListener('click', function(e) {
-      if (e.target && e.target.tagName === 'IMG' && e.target.closest('#grille')) {
-        e.target.classList.toggle('zoomed');
-      }
-    });
-  </script>
+  <!-- Sezione Selezione EDT in alto (fissa e accessibile) -->
+  <div id="bandeaux-container">
+    <table width="100%" border="0" cellspacing="0" cellpadding="0">
+      <tr class="nePasImprimer fondBleuMarine">
+        <td id="bandeauPage"></td>
+      </tr>
+      <tr class="nePasImprimer fondBleuMarine">
+        <td id="bandeauGenre"></td>
+      </tr>
+      <tr class="nePasImprimer fondBleuVert">
+        <td>
+          <table border="0" cellspacing="0" cellpadding="0">
+            <tr>
+              <td id="bandeauRessource"></td>
+              <td id="bandeauPeriode"></td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </div>
+
+  <!-- Area Zoom Viewport & Stage per la griglia orario -->
+  <div id="zoom-viewport" class="zoom-viewport">
+    <div id="zoom-stage" class="zoom-stage">
+      <div id="grille"></div>
+      <div id="signature" class="nePasImprimer"></div>
+    </div>
+  </div>
+
+  <!-- Floating Zoom Toolbar (Mobile & Desktop) -->
+  <div id="floating-zoom-bar" class="floating-zoom-bar" role="toolbar" aria-label="Controlli di zoom">
+    <button id="btn-zoom-out" class="zoom-btn" title="Rimpicciolisci (−)" aria-label="Rimpicciolisci">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+    </button>
+    <button id="btn-zoom-reset" class="zoom-btn zoom-level" title="Reimposta zoom (100% / Adatta)" aria-label="Reimposta zoom">
+      <span id="zoom-level-text">100%</span>
+    </button>
+    <button id="btn-zoom-in" class="zoom-btn" title="Ingrandisci (+)" aria-label="Ingrandisci">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+    </button>
+    <button id="btn-zoom-fit" class="zoom-btn zoom-btn-fit" title="Adatta allo schermo" aria-label="Adatta allo schermo">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"></path></svg>
+    </button>
+  </div>
 </body>
 </html>
