@@ -269,6 +269,7 @@ export function updateTimelineCursor(containerElement, now = new Date()) {
 
   let targetTop = 0;
   let isVisible = false;
+  let hasActiveBlock = false;
 
   // Reset stati attivi precedenti
   rows.forEach(row => {
@@ -292,6 +293,7 @@ export function updateTimelineCursor(containerElement, now = new Date()) {
         const card = row.querySelector('.lesson-card');
         if (card) {
           card.classList.add('is-active');
+          hasActiveBlock = true;
           const timeLeftElem = card.querySelector('.time-left-text');
           if (timeLeftElem) {
             const rem = end - currentMinutes;
@@ -302,6 +304,7 @@ export function updateTimelineCursor(containerElement, now = new Date()) {
         const breakBar = row.querySelector('.timeline-break-bar');
         if (breakBar) {
           breakBar.classList.add('is-active-break');
+          hasActiveBlock = true;
         }
         break;
       } else if (i + 1 < rows.length) {
@@ -321,9 +324,19 @@ export function updateTimelineCursor(containerElement, now = new Date()) {
   if (cursorBadge) {
     if (isVisible && targetTop > 0) {
       cursorBadge.style.display = 'flex';
-      if (indicatorLine) indicatorLine.style.display = 'block';
       cursorBadge.style.top = `${targetTop}px`;
-      if (indicatorLine) indicatorLine.style.top = `${targetTop}px`;
+
+      if (indicatorLine) {
+        indicatorLine.style.display = 'block';
+        indicatorLine.style.top = `${targetTop}px`;
+        if (hasActiveBlock) {
+          indicatorLine.style.right = 'auto';
+          indicatorLine.style.width = '32px';
+        } else {
+          indicatorLine.style.right = '0';
+          indicatorLine.style.width = 'auto';
+        }
+      }
 
       const badgeTimeText = cursorBadge.querySelector('.cursor-time');
       if (badgeTimeText) {

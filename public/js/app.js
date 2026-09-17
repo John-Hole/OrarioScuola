@@ -1085,9 +1085,11 @@ function createDailyLessonSlot(lesson, start, end, slotClass) {
   slot.setAttribute('data-end', end);
 
   const themeClass = getSubjectThemeClass(lesson.materia);
+  const isLongName = (lesson.materia || '').length > 18;
+  const compactClass = isLongName ? 'compact-text' : '';
 
   slot.innerHTML = `
-    <article class="lesson-card ${themeClass}" data-start="${start}" data-end="${end}">
+    <article class="lesson-card ${themeClass} ${compactClass}" data-start="${start}" data-end="${end}">
       <div class="lesson-card-header">
         <h2 class="subject-title">${escapeHtml(lesson.materia)}</h2>
         <div class="room-title">${escapeHtml(lesson.aula)}</div>
@@ -1340,7 +1342,7 @@ function renderWeeklyView() {
   if (structure.length === 0) return;
 
   const numCols = giorni.length + 1; // 1 colonna asse tempo + N colonne giorni
-  elements.weeklyGridContainer.style.gridTemplateColumns = `48px repeat(${giorni.length}, minmax(105px, 1fr))`;
+  elements.weeklyGridContainer.style.gridTemplateColumns = `48px repeat(${giorni.length}, minmax(115px, 1fr))`;
 
   // 1. CELLE DI SFONDO DELLA GRIGLIA PERMANENTE
   structure.forEach((item) => {
@@ -1482,7 +1484,15 @@ function createGridCell(lesson, giorno, startMin, endMin, isDouble = false) {
   const themeClass = getSubjectThemeClass(lesson.materia);
   const doubleClass = isDouble ? 'span-2-hours' : '';
 
-  cell.className = `grid-cell-lesson ${themeClass} ${doubleClass}`;
+  const matLen = (lesson.materia || '').length;
+  let textScaleClass = '';
+  if (matLen >= 18) {
+    textScaleClass = 'very-compact-text';
+  } else if (matLen >= 12) {
+    textScaleClass = 'compact-text';
+  }
+
+  cell.className = `grid-cell-lesson ${themeClass} ${doubleClass} ${textScaleClass}`.trim();
   cell.setAttribute('data-day', giorno);
   cell.setAttribute('data-start-min', startMin);
   cell.setAttribute('data-end-min', endMin);
