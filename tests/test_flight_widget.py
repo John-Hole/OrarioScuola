@@ -51,7 +51,7 @@ class TestFlightWidget(unittest.TestCase):
         self.assertEqual(p["flight_origin_sub"], "TPSIT")
         self.assertEqual(p["flight_time"], "08:52")
         self.assertEqual(p["flight_dest_sub"], "SISTEMI")
-        self.assertEqual(p["flight_dest_room"], "Lab B 010")
+        self.assertEqual(p["flight_dest_room"], "B 010")
 
     def test_during_change_of_hour(self):
         # Ore 08:52 (Cambio d'ora) -> SISTEMI

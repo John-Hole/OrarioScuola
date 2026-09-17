@@ -152,31 +152,40 @@ export function computeFlightWidgetState(timetable, simulatedDate = new Date()) 
 
   const s1 = shortenSubject(originSub);
   const s2 = shortenSubject(destSub);
-  const singleLine = `${s1} [${originRoom}]  ── ${flightTime} ✈ ──>  ${s2} [${destRoom}]`;
-  const leftCol = `${s1}\n${originRoom}`;
+  const r1 = cleanRoom(originRoom);
+  const r2 = cleanRoom(destRoom);
+  const singleLine = `${s1} [${r1}]  ── ${flightTime} ✈ ──>  ${s2} [${r2}]`;
+  const leftCol = `${s1}\n${r1}`;
   const centerCol = `───>\n${flightTime}`;
-  const rightCol = `${s2}\n${destRoom}`;
-  const board2lines = `${s1}      ───>      ${s2}\n${originRoom}      ${flightTime}    ${destRoom}`;
-  const flightCompact = `[b]${s1}[/b]   [c=#38bdf8]───>[/c]   [b]${s2}[/b]\n[c=#38bdf8]📍 ${originRoom}[/c]   [b][c=#f59e0b]${flightTime}[/c][/b]   [c=#4ade80]📍 ${destRoom}[/c]`;
+  const rightCol = `${s2}\n${r2}`;
+  const board2lines = `${s1}       ───>       ${s2}\n🚩 {r1}     ${flightTime}     🚩 {r2}`;
+  const flightCompact = `[b]${s1}[/b]       [c=#38bdf8]───>[/c]       [b]${s2}[/b]\n[c=#38bdf8]🚩 ${r1}[/c]     [b][c=#f59e0b]${flightTime}[/c][/b]     [c=#4ade80]🚩 ${r2}[/c]`;
 
   return {
     flight_visible: 1,
     flight_origin_sub: s1,
-    flight_origin_room: originRoom,
+    flight_origin_room: r1,
     flight_arrow: "───>",
     flight_time: flightTime,
     flight_dest_sub: s2,
-    flight_dest_room: destRoom,
+    flight_dest_room: r2,
     flight_single_line: singleLine,
     flight_multiline: board2lines,
     flight_board: board2lines,
     flight_board_2lines: board2lines,
     flight_compact: flightCompact,
     flight_bbcode: flightCompact,
+    flight_clean: flightCompact,
+    flight_clean_plain: board2lines,
     flight_left_col: leftCol,
     flight_center_col: centerCol,
     flight_right_col: rightCol
   };
+}
+
+export function cleanRoom(room) {
+  if (!room) return "";
+  return room.replace(/\blab\b\.?\s*/gi, "").trim();
 }
 
 export function shortenSubject(name) {

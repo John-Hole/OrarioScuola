@@ -28,6 +28,11 @@ function shortenSubject(name) {
   return mapping[clean] || name.trim();
 }
 
+function cleanRoom(room) {
+  if (!room) return '';
+  return room.replace(/\blab\b\.?\s*/gi, '').trim();
+}
+
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
@@ -68,6 +73,8 @@ export default async function handler(req, res) {
       flight_board: '',
       flight_compact: '',
       flight_bbcode: '',
+      flight_clean: '',
+      flight_clean_plain: '',
       flight_left_col: '',
       flight_center_col: '',
       flight_right_col: ''
@@ -175,23 +182,28 @@ export default async function handler(req, res) {
 
     const s1 = shortenSubject(originSub);
     const s2 = shortenSubject(destSub);
+    const r1 = cleanRoom(originRoom);
+    const r2 = cleanRoom(destRoom);
+
     const singleLine = ${s1} []  ──  ✈ ──>   [];
-    const board = ${s1}      ───>      \n          ;
-    const flightCompact = [b][/b]   [c=#38bdf8]───>[/c]   [b][/b]\n[c=#38bdf8]📍 [/c]   [b][c=#f59e0b][/c][/b]   [c=#4ade80]📍 [/c];
+    const board = ${s1}       ───>       \n🚩           🚩 ;
+    const flightCompact = [b][/b]       [c=#38bdf8]───>[/c]       [b][/b]\n[c=#38bdf8]🚩 [/c]     [b][c=#f59e0b][/c][/b]     [c=#4ade80]🚩 [/c];
 
     return res.status(200).json({
       flight_visible: isVisible,
       flight_origin_sub: s1,
-      flight_origin_room: originRoom,
+      flight_origin_room: r1,
       flight_arrow: '───>',
       flight_time: flightTime,
       flight_dest_sub: s2,
-      flight_dest_room: destRoom,
+      flight_dest_room: r2,
       flight_single_line: singleLine,
       flight_multiline: board,
       flight_board: board,
       flight_compact: flightCompact,
       flight_bbcode: flightCompact,
+      flight_clean: flightCompact,
+      flight_clean_plain: board,
       flight_left_col: ${s1}\n,
       flight_center_col: ───>\n,
       flight_right_col: ${s2}\n,

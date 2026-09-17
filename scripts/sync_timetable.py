@@ -16,6 +16,7 @@ import argparse
 from datetime import datetime, time
 from typing import List, Optional, Dict, Any
 from pathlib import Path
+import re
 
 try:
     import requests
@@ -350,6 +351,14 @@ def shorten_subject(name: str) -> str:
     return mapping.get(cleaned, name.strip())
 
 
+def clean_room(room: str) -> str:
+    if not room:
+        return ""
+    # Rimuove per sempre la dicitura 'Lab' o 'LAB' dall'aula
+    cleaned = re.sub(r'(?i)\blab\b\.?\s*', '', room).strip()
+    return cleaned
+
+
 def compute_flight_payload(timetable: Dict[str, Any], ref_dt: Optional[datetime] = None) -> Dict[str, Any]:
     """
     Calcola i campi per il widget 'Scalo / Volo Aereo':
@@ -463,27 +472,31 @@ def compute_flight_payload(timetable: Dict[str, Any], ref_dt: Optional[datetime]
 
     s1 = shorten_subject(origin_sub)
     s2 = shorten_subject(dest_sub)
-    single_line = f"{s1} [{origin_room}]  ── {flight_time} ✈ ──>  {s2} [{dest_room}]"
-    left_col = f"{s1}\n{origin_room}"
+    r1 = clean_room(origin_room)
+    r2 = clean_room(dest_room)
+    single_line = f"{s1} [{r1}]  ── {flight_time} ✈ ──>  {s2} [{r2}]"
+    left_col = f"{s1}\n{r1}"
     center_col = f"───>\n{flight_time}"
-    right_col = f"{s2}\n{dest_room}"
-    board_2lines = f"{s1}      ───>      {s2}\n{origin_room}      {flight_time}    {dest_room}"
-    flight_compact = f"[b]{s1}[/b]   [c=#38bdf8]───>[/c]   [b]{s2}[/b]\n[c=#38bdf8]📍 {origin_room}[/c]   [b][c=#f59e0b]{flight_time}[/c][/b]   [c=#4ade80]📍 {dest_room}[/c]"
+    right_col = f"{s2}\n{r2}"
+    board_2lines = f"{s1}       ───>       {s2}\n🚩 {r1}     {flight_time}     🚩 {r2}"
+    flight_compact = f"[b]{s1}[/b]       [c=#38bdf8]───>[/c]       [b]{s2}[/b]\n[c=#38bdf8]🚩 {r1}[/c]     [b][c=#f59e0b]{flight_time}[/c][/b]     [c=#4ade80]🚩 {r2}[/c]"
 
     return {
         "flight_visible": 1,
         "flight_origin_sub": s1,
-        "flight_origin_room": origin_room,
+        "flight_origin_room": r1,
         "flight_arrow": "───>",
         "flight_time": flight_time,
         "flight_dest_sub": s2,
-        "flight_dest_room": dest_room,
+        "flight_dest_room": r2,
         "flight_single_line": single_line,
         "flight_multiline": board_2lines,
         "flight_board": board_2lines,
         "flight_board_2lines": board_2lines,
         "flight_compact": flight_compact,
         "flight_bbcode": flight_compact,
+        "flight_clean": flight_compact,
+        "flight_clean_plain": board_2lines,
         "flight_left_col": left_col,
         "flight_center_col": center_col,
         "flight_right_col": right_col
