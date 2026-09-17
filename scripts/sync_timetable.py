@@ -446,20 +446,21 @@ def compute_flight_payload(timetable: Dict[str, Any], ref_dt: Optional[datetime]
 
     single_line = f"{origin_sub} [{origin_room}]  ── {flight_time} ✈ ──>  {dest_sub} [{dest_room}]"
     left_col = f"{origin_sub}\n{origin_room}"
-    center_col = f"────── ✈ ──────>\n{flight_time}"
+    center_col = f"──── ✈ ────>\n{flight_time}"
     right_col = f"{dest_sub}\n{dest_room}"
-    board_2lines = f"{origin_sub}    ────── ✈ ──────>    {dest_sub}\n{origin_room}              {flight_time}              {dest_room}"
+    board_2lines = f"{origin_sub}       ──── ✈ ────>       {dest_sub}\n{origin_room}             {flight_time}             {dest_room}"
 
     return {
         "flight_visible": 1,
         "flight_origin_sub": origin_sub,
         "flight_origin_room": origin_room,
-        "flight_arrow": "────── ✈ ──────>",
+        "flight_arrow": "──── ✈ ────>",
         "flight_time": flight_time,
         "flight_dest_sub": dest_sub,
         "flight_dest_room": dest_room,
         "flight_single_line": single_line,
         "flight_multiline": board_2lines,
+        "flight_board": board_2lines,
         "flight_board_2lines": board_2lines,
         "flight_left_col": left_col,
         "flight_center_col": center_col,

@@ -1,0 +1,13 @@
+{
+  "status": "BEFORE_SCHOOL",
+  "badge": "PRIMA ORA",
+  "flight_origin_sub": "Casa",
+  "flight_origin_room": "Partenza",
+  "flight_arrow": "──── ✈ ────>",
+  "flight_time": "08:00",
+  "flight_dest_sub": "SCIENZE MOTORIE",
+  "flight_dest_room": "Palestra ITTS",
+  "flight_board": "Casa        ──── ✈ ────>        SCIENZE MOTORIE\nPartenza              08:00              Palestra ITTS",
+  "flight_multiline": "Casa        ──── ✈ ────>        SCIENZE MOTORIE\nPartenza              08:00              Palestra ITTS",
+  "flight_single_line": "Casa [Partenza]  ── 08:00 ✈ ──>  SCIENZE MOTORIE [Palestra ITTS]"
+}
