@@ -1,0 +1,17 @@
+{
+  "status": "IN_CLASS",
+  "badge": "IN CORSO",
+  "title": "TPSIT",
+  "subtitle": "Poi: SISTEMI (Lab B 010)",
+  "room": "B 045",
+  "time_left": "Fine tra 12 min",
+  "flight_visible": 1,
+  "flight_origin_sub": "TPSIT",
+  "flight_origin_room": "B 045",
+  "flight_arrow": "────── ✈ ──────>",
+  "flight_time": "08:52",
+  "flight_dest_sub": "SISTEMI",
+  "flight_dest_room": "Lab B 010",
+  "flight_single_line": "TPSIT [B 045]  ── 08:52 ✈ ──>  SISTEMI [Lab B 010]",
+  "flight_multiline": "TPSIT (B 045)\n────── 08:52 ✈ ──────>\nSISTEMI (Lab B 010)"
+}

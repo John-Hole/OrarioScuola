@@ -1,0 +1,17 @@
+{
+  "status": "BEFORE_SCHOOL",
+  "badge": "PRIMA ORA",
+  "title": "Prima ora: ITALIANO",
+  "subtitle": "Inizio alle 08:00",
+  "room": "B 060",
+  "time_left": "27m all inizio",
+  "flight_visible": 1,
+  "flight_origin_sub": "Casa",
+  "flight_origin_room": "Partenza",
+  "flight_arrow": "────── ✈ ──────>",
+  "flight_time": "08:00",
+  "flight_dest_sub": "ITALIANO",
+  "flight_dest_room": "B 060",
+  "flight_single_line": "Casa [Partenza]  ── 08:00 ✈ ──>  ITALIANO [B 060]",
+  "flight_multiline": "Casa (Partenza)\n────── 08:00 ✈ ──────>\nITALIANO (B 060)"
+}

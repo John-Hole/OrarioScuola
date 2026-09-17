@@ -1,0 +1,17 @@
+{
+  "status": "IN_CLASS",
+  "badge": "ULTIMA ORA",
+  "title": "INGLESE",
+  "subtitle": "Campanella di uscita!",
+  "room": "B 045",
+  "time_left": "Fine tra 18 min",
+  "flight_visible": 1,
+  "flight_origin_sub": "INGLESE",
+  "flight_origin_room": "B 045",
+  "flight_arrow": "────── ✈ ──────>",
+  "flight_time": "11:42",
+  "flight_dest_sub": "Casa",
+  "flight_dest_room": "Uscita",
+  "flight_single_line": "INGLESE [B 045]  ── 11:42 ✈ ──>  Casa [Uscita]",
+  "flight_multiline": "INGLESE (B 045)\n────── 11:42 ✈ ──────>\nCasa (Uscita)"
+}
