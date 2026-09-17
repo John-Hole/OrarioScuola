@@ -1,0 +1,15 @@
+{
+  "status": "IN_CLASS",
+  "badge": "IN CORSO",
+  "flight_origin_sub": "TPSIT",
+  "flight_origin_room": "B 045",
+  "flight_arrow": "──── ✈ ────>",
+  "flight_time": "08:52",
+  "flight_dest_sub": "SISTEMI",
+  "flight_dest_room": "Lab B 010",
+  "flight_multiline": "TPSIT       ──── ✈ ────>       SISTEMI\nB 045             08:52             Lab B 010",
+  "flight_board": "TPSIT       ──── ✈ ────>       SISTEMI\nB 045             08:52             Lab B 010",
+  "flight_left_col": "TPSIT\nB 045",
+  "flight_center_col": "──── ✈ ────>\n08:52",
+  "flight_right_col": "SISTEMI\nLab B 010"
+}
