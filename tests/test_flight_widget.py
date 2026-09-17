@@ -64,7 +64,7 @@ class TestFlightWidget(unittest.TestCase):
         # Ore 11:00 (Durante ultima ora: INGLESE fino alle 11:42) -> INGLESE [B 045] ── 11:42 ✈ ──> Casa [Uscita]
         p = self._test_time(11, 0)
         self.assertEqual(p["flight_visible"], 1)
-        self.assertEqual(p["flight_origin_sub"], "INGLESE")
+        self.assertEqual(p["flight_origin_sub"], "ING")
         self.assertEqual(p["flight_time"], "11:42")
         self.assertEqual(p["flight_dest_sub"], "Casa")
         self.assertEqual(p["flight_dest_room"], "Uscita")

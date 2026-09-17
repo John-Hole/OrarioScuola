@@ -2,7 +2,7 @@
   "classe": "4 BINF",
   "stato_orario": "Orario Provvisorio",
   "data_decorrenza": "In vigore dal 14 Settembre 2026",
-  "data_aggiornamento": "2026-09-17 07:33",
+  "data_aggiornamento": "2026-09-17 15:24",
   "classi_disponibili": [
     "4 BINF",
     "4 AINF",
@@ -288,7 +288,7 @@
     "verified": true,
     "scan_mode": "single",
     "consensus": 1.0,
-    "status": "DEMO_FALLBACK",
-    "verified_at": "2026-09-17 07:33:32"
+    "status": "MOCK_VERIFIED",
+    "verified_at": "2026-09-17 15:24:04"
   }
 }

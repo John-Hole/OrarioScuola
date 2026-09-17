@@ -334,18 +334,25 @@ def get_sample_mock_data(classe: str = "4 BINF") -> Dict[str, Any]:
     }
 
 
-def shorten_subject(name: str) -> str:
+def shorten_subject(name: str, is_lab: bool = False) -> str:
     if not name:
         return ""
     mapping = {
-        "TELECOMUNICAZIONI": "TELECOM.",
-        "SCIENZE MOTORIE": "SC. MOTORIE",
-        "SISTEMI E RETI LAB": "SISTEMI LAB",
-        "SISTEMI E RETI": "SISTEMI",
-        "INFORMATICA LAB": "INFORMATICA",
-        "TPSIT LAB": "TPSIT",
+        "INFORMATICA LAB": "INF L.",
+        "INFORMATICA": "INF L." if is_lab else "INF",
+        "INGLESE": "ING",
+        "ITALIANO": "ITA",
+        "MATEMATICA": "MATE",
+        "RELIGIONE": "REL",
+        "SCIENZE MOTORIE": "MOTORIA",
+        "SISTEMI E RETI LAB": "SISTEMI L.",
+        "SISTEMI E RETI": "SISTEMI L." if is_lab else "SISTEMI",
+        "TELECOMUNICAZIONI LAB": "TELECOM L.",
+        "TELECOMUNICAZIONI": "TELECOM L." if is_lab else "TELECOM",
+        "TPSIT LAB": "TPSIT L.",
+        "TPSIT": "TPSIT L." if is_lab else "TPSIT",
         "DIRITTO ED ECONOMIA": "DIRITTO",
-        "TECNOLOGIE E PROGETTAZIONE": "TPSIT"
+        "STORIA": "STORIA"
     }
     cleaned = name.strip().upper()
     return mapping.get(cleaned, name.strip())
@@ -354,8 +361,11 @@ def shorten_subject(name: str) -> str:
 def clean_room(room: str) -> str:
     if not room:
         return ""
+    cleaned = room.strip()
+    if "palestra" in cleaned.lower():
+        return "Palestra"
     # Rimuove per sempre la dicitura 'Lab' o 'LAB' dall'aula
-    cleaned = re.sub(r'(?i)\blab\b\.?\s*', '', room).strip()
+    cleaned = re.sub(r'(?i)\blab\b\.?\s*', '', cleaned).strip()
     return cleaned
 
 
@@ -375,16 +385,28 @@ def compute_flight_payload(timetable: Dict[str, Any], ref_dt: Optional[datetime]
         "flight_visible": 0,
         "flight_origin_sub": "",
         "flight_origin_room": "",
-        "flight_arrow": "────── ✈ ──────>",
+        "flight_arrow": "───>",
         "flight_time": "",
         "flight_dest_sub": "",
         "flight_dest_room": "",
         "flight_single_line": "",
         "flight_multiline": "",
+        "flight_board": "",
+        "flight_board_2lines": "",
+        "flight_compact": "",
+        "flight_bbcode": "",
+        "flight_clean": "",
+        "flight_clean_plain": "",
+        "flight_flag": "",
         "flight_left_col": "",
         "flight_center_col": "",
         "flight_right_col": "",
-        "flight_board_2lines": ""
+        "flight_col_left": "",
+        "flight_col_center": "",
+        "flight_col_right": "",
+        "flight_col_left_plain": "",
+        "flight_col_center_plain": "",
+        "flight_col_right_plain": ""
     }
 
     if ref_dt.weekday() in (5, 6):
@@ -475,9 +497,17 @@ def compute_flight_payload(timetable: Dict[str, Any], ref_dt: Optional[datetime]
     r1 = clean_room(origin_room)
     r2 = clean_room(dest_room)
     single_line = f"{s1} [{r1}]  ── {flight_time} ✈ ──>  {s2} [{r2}]"
-    left_col = f"{s1}\n{r1}"
-    center_col = f"───>\n{flight_time}"
-    right_col = f"{s2}\n{r2}"
+    r1_flag = f"🚩 {r1}" if r1 else ""
+    r2_flag = f"🚩 {r2}" if r2 else ""
+
+    left_col_plain = f"{s1}\n{r1_flag}".strip()
+    center_col_plain = f"───>\n{flight_time}"
+    right_col_plain = f"{s2}\n{r2_flag}".strip()
+
+    col_left_bbcode = f"[b]{s1}[/b]\n[c=#38bdf8]🚩 {r1}[/c]" if r1 else f"[b]{s1}[/b]"
+    col_center_bbcode = f"[c=#38bdf8]───>[/c]\n[b][c=#f59e0b]{flight_time}[/c][/b]"
+    col_right_bbcode = f"[b]{s2}[/b]\n[c=#4ade80]🚩 {r2}[/c]" if r2 else f"[b]{s2}[/b]"
+
     board_2lines = f"{s1}       ───>       {s2}\n🚩 {r1}     {flight_time}     🚩 {r2}"
     flight_compact = f"[b]{s1}[/b]       [c=#38bdf8]───>[/c]       [b]{s2}[/b]\n[c=#38bdf8]🚩 {r1}[/c]     [b][c=#f59e0b]{flight_time}[/c][/b]     [c=#4ade80]🚩 {r2}[/c]"
 
@@ -497,9 +527,19 @@ def compute_flight_payload(timetable: Dict[str, Any], ref_dt: Optional[datetime]
         "flight_bbcode": flight_compact,
         "flight_clean": flight_compact,
         "flight_clean_plain": board_2lines,
-        "flight_left_col": left_col,
-        "flight_center_col": center_col,
-        "flight_right_col": right_col
+        "flight_flag": flight_compact,
+        "flight_left_col": col_left_bbcode,
+        "flight_center_col": col_center_bbcode,
+        "flight_right_col": col_right_bbcode,
+        "flight_col_left": col_left_bbcode,
+        "flight_col_center": col_center_bbcode,
+        "flight_col_right": col_right_bbcode,
+        "flight_col_left_plain": left_col_plain,
+        "flight_col_center_plain": center_col_plain,
+        "flight_col_right_plain": right_col_plain,
+        "flight_left_col_plain": left_col_plain,
+        "flight_center_col_plain": center_col_plain,
+        "flight_right_col_plain": right_col_plain
     }
 
 

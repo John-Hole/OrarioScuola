@@ -12,16 +12,27 @@ function timeToMinutes(str) {
   return h * 60 + m;
 }
 
-function shortenSubject(name) {
+function shortenSubject(name, isLab = false) {
   if (!name) return '';
   const mapping = {
-    'TELECOMUNICAZIONI': 'TELECOM.',
-    'SCIENZE MOTORIE': 'SC. MOTORIE',
-    'SISTEMI E RETI LAB': 'SISTEMI LAB',
-    'SISTEMI E RETI': 'SISTEMI',
-    'INFORMATICA LAB': 'INFORMATICA',
-    'TPSIT LAB': 'TPSIT',
+    'INFORMATICA LAB': 'INF L.',
+    'INFORMATICA': isLab ? 'INF L.' : 'INF',
+    'INGLESE': 'ING',
+    'ITALIANO': 'ITA',
+    'MATEMATICA': 'MATE',
+    'RELIGIONE': 'REL',
+    'SCIENZE MOTORIE': 'MOTORIA',
+    'SISTEMI E RETI LAB': 'SISTEMI L.',
+    'SISTEMI E RETI': isLab ? 'SISTEMI L.' : 'SISTEMI',
+    'SISTEMI LAB': 'SISTEMI L.',
+    'SISTEMI': 'SISTEMI',
+    'TELECOMUNICAZIONI LAB': 'TELECOM L.',
+    'TELECOMUNICAZIONI': isLab ? 'TELECOM L.' : 'TELECOM',
+    'TPSIT LAB': 'TPSIT L.',
+    'TPSIT': isLab ? 'TPSIT L.' : 'TPSIT',
     'DIRITTO ED ECONOMIA': 'DIRITTO',
+    'DIRITTO': 'DIRITTO',
+    'STORIA': 'STORIA',
     'TECNOLOGIE E PROGETTAZIONE': 'TPSIT'
   };
   const clean = name.trim().toUpperCase();
@@ -30,7 +41,11 @@ function shortenSubject(name) {
 
 function cleanRoom(room) {
   if (!room) return '';
-  return room.replace(/\blab\b\.?\s*/gi, '').trim();
+  const cleaned = room.trim();
+  if (cleaned.toLowerCase().includes('palestra')) {
+    return 'Palestra';
+  }
+  return cleaned.replace(/\blab\b\.?\s*/gi, '').trim();
 }
 
 export default async function handler(req, res) {
@@ -58,7 +73,7 @@ export default async function handler(req, res) {
     const itDays = ['Domenica', 'Lunedì', 'Martedì', 'Mercoledì', 'Giovedì', 'Venerdì', 'Sabato'];
     const dayIdx = romeDate.getDay();
     const currentMinutes = romeDate.getHours() * 60 + romeDate.getMinutes();
-    const timeStr = ${String(romeDate.getHours()).padStart(2, '0')}:;
+    const timeStr = `${String(romeDate.getHours()).padStart(2, '0')}:${String(romeDate.getMinutes()).padStart(2, '0')}`;
 
     const emptyFlight = {
       flight_visible: 0,
@@ -71,13 +86,24 @@ export default async function handler(req, res) {
       flight_single_line: '',
       flight_multiline: '',
       flight_board: '',
+      flight_board_2lines: '',
       flight_compact: '',
       flight_bbcode: '',
       flight_clean: '',
       flight_clean_plain: '',
+      flight_flag: '',
       flight_left_col: '',
       flight_center_col: '',
-      flight_right_col: ''
+      flight_right_col: '',
+      flight_col_left: '',
+      flight_col_center: '',
+      flight_col_right: '',
+      flight_col_left_plain: '',
+      flight_col_center_plain: '',
+      flight_col_right_plain: '',
+      flight_left_col_plain: '',
+      flight_center_col_plain: '',
+      flight_right_col_plain: ''
     };
 
     if (!timetable || dayIdx === 0 || dayIdx === 6) {
@@ -185,9 +211,20 @@ export default async function handler(req, res) {
     const r1 = cleanRoom(originRoom);
     const r2 = cleanRoom(destRoom);
 
-    const singleLine = ${s1} []  ──  ✈ ──>   [];
-    const board = ${s1}       ───>       \n🚩           🚩 ;
-    const flightCompact = [b][/b]       [c=#38bdf8]───>[/c]       [b][/b]\n[c=#38bdf8]🚩 [/c]     [b][c=#f59e0b][/c][/b]     [c=#4ade80]🚩 [/c];
+    const singleLine = `${s1} [${r1}]  ── ${flightTime} ✈ ──>  ${s2} [${r2}]`;
+    const r1Flag = r1 ? `🚩 ${r1}` : '';
+    const r2Flag = r2 ? `🚩 ${r2}` : '';
+
+    const leftColPlain = `${s1}\n${r1Flag}`.trim();
+    const centerColPlain = `───>\n${flightTime}`;
+    const rightColPlain = `${s2}\n${r2Flag}`.trim();
+
+    const colLeftBbcode = r1 ? `[b]${s1}[/b]\n[c=#38bdf8]🚩 ${r1}[/c]` : `[b]${s1}[/b]`;
+    const colCenterBbcode = `[c=#38bdf8]───>[/c]\n[b][c=#f59e0b]${flightTime}[/c][/b]`;
+    const colRightBbcode = r2 ? `[b]${s2}[/b]\n[c=#4ade80]🚩 ${r2}[/c]` : `[b]${s2}[/b]`;
+
+    const board2lines = `${s1}       ───>       ${s2}\n🚩 ${r1}     ${flightTime}     🚩 ${r2}`;
+    const flightCompact = `[b]${s1}[/b]       [c=#38bdf8]───>[/c]       [b]${s2}[/b]\n[c=#38bdf8]🚩 ${r1}[/c]     [b][c=#f59e0b]${flightTime}[/c][/b]     [c=#4ade80]🚩 ${r2}[/c]`;
 
     return res.status(200).json({
       flight_visible: isVisible,
@@ -198,15 +235,26 @@ export default async function handler(req, res) {
       flight_dest_sub: s2,
       flight_dest_room: r2,
       flight_single_line: singleLine,
-      flight_multiline: board,
-      flight_board: board,
+      flight_multiline: board2lines,
+      flight_board: board2lines,
+      flight_board_2lines: board2lines,
       flight_compact: flightCompact,
       flight_bbcode: flightCompact,
       flight_clean: flightCompact,
-      flight_clean_plain: board,
-      flight_left_col: ${s1}\n,
-      flight_center_col: ───>\n,
-      flight_right_col: ${s2}\n,
+      flight_clean_plain: board2lines,
+      flight_flag: flightCompact,
+      flight_left_col: colLeftBbcode,
+      flight_center_col: colCenterBbcode,
+      flight_right_col: colRightBbcode,
+      flight_col_left: colLeftBbcode,
+      flight_col_center: colCenterBbcode,
+      flight_col_right: colRightBbcode,
+      flight_col_left_plain: leftColPlain,
+      flight_col_center_plain: centerColPlain,
+      flight_col_right_plain: rightColPlain,
+      flight_left_col_plain: leftColPlain,
+      flight_center_col_plain: centerColPlain,
+      flight_right_col_plain: rightColPlain,
       status: currentMinutes < firstStart ? 'BEFORE_SCHOOL' : (currentMinutes >= lastEnd ? 'FINISHED' : 'IN_CLASS'),
       updated_at: timeStr,
       class_name: timetable?.classe || '4 BINF'
