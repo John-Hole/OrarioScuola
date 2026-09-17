@@ -1,4 +1,4 @@
-const CACHE_NAME = 'smart-timetable-v35';
+const CACHE_NAME = 'smart-timetable-v36';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
@@ -70,7 +70,7 @@ self.addEventListener('fetch', (event) => {
           }
           return response;
         })
-        .catch(() => caches.match(event.request).then((cached) => cached || caches.match('/index.html') || caches.match('/')))
+        .catch(() => caches.match(event.request, { ignoreSearch: true }).then((cached) => cached || caches.match('/index.html') || caches.match('/')))
     );
     return;
   }
@@ -87,6 +87,6 @@ self.addEventListener('fetch', (event) => {
         }
         return networkResponse;
       })
-      .catch(() => caches.match(event.request))
+      .catch(() => caches.match(event.request, { ignoreSearch: true }))
   );
 });

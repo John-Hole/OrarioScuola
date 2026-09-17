@@ -13,7 +13,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <link rel="icon" type="image/svg+xml" href="icons/icon.svg">
 
-  <link rel="stylesheet" href="css/style.css?v=35">
+  <link rel="stylesheet" href="css/style.css?v=36">
 </head>
 <body>
   <div id="app" class="app-layout">
@@ -915,34 +915,35 @@ const BASE_URL = "..."; // Configurato automaticamente
       </div>
     </div>
 
-    <!-- Pop-up Notifica Sincronizzazione con Backdrop Sfumato al Centro dello Schermo -->
-    <div id="sync-banner-overlay" class="sync-banner-overlay hidden" role="dialog" aria-modal="true" aria-live="polite">
-      <div id="sync-banner" class="sync-banner is-loading">
-        <div class="sync-banner-icon-container" id="sync-banner-icon-box">
-          <!-- Spinner rotella in corso -->
-          <svg class="sync-spinner-icon" id="sync-banner-spinner" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-            <circle class="sync-spinner-track" cx="12" cy="12" r="9" stroke-opacity="0.25"></circle>
-            <path class="sync-spinner-head" d="M12 3a9 9 0 0 1 9 9" stroke-linecap="round"></path>
-          </svg>
-          <!-- Spunta verde completata -->
-          <svg class="sync-success-icon" id="sync-banner-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
-            <polyline points="20 6 9 17 4 12"></polyline>
-          </svg>
-          <!-- Icona Errore/Attenzione -->
-          <svg class="sync-error-icon" id="sync-banner-error" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="12" r="10"></circle>
-            <line x1="12" y1="8" x2="12" y2="12"></line>
-            <line x1="12" y1="16" x2="12.01" y2="16"></line>
-          </svg>
-        </div>
-        <div class="sync-banner-text">
-          <div class="sync-banner-title" id="sync-banner-title">Sincronizzazione in corso...</div>
-          <div class="sync-banner-subtitle" id="sync-banner-subtitle">Verifica orario scolastico</div>
-        </div>
+  </div>
+
+  <!-- Pop-up Notifica Sincronizzazione con Backdrop Sfumato al Centro dello Schermo -->
+  <div id="sync-banner-overlay" class="sync-banner-overlay hidden" role="dialog" aria-modal="true" aria-live="polite">
+    <div id="sync-banner" class="sync-banner is-loading">
+      <div class="sync-banner-icon-container" id="sync-banner-icon-box">
+        <!-- Spinner rotella in corso -->
+        <svg class="sync-spinner-icon" id="sync-banner-spinner" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <circle class="sync-spinner-track" cx="12" cy="12" r="9" stroke-opacity="0.25"></circle>
+          <path class="sync-spinner-head" d="M12 3a9 9 0 0 1 9 9" stroke-linecap="round"></path>
+        </svg>
+        <!-- Spunta verde completata -->
+        <svg class="sync-success-icon" id="sync-banner-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="20 6 9 17 4 12"></polyline>
+        </svg>
+        <!-- Icona Errore/Attenzione -->
+        <svg class="sync-error-icon" id="sync-banner-error" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="12" y1="8" x2="12" y2="12"></line>
+          <line x1="12" y1="16" x2="12.01" y2="16"></line>
+        </svg>
+      </div>
+      <div class="sync-banner-text">
+        <div class="sync-banner-title" id="sync-banner-title">Sincronizzazione in corso...</div>
+        <div class="sync-banner-subtitle" id="sync-banner-subtitle">Verifica orario scolastico</div>
       </div>
     </div>
   </div>
 
-  <script type="module" src="js/app.js?v=35"></script>
+  <script type="module" src="js/app.js?v=36"></script>
 </body>
 </html>

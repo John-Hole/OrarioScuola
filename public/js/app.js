@@ -2267,7 +2267,10 @@ function setupEventListeners() {
 
   // Pulsante Sincronizza nel Footer del Drawer
   if (elements.btnSyncNow) {
-    elements.btnSyncNow.addEventListener('click', () => triggerSync());
+    elements.btnSyncNow.addEventListener('click', () => {
+      toggleDrawer(false);
+      triggerSync();
+    });
   }
 
   // Voce "Sincronizza orario" nel Menu del Drawer
@@ -2422,6 +2425,8 @@ function ensureSyncBannerInDom() {
         </div>
       </div>
     `;
+    document.body.appendChild(overlay);
+  } else if (overlay.parentElement !== document.body) {
     document.body.appendChild(overlay);
   }
 
