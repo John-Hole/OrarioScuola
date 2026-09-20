@@ -5,47 +5,12 @@
 
 import fs from 'fs';
 import path from 'path';
+import { shortenSubject, cleanRoom } from '../public/js/subject_normalizer.js';
 
 function timeToMinutes(str) {
   if (!str) return 0;
   const [h, m] = str.split(':').map(Number);
   return h * 60 + m;
-}
-
-function shortenSubject(name, isLab = false) {
-  if (!name) return '';
-  const mapping = {
-    'INFORMATICA LAB': 'INF L.',
-    'INFORMATICA': isLab ? 'INF L.' : 'INF',
-    'INGLESE': 'ING',
-    'ITALIANO': 'ITA',
-    'MATEMATICA': 'MATE',
-    'RELIGIONE': 'REL',
-    'SCIENZE MOTORIE': 'MOTORIA',
-    'SISTEMI E RETI LAB': 'SISTEMI L.',
-    'SISTEMI E RETI': isLab ? 'SISTEMI L.' : 'SISTEMI',
-    'SISTEMI LAB': 'SISTEMI L.',
-    'SISTEMI': 'SISTEMI',
-    'TELECOMUNICAZIONI LAB': 'TELECOM L.',
-    'TELECOMUNICAZIONI': isLab ? 'TELECOM L.' : 'TELECOM',
-    'TPSIT LAB': 'TPSIT L.',
-    'TPSIT': isLab ? 'TPSIT L.' : 'TPSIT',
-    'DIRITTO ED ECONOMIA': 'DIRITTO',
-    'DIRITTO': 'DIRITTO',
-    'STORIA': 'STORIA',
-    'TECNOLOGIE E PROGETTAZIONE': 'TPSIT'
-  };
-  const clean = name.trim().toUpperCase();
-  return mapping[clean] || name.trim();
-}
-
-function cleanRoom(room) {
-  if (!room) return '';
-  const cleaned = room.trim();
-  if (cleaned.toLowerCase().includes('palestra')) {
-    return 'Palestra';
-  }
-  return cleaned.replace(/\blab\b\.?\s*/gi, '').trim();
 }
 
 export default async function handler(req, res) {

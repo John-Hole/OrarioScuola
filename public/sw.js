@@ -7,6 +7,7 @@ const STATIC_ASSETS = [
   '/js/timeline.js',
   '/js/timetable_store.js',
   '/js/widget_helper.js',
+  '/js/subject_normalizer.js',
   '/data/volta_classes.json',
   '/data/timetable.json',
   '/manifest.json',
@@ -58,8 +59,32 @@ self.addEventListener('fetch', (event) => {
 
   const url = new URL(event.request.url);
 
-  // Strategia Network-First con fallback su Cache per navigazione e dati
-  if (event.request.mode === 'navigate' || url.pathname.endsWith('.html') || url.pathname === '/' || url.pathname.includes('/data/')) {
+  // 1. Endpoint API serverless: bypass totale del SW (sempre da rete, mai cached nel SW)
+  if (url.pathname.startsWith('/api/')) {
+    event.respondWith(fetch(event.request));
+    return;
+  }
+
+  // 2. Dati dinamici orario (/data/): Network-First con fallback su Cache offline
+  if (url.pathname.includes('/data/')) {
+    event.respondWith(
+      fetch(event.request)
+        .then((response) => {
+          if (response && response.status === 200) {
+            const clone = response.clone();
+            caches.open(CACHE_NAME).then((cache) => {
+              cache.put(event.request, clone).catch(() => {});
+            }).catch(() => {});
+          }
+          return response;
+        })
+        .catch(() => caches.match(event.request, { ignoreSearch: true }).then((cached) => cached || caches.match('/data/timetable.json')))
+    );
+    return;
+  }
+
+  // 3. Pagine e navigazione HTML: Network-First con fallback su index.html in cache
+  if (event.request.mode === 'navigate' || url.pathname.endsWith('.html') || url.pathname === '/') {
     event.respondWith(
       fetch(event.request)
         .then((response) => {
@@ -76,18 +101,22 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Strategia Network-First per JS, CSS e icone con fallback istantaneo su Cache
+  // 4. Asset statici (JS, CSS, Immagini, Icone): Stale-While-Revalidate per avvio istantaneo a 120Hz
   event.respondWith(
-    fetch(event.request)
-      .then((networkResponse) => {
-        if (networkResponse && networkResponse.status === 200) {
-          const clone = networkResponse.clone();
-          caches.open(CACHE_NAME).then((cache) => {
-            cache.put(event.request, clone).catch(() => {});
-          }).catch(() => {});
-        }
-        return networkResponse;
-      })
-      .catch(() => caches.match(event.request, { ignoreSearch: true }))
+    caches.match(event.request, { ignoreSearch: true }).then((cachedResponse) => {
+      const fetchPromise = fetch(event.request)
+        .then((networkResponse) => {
+          if (networkResponse && networkResponse.status === 200) {
+            const clone = networkResponse.clone();
+            caches.open(CACHE_NAME).then((cache) => {
+              cache.put(event.request, clone).catch(() => {});
+            }).catch(() => {});
+          }
+          return networkResponse;
+        })
+        .catch(() => cachedResponse);
+
+      return cachedResponse || fetchPromise;
+    })
   );
 });

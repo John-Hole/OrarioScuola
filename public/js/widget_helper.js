@@ -4,8 +4,9 @@
  */
 
 import { timeToMinutes } from './timeline.js';
+import { cleanRoom, shortenSubject } from './subject_normalizer.js';
 
-export function generateKWGTCodeSnippet(jsonUrl) {
+export { cleanRoom, shortenSubject };
   return {
     materia_e_aula: `$wg("${jsonUrl}", json, .title)$ - $wg("${jsonUrl}", json, .room)$`,
     tempo_rimasto: `$wg("${jsonUrl}", json, .time_left)$`,
@@ -214,42 +215,6 @@ export function computeFlightWidgetState(timetable, simulatedDate = new Date()) 
     flight_center_col_plain: centerColPlain,
     flight_right_col_plain: rightColPlain
   };
-}
-
-export function cleanRoom(room) {
-  if (!room) return "";
-  const cleaned = room.trim();
-  if (cleaned.toLowerCase().includes("palestra")) {
-    return "Palestra";
-  }
-  return cleaned.replace(/\blab\b\.?\s*/gi, "").trim();
-}
-
-export function shortenSubject(name, isLab = false) {
-  if (!name) return "";
-  const mapping = {
-    "INFORMATICA LAB": "INF L.",
-    "INFORMATICA": isLab ? "INF L." : "INF",
-    "INGLESE": "ING",
-    "ITALIANO": "ITA",
-    "MATEMATICA": "MATE",
-    "RELIGIONE": "REL",
-    "SCIENZE MOTORIE": "MOTORIA",
-    "SISTEMI E RETI LAB": "SISTEMI L.",
-    "SISTEMI E RETI": isLab ? "SISTEMI L." : "SISTEMI",
-    "SISTEMI LAB": "SISTEMI L.",
-    "SISTEMI": "SISTEMI",
-    "TELECOMUNICAZIONI LAB": "TELECOM L.",
-    "TELECOMUNICAZIONI": isLab ? "TELECOM L." : "TELECOM",
-    "TPSIT LAB": "TPSIT L.",
-    "TPSIT": isLab ? "TPSIT L." : "TPSIT",
-    "DIRITTO ED ECONOMIA": "DIRITTO",
-    "DIRITTO": "DIRITTO",
-    "STORIA": "STORIA",
-    "TECNOLOGIE E PROGETTAZIONE": "TPSIT"
-  };
-  const clean = name.trim().toUpperCase();
-  return mapping[clean] || name.trim();
 }
 
 export function computeClientWidgetState(timetable, simulatedDate = new Date()) {

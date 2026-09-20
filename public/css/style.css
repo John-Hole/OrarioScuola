@@ -13,8 +13,8 @@
   
   /* Text Colors */
   --text-main: #FFFFFF;
-  --text-muted: #8896A6;
-  --text-dim: #556477;
+  --text-muted: #A0B3C6;
+  --text-dim: #7E92A8;
   
   /* Linee Guida Sottilissime ("linee grigie piccolissime") */
   --border-subtle: rgba(255, 255, 255, 0.08);
@@ -37,7 +37,9 @@
   --live-cursor-padding: 2px 5px;
   --live-cursor-dot-size: 4.5px;
   --accent-green: #22C55E;
-  --accent-amber: #F59E0B;
+  --accent-amber: #FBBF24;
+  --accent-amber-bg: rgba(251, 191, 36, 0.09);
+  --accent-amber-border: rgba(251, 191, 36, 0.28);
 
   /* Parametri di Calibrazione Griglia Regolabili al Millimetro */
   --timeline-axis-width: 52px;
@@ -50,8 +52,8 @@
   /* ==========================================================================
      Mappe Colori Pastello per Materie (con testo scuro ad alto contrasto)
      ========================================================================== */
-  --subject-sistemi-bg: #76A6D7;
-  --subject-sistemi-text: #0D1C2E;
+  --subject-sistemi-bg: #82B2E4;
+  --subject-sistemi-text: #081524;
 
   --subject-tpsit-bg: #F7E388;
   --subject-tpsit-text: #2B2306;
@@ -205,13 +207,16 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
+  min-width: 44px;
+  min-height: 44px;
   padding: 6px;
   border-radius: var(--radius-sm);
-  transition: opacity 0.2s ease;
+  transition: opacity 0.2s ease, background-color 0.2s ease;
 }
 
 .icon-button:active {
-  opacity: 0.6;
+  opacity: 0.7;
+  background-color: rgba(255, 255, 255, 0.05);
 }
 
 .view-switch-pill {
@@ -259,6 +264,9 @@ body {
   align-items: center;
   justify-content: space-between;
   padding: 16px 16px 10px 16px;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: pan-y;
 }
 
 .daily-date-title {
@@ -268,6 +276,40 @@ body {
   text-transform: uppercase;
   letter-spacing: 0.6px;
   text-align: center;
+  user-select: none;
+  -webkit-user-select: none;
+  will-change: transform, opacity;
+}
+
+/* Animazioni Transizione Giorno (Swipe / Frecce) */
+@keyframes daySlideFromRight {
+  0% {
+    opacity: 0.3;
+    transform: translateX(18px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes daySlideFromLeft {
+  0% {
+    opacity: 0.3;
+    transform: translateX(-18px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.day-anim-next {
+  animation: daySlideFromRight 0.22s cubic-bezier(0.2, 0.9, 0.3, 1);
+}
+
+.day-anim-prev {
+  animation: daySlideFromLeft 0.22s cubic-bezier(0.2, 0.9, 0.3, 1);
 }
 
 .day-nav-arrow {
@@ -278,13 +320,16 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 6px;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 8px;
   border-radius: 50%;
-  transition: color 0.15s ease;
+  transition: color 0.15s ease, background-color 0.15s ease;
 }
 
-.day-nav-arrow:active {
+.day-nav-arrow:hover, .day-nav-arrow:active {
   color: var(--text-main);
+  background-color: rgba(255, 255, 255, 0.08);
 }
 
 .days-nav {
@@ -301,11 +346,19 @@ body {
   color: var(--text-muted);
   font-size: 0.78rem;
   font-weight: 700;
-  padding: 7px 0;
+  min-height: 40px;
+  padding: 8px 0;
   border-radius: var(--radius-sm);
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   text-align: center;
   transition: all 0.2s ease;
+}
+
+.day-chip:active {
+  transform: scale(0.96);
 }
 
 .day-chip.active {
@@ -2001,17 +2054,6 @@ body {
 
 
 /* ==========================================================================
-   SEZIONE DRAWER: I MIEI ORARI & PREFERITI ⭐
-   ========================================================================== */
-.drawer-timetables-section {
-  padding: 12px 14px;
-  background: rgba(255, 255, 255, 0.02);
-  border-radius: var(--radius-md);
-  margin-bottom: 12px;
-  border: 1px solid var(--border-subtle);
-}
-
-/* ==========================================================================
    SEZIONE I MIEI ORARI NEL DRAWER LATERALE (ELEGANTE SELETTORE SOTTO IL MENU)
    ========================================================================== */
 .drawer-timetables-section {
@@ -3126,9 +3168,6 @@ body {
   }
 }
 
-/* ==========================================================================
-   VISTA 4: ORARIO ORIGINALE SCUOLA (EDT EMBEDDED VIEW)
-   ========================================================================== */
 /* ==========================================================================
    VISTA 4: ORARIO ORIGINALE SCUOLA (EDT EMBEDDED VIEW)
    ========================================================================== */

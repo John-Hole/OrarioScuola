@@ -59,10 +59,6 @@ const elements = {
   viewDaily: document.getElementById('view-daily'),
   viewWeekly: document.getElementById('view-weekly'),
 
-  // Header Cambio Classe
-  btnHeaderChangeClass: document.getElementById('btn-header-change-class'),
-  headerClassName: document.getElementById('header-class-name'),
-
   // Vista Giorno
   dailyDateTitle: document.getElementById('daily-date-title'),
   btnPrevDay: document.getElementById('btn-prev-day'),
@@ -419,7 +415,6 @@ const TIMETABLE_URL = \`\${BASE_URL}/data/timetable.json\`;
         if (resp.ok) {
           state.timetable = await resp.json();
           state.currentClass = state.timetable.classe || '4 BINF';
-          if (elements.headerClassName) elements.headerClassName.textContent = state.currentClass;
           const now = getCurrentDate();
           state.lastCalendarDay = now.toDateString();
           state.selectedDay = getSmartDefaultDay(state.timetable.giorni, now);
@@ -432,8 +427,8 @@ const TIMETABLE_URL = \`\${BASE_URL}/data/timetable.json\`;
     }
   }
 
-  // Tick real-time ogni 5 secondi
-  setInterval(tick, 5000);
+  // Avvio ciclo di aggiornamento real-time (con sospensione automatica in background)
+  startLiveTimer();
 }
 
 /**
@@ -443,17 +438,13 @@ function registerServiceWorker() {
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('sw.js')
       .then((reg) => {
-        console.log('[PWA] Service Worker attivo:', reg.scope);
         reg.update().catch(() => {});
       })
       .catch((err) => console.warn('[PWA] Errore Service Worker:', err));
 
-    let refreshing = false;
     navigator.serviceWorker.addEventListener('controllerchange', () => {
-      if (!refreshing) {
-        refreshing = true;
-        window.location.reload();
-      }
+      // Notifica non distruttiva senza forzare reload della pagina durante l'uso
+      console.log('[PWA] Service Worker aggiornato con successo');
     });
   }
 }
@@ -1506,8 +1497,33 @@ function createGridCell(lesson, giorno, startMin, endMin, isDouble = false) {
 }
 
 /**
- * Ciclo di aggiornamento temporale real-time (ogni 5 sec)
+ * Ciclo di aggiornamento temporale real-time
  */
+let tickTimerId = null;
+
+function startLiveTimer() {
+  if (!tickTimerId) {
+    tick();
+    tickTimerId = setInterval(tick, 5000);
+  }
+}
+
+function stopLiveTimer() {
+  if (tickTimerId) {
+    clearInterval(tickTimerId);
+    tickTimerId = null;
+  }
+}
+
+// Sospensione intelligente del timer a schermo spento / app in background (risparmio batteria AMOLED)
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible') {
+    startLiveTimer();
+  } else {
+    stopLiveTimer();
+  }
+});
+
 function tick() {
   if (!state.timetable) return;
 
@@ -1547,28 +1563,156 @@ function setupEventListeners() {
     render();
   });
 
-  // Navigazione giorno precedente / successivo
-  elements.btnPrevDay.addEventListener('click', () => {
-    const idx = DAY_ORDER.indexOf(state.selectedDay);
-    const nextIdx = (idx - 1 + DAY_ORDER.length) % DAY_ORDER.length;
-    state.selectedDay = DAY_ORDER[nextIdx];
-    render();
-  });
-
-  elements.btnNextDay.addEventListener('click', () => {
+  // Funzioni unificate navigazione giorno con transizione e feedback
+  function goToNextDay(source = 'button') {
     const idx = DAY_ORDER.indexOf(state.selectedDay);
     const nextIdx = (idx + 1) % DAY_ORDER.length;
     state.selectedDay = DAY_ORDER[nextIdx];
     render();
-  });
+    triggerDayTransitionAnimation('next');
+    if (source === 'swipe' && navigator.vibrate) {
+      try { navigator.vibrate(12); } catch (_) {}
+    }
+  }
+
+  function goToPrevDay(source = 'button') {
+    const idx = DAY_ORDER.indexOf(state.selectedDay);
+    const nextIdx = (idx - 1 + DAY_ORDER.length) % DAY_ORDER.length;
+    state.selectedDay = DAY_ORDER[nextIdx];
+    render();
+    triggerDayTransitionAnimation('prev');
+    if (source === 'swipe' && navigator.vibrate) {
+      try { navigator.vibrate(12); } catch (_) {}
+    }
+  }
+
+  function triggerDayTransitionAnimation(direction) {
+    const titleEl = elements.dailyDateTitle;
+    const listEl = elements.lessonsList;
+    const animClass = direction === 'next' ? 'day-anim-next' : 'day-anim-prev';
+
+    [titleEl, listEl].forEach((el) => {
+      if (!el) return;
+      el.classList.remove('day-anim-next', 'day-anim-prev');
+      // Doppio rAF: azzera il forced reflow sincrono e assicura 120 FPS stabili
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          el.classList.add(animClass);
+        });
+      });
+    });
+  }
+
+  // Navigazione giorno precedente / successivo via frecce
+  elements.btnPrevDay.addEventListener('click', () => goToPrevDay('button'));
+  elements.btnNextDay.addEventListener('click', () => goToNextDay('button'));
 
   // Navigazione chip giorni
   elements.daysNav.addEventListener('click', (e) => {
     const chip = e.target.closest('.day-chip');
     if (!chip) return;
-    state.selectedDay = chip.getAttribute('data-day');
-    render();
+    const targetDay = chip.getAttribute('data-day');
+    if (targetDay && targetDay !== state.selectedDay) {
+      const curIdx = DAY_ORDER.indexOf(state.selectedDay);
+      const targetIdx = DAY_ORDER.indexOf(targetDay);
+      state.selectedDay = targetDay;
+      render();
+      triggerDayTransitionAnimation(targetIdx > curIdx ? 'next' : 'prev');
+    }
   });
+
+  /**
+   * Gestione gesture di swipe per il cambio giorno nella vista giornaliera.
+   * 
+   * Ergonomia ottimizzata per Samsung One UI / Galaxy S24:
+   * 1. I primi 20px dei bordi laterali sono riservati al gesto di sistema Android "Indietro".
+   * 2. Lo swipe funziona in modo fluido su tutta la superficie (header, chip o timeline)
+   *    purché il movimento sia marcatamente orizzontale, evitando conflitti con lo scroll verticale.
+   */
+  function initDaySwipeNavigation() {
+    const viewDaily = elements.viewDaily || document.getElementById('view-daily');
+    if (!viewDaily) return;
+
+    let startX = 0;
+    let startY = 0;
+    let startTime = 0;
+    let isSwiping = false;
+
+    const SYSTEM_BACK_MARGIN_PX = 20;
+
+    viewDaily.addEventListener('touchstart', (e) => {
+      if (state.currentView !== 'daily' || e.touches.length !== 1) {
+        isSwiping = false;
+        return;
+      }
+
+      if (elements.sidebarDrawer?.classList.contains('open') || 
+          elements.modalSettings?.classList.contains('open') ||
+          elements.modalWidget?.classList.contains('open')) {
+        isSwiping = false;
+        return;
+      }
+
+      const touch = e.touches[0];
+      const screenWidth = window.innerWidth || document.documentElement.clientWidth;
+
+      // Se il tocco è sui bordi estremi, non interferire con la gesture nativa di sistema
+      if (touch.clientX < SYSTEM_BACK_MARGIN_PX || touch.clientX > (screenWidth - SYSTEM_BACK_MARGIN_PX)) {
+        isSwiping = false;
+        return;
+      }
+
+      startX = touch.clientX;
+      startY = touch.clientY;
+      startTime = performance.now();
+      isSwiping = true;
+    }, { passive: true });
+
+    viewDaily.addEventListener('touchmove', (e) => {
+      if (!isSwiping || e.touches.length !== 1) return;
+
+      const touch = e.touches[0];
+      const diffX = touch.clientX - startX;
+      const diffY = touch.clientY - startY;
+
+      // Se l'utente sta chiaramente effettuando uno scroll verticale della timeline, disattiva lo swipe
+      if (Math.abs(diffY) > 20 && Math.abs(diffY) > Math.abs(diffX) * 0.9) {
+        isSwiping = false;
+      }
+    }, { passive: true });
+
+    viewDaily.addEventListener('touchend', (e) => {
+      if (!isSwiping) return;
+      isSwiping = false;
+
+      const touch = e.changedTouches ? e.changedTouches[0] : null;
+      if (!touch) return;
+
+      const diffX = touch.clientX - startX;
+      const diffY = touch.clientY - startY;
+      const elapsed = performance.now() - startTime;
+
+      if (elapsed > 600) return;
+
+      const minDistance = 45;
+      const isHorizontal = Math.abs(diffX) > Math.abs(diffY) * 1.35;
+
+      if (isHorizontal && Math.abs(diffX) >= minDistance) {
+        if (diffX < 0) {
+          goToNextDay('swipe');
+        } else {
+          goToPrevDay('swipe');
+        }
+      }
+    }, { passive: true });
+
+    viewDaily.addEventListener('touchcancel', () => {
+      isSwiping = false;
+    }, { passive: true });
+  }
+
+  // Inizializza swipe gesture intelligente per cambio giorno
+  initDaySwipeNavigation();
 
   // Drawer Apertura e Chiusura
   elements.btnOpenDrawer.addEventListener('click', () => toggleDrawer(true));
