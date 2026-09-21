@@ -81,3 +81,32 @@ assert.strictEqual(lessons5[4].end, '13:05', 'La quinta ora deve terminare alle 
 
 console.log('Tutti i test di extractTimetableStructure sono passati con successo!');
 
+import { getFormattedDateForDay } from '../public/js/timeline.js';
+
+console.log('--- Test getFormattedDateForDay (Date Dinamiche Intestazione) ---');
+
+// 1. Data odierna: Lunedì 21 Settembre 2026
+const todayMonday = new Date('2026-09-21T12:00:00');
+assert.strictEqual(getFormattedDateForDay('Lunedì', todayMonday), 'LUNEDÌ 21 SETTEMBRE');
+assert.strictEqual(getFormattedDateForDay('Martedì', todayMonday), 'MARTEDÌ 22 SETTEMBRE');
+assert.strictEqual(getFormattedDateForDay('Mercoledì', todayMonday), 'MERCOLEDÌ 23 SETTEMBRE');
+assert.strictEqual(getFormattedDateForDay('Giovedì', todayMonday), 'GIOVEDÌ 24 SETTEMBRE');
+assert.strictEqual(getFormattedDateForDay('Venerdì', todayMonday), 'VENERDÌ 25 SETTEMBRE');
+
+// 2. Domenica 20 Settembre 2026 (weekend: punta alla settimana entrante 21-25 Settembre)
+const sundayPre = new Date('2026-09-20T18:00:00');
+assert.strictEqual(getFormattedDateForDay('Lunedì', sundayPre), 'LUNEDÌ 21 SETTEMBRE');
+assert.strictEqual(getFormattedDateForDay('Martedì', sundayPre), 'MARTEDÌ 22 SETTEMBRE');
+
+// 3. Sabato 26 Settembre 2026 (weekend: punta alla settimana entrante 28 Settembre)
+const saturdayPost = new Date('2026-09-26T10:00:00');
+assert.strictEqual(getFormattedDateForDay('Lunedì', saturdayPost), 'LUNEDÌ 28 SETTEMBRE');
+
+// 4. Cambio mese (es. Mercoledì 30 Settembre 2026)
+const endOfMonth = new Date('2026-09-30T10:00:00');
+assert.strictEqual(getFormattedDateForDay('Mercoledì', endOfMonth), 'MERCOLEDÌ 30 SETTEMBRE');
+assert.strictEqual(getFormattedDateForDay('Giovedì', endOfMonth), 'GIOVEDÌ 1 OTTOBRE');
+assert.strictEqual(getFormattedDateForDay('Venerdì', endOfMonth), 'VENERDÌ 2 OTTOBRE');
+
+console.log('Tutti i test di getFormattedDateForDay sono passati con successo!');
+

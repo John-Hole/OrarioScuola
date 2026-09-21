@@ -9,6 +9,7 @@ import {
   minutesToTime,
   getSubjectThemeClass,
   getSmartDefaultDay,
+  getFormattedDateForDay,
   extractTimetableStructure,
   updateTimelineCursor,
   updateWeeklyLiveCursor,
@@ -363,6 +364,11 @@ function getCurrentDate() {
 async function init() {
   registerServiceWorker();
   setupEventListeners();
+
+  const initialNow = getCurrentDate();
+  state.lastCalendarDay = initialNow.toDateString();
+  state.selectedDay = getSmartDefaultDay([], initialNow);
+  renderDailyHeader();
 
   const currentOrigin = window.location.origin + window.location.pathname.replace('index.html', '');
   const widgetFullPath = `${currentOrigin}data/widget_data.json`;
@@ -1033,18 +1039,11 @@ function render() {
 }
 
 /**
- * Render dell'intestazione data nel formato es. "LUNEDÌ 14 SETTEMBRE"
+ * Render dell'intestazione data nel formato dinamico es. "LUNEDÌ 21 SETTEMBRE"
  */
 function renderDailyHeader() {
-  const dateMap = {
-    'Lunedì': 'LUNEDÌ 14 SETTEMBRE',
-    'Martedì': 'MARTEDÌ 15 SETTEMBRE',
-    'Mercoledì': 'MERCOLEDÌ 16 SETTEMBRE',
-    'Giovedì': 'GIOVEDÌ 17 SETTEMBRE',
-    'Venerdì': 'VENERDÌ 18 SETTEMBRE'
-  };
-
-  const title = dateMap[state.selectedDay] || state.selectedDay.toUpperCase();
+  const now = getCurrentDate();
+  const title = getFormattedDateForDay(state.selectedDay, now);
   if (elements.dailyDateTitle) {
     elements.dailyDateTitle.textContent = title;
   }

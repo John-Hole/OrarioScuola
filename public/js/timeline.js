@@ -5,6 +5,44 @@
 
 const IT_DAYS = ["Domenica", "Lunedì", "Martedì", "Mercoledì", "Giovedì", "Venerdì", "Sabato"];
 
+export const IT_MONTHS = [
+  'GENNAIO', 'FEBBRAIO', 'MARZO', 'APRILE', 'MAGGIO', 'GIUGNO',
+  'LUGLIO', 'AGOSTO', 'SETTEMBRE', 'OTTOBRE', 'NOVEMBRE', 'DICEMBRE'
+];
+
+/**
+ * Calcola l'etichetta data dinamica per un giorno della settimana (Lunedì-Venerdì)
+ * rispetto alla data di riferimento corrente (o simulata).
+ * Es. per Lunedì 21 Settembre restituisce "LUNEDÌ 21 SETTEMBRE".
+ */
+export function getFormattedDateForDay(selectedDay, baseDate = new Date()) {
+  const currentDayOfWeek = baseDate.getDay(); // 0 = Dom, 1 = Lun, ..., 6 = Sab
+
+  // Determina il lunedì della settimana di riferimento:
+  // Se è Domenica (0) punta al lunedì successivo (+1), se è Sabato (6) a +2 giorni
+  const monday = new Date(baseDate);
+  if (currentDayOfWeek === 0) {
+    monday.setDate(baseDate.getDate() + 1);
+  } else if (currentDayOfWeek === 6) {
+    monday.setDate(baseDate.getDate() + 2);
+  } else {
+    monday.setDate(baseDate.getDate() - (currentDayOfWeek - 1));
+  }
+
+  const dayOrder = ['Lunedì', 'Martedì', 'Mercoledì', 'Giovedì', 'Venerdì', 'Sabato'];
+  const dayIndex = dayOrder.indexOf(selectedDay);
+  const offset = dayIndex !== -1 ? dayIndex : 0;
+
+  const targetDate = new Date(monday);
+  targetDate.setDate(monday.getDate() + offset);
+
+  const dayNum = targetDate.getDate();
+  const monthName = IT_MONTHS[targetDate.getMonth()];
+  const dayName = selectedDay ? selectedDay.toUpperCase() : '';
+
+  return `${dayName} ${dayNum} ${monthName}`;
+}
+
 export function timeToMinutes(tStr) {
   if (!tStr) return 0;
   const clean = tStr.replace('h', ':').trim();
