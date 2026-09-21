@@ -7,6 +7,8 @@ import { timeToMinutes } from './timeline.js';
 import { cleanRoom, shortenSubject } from './subject_normalizer.js';
 
 export { cleanRoom, shortenSubject };
+
+export function generateKWGTCodeSnippet(jsonUrl) {
   return {
     materia_e_aula: `$wg("${jsonUrl}", json, .title)$ - $wg("${jsonUrl}", json, .room)$`,
     tempo_rimasto: `$wg("${jsonUrl}", json, .time_left)$`,
