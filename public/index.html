@@ -13,7 +13,7 @@
   <meta name="apple-mobile-web-app-title" content="OrarioScuola">
   <link rel="icon" type="image/svg+xml" href="icons/icon.svg">
 
-  <link rel="stylesheet" href="css/style.css?v=41">
+  <link rel="stylesheet" href="css/style.css?v=40">
 </head>
 <body>
   <div id="app" class="app-layout">
@@ -21,113 +21,25 @@
     <!-- Top Bar Navigation (Sleek Dark Theme) -->
     <header class="app-header">
       <div class="header-left">
-        <button id="btn-open-drawer" class="icon-button" aria-label="Apri menu laterale" title="Menu (Scorciatoia: M)">
+        <button id="btn-open-drawer" class="icon-button" aria-label="Apri menu laterale">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
             <line x1="3" y1="6" x2="21" y2="6"></line>
             <line x1="3" y1="12" x2="21" y2="12"></line>
             <line x1="3" y1="18" x2="21" y2="18"></line>
           </svg>
         </button>
-
-        <!-- Branding Desktop (visibile da PC) -->
-        <div class="desktop-brand">
-          <div class="desktop-brand-icon">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-              <line x1="16" y1="2" x2="16" y2="6"></line>
-              <line x1="8" y1="2" x2="8" y2="6"></line>
-              <line x1="3" y1="10" x2="21" y2="10"></line>
-            </svg>
-          </div>
-          <div class="desktop-brand-text">
-            <span class="desktop-brand-title">Smart Timetable</span>
-            <span class="desktop-brand-school">I.T.T.S. Volta</span>
-          </div>
-        </div>
-
-        <!-- Selettore / Badge Classe Desktop -->
-        <div class="desktop-class-pill" id="desktop-class-badge" title="Clicca per cambiare orario o classe">
-          <span class="desktop-class-dot"></span>
-          <span class="desktop-class-text" id="desktop-class-name">4 BINF</span>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
-            <polyline points="6 9 12 15 18 9"></polyline>
-          </svg>
-        </div>
       </div>
 
       <div class="header-center">
         <!-- Switcher a Capsula: Giorno vs Settimana -->
         <div class="view-switch-pill" role="tablist">
-          <button id="btn-view-daily" class="pill-btn active" role="tab" aria-selected="true" title="Vista Giorno (Tasto 1 o G)">
-            <span>Giorno</span>
-            <span class="kbd-badge">1</span>
-          </button>
-          <button id="btn-view-weekly" class="pill-btn" role="tab" aria-selected="false" title="Vista Settimana (Tasto 2 o S)">
-            <span>Settimana</span>
-            <span class="kbd-badge">2</span>
-          </button>
+          <button id="btn-view-daily" class="pill-btn active" role="tab" aria-selected="true">Giorno</button>
+          <button id="btn-view-weekly" class="pill-btn" role="tab" aria-selected="false">Settimana</button>
         </div>
       </div>
 
       <div class="header-right">
-        <!-- Barra di Azioni Desktop (visibile da PC) -->
-        <div class="desktop-header-actions">
-          <button id="btn-desktop-change" class="desktop-action-btn" title="Cambia orario o seleziona classe (Tasto C)">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
-              <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
-            </svg>
-            <span>Cambia</span>
-            <span class="kbd-badge">C</span>
-          </button>
-
-          <button id="btn-desktop-original" class="desktop-action-btn" title="Orario originale Spaggiari EDT (Tasto O)">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-              <circle cx="12" cy="12" r="10"></circle>
-              <line x1="2" y1="12" x2="22" y2="12"></line>
-              <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
-            </svg>
-            <span>Originale</span>
-            <span class="kbd-badge">O</span>
-          </button>
-
-          <button id="btn-desktop-sync" class="desktop-action-btn" title="Sincronizza / Forza refresh (Tasto R)">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-              <polyline points="23 4 23 10 17 10"></polyline>
-              <polyline points="1 20 1 14 7 14"></polyline>
-              <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
-            </svg>
-            <span>Sincronizza</span>
-            <span class="kbd-badge">R</span>
-          </button>
-
-          <button id="btn-desktop-print" class="desktop-action-btn" title="Stampa orario A4 (Tasto P o Ctrl+P)">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-              <polyline points="6 9 6 2 18 2 18 9"></polyline>
-              <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
-              <rect x="6" y="14" width="12" height="8"></rect>
-            </svg>
-            <span>Stampa</span>
-            <span class="kbd-badge">P</span>
-          </button>
-
-          <button id="btn-desktop-shortcuts" class="desktop-icon-btn" title="Scorciatoie da tastiera (Tasto ?)" aria-label="Scorciatoie tastiera">
-            <span class="shortcuts-question-mark">?</span>
-          </button>
-
-          <button id="btn-desktop-settings" class="desktop-icon-btn" title="Impostazioni & Simulatore orario" aria-label="Impostazioni">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <circle cx="12" cy="12" r="3"></circle>
-              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
-            </svg>
-          </button>
-
-          <!-- Orologio Digitale Real-Time Desktop -->
-          <div class="desktop-clock-pill" id="desktop-live-clock" title="Ora di sistema">
-            <span class="desktop-clock-dot"></span>
-            <span class="desktop-clock-text" id="desktop-clock-time">--:--:--</span>
-          </div>
-        </div>
+        <!-- Spazio bilanciato pulito senza selettori -->
       </div>
     </header>
 
@@ -136,146 +48,52 @@
          ========================================================================== -->
     <main id="view-daily" class="view-container active-view">
       
-      <div class="daily-desktop-layout">
-        
-        <!-- Pannello Laterale Companion per PC (visibile su schermi >= 1024px) -->
-        <aside class="daily-companion-panel" id="daily-companion-panel" aria-label="Riepilogo e navigazione rapida">
+      <!-- Intestazione Data (es. LUNEDÌ 14 SETTEMBRE) -->
+      <section class="daily-header-bar">
+        <button id="btn-prev-day" class="day-nav-arrow" aria-label="Giorno precedente">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="15 18 9 12 15 6"></polyline>
+          </svg>
+        </button>
+        <h1 id="daily-date-title" class="daily-date-title"></h1>
+        <button id="btn-next-day" class="day-nav-arrow" aria-label="Giorno successivo">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="9 18 15 12 9 6"></polyline>
+          </svg>
+        </button>
+      </section>
+
+      <!-- Selettore rapido compatto giorni (Lunedì - Venerdì) -->
+      <nav class="days-nav" aria-label="Selettore rapido giorno">
+        <button class="day-chip" data-day="Lunedì">LUN</button>
+        <button class="day-chip" data-day="Martedì">MAR</button>
+        <button class="day-chip" data-day="Mercoledì">MER</button>
+        <button class="day-chip" data-day="Giovedì">GIO</button>
+        <button class="day-chip" data-day="Venerdì">VEN</button>
+      </nav>
+
+      <!-- Contenitore Timeline Verticale -->
+      <div class="timeline-viewport" id="timeline-viewport">
+        <div class="timeline-container" id="timeline-container">
           
-          <!-- 1. Scheda Classe & Info Orario -->
-          <div class="companion-card companion-class-card">
-            <div class="companion-card-header">
-              <span class="companion-card-tag">ORARIO ATTIVO</span>
-              <span class="companion-status-badge" id="companion-status-badge">Provvisorio</span>
-            </div>
-            <div class="companion-class-row">
-              <h2 class="companion-class-name" id="companion-class-name">4 BINF</h2>
-              <button id="btn-companion-change-class" class="btn-companion-pill-action" title="Cambia classe o orario">Cambia</button>
-            </div>
-            <div class="companion-school-title">I.T.T.S. Alessandro Volta • Perugia</div>
-            <div class="companion-date-decorrenza" id="companion-date-decorrenza">In vigore dal 14 Settembre 2026</div>
+          <!-- Asse Orario Verticale (popolato dinamicamente con ore 08:00, 08:58, ecc.) -->
+          <div class="timeline-time-column" id="timeline-time-column">
+            <!-- I marker orari sono generati da JS -->
           </div>
 
-          <!-- 2. Scheda Stato Live & Countdown -->
-          <div class="companion-card companion-live-card" id="companion-live-card">
-            <div class="companion-card-header">
-              <span class="companion-card-tag">STATO ORA IN TEMPO REALE</span>
-              <span class="companion-live-dot" id="companion-live-dot"></span>
-            </div>
-            <div class="companion-live-body">
-              <div class="companion-live-status-title" id="companion-live-status-title">In attesa...</div>
-              <div class="companion-live-subtitle" id="companion-live-subtitle">Calcolo orario in corso...</div>
-              
-              <div class="companion-progress-track" id="companion-progress-track">
-                <div class="companion-progress-fill" id="companion-progress-fill" style="width: 0%;"></div>
-              </div>
-
-              <div class="companion-next-lesson-box" id="companion-next-box">
-                <span class="next-box-label">PROSSIMA ORA:</span>
-                <span class="next-box-value" id="companion-next-value">--</span>
-              </div>
-            </div>
+          <!-- Cursore Dinamico Live (Badge blu + Raggio Laser Orizzontale) -->
+          <div class="live-timeline-line" id="live-timeline-line"></div>
+          <div class="live-cursor" id="live-cursor">
+            <span class="cursor-dot"></span>
+            <span class="cursor-time" id="cursor-time">09:23</span>
           </div>
 
-          <!-- 3. Navigatore Rapido Giorni Settimana -->
-          <div class="companion-card companion-days-card">
-            <div class="companion-card-header">
-              <span class="companion-card-tag">GIORNI DELLA SETTIMANA</span>
-              <span class="companion-hint-sub">Clicca per cambiare</span>
-            </div>
-            <div class="companion-days-nav-list" id="companion-days-list">
-              <!-- Popolato dinamicamente via JS con Lun-Ven, data e numero ore -->
-            </div>
+          <!-- Lista Card Lezioni Pastello -->
+          <div class="lessons-list" id="lessons-list">
+            <!-- Popolato dinamicamente da JS -->
           </div>
 
-          <!-- 4. Scheda Riepilogo Giornaliero -->
-          <div class="companion-card companion-summary-card">
-            <div class="companion-card-header">
-              <span class="companion-card-tag" id="companion-summary-title">RIEPILOGO GIORNATA</span>
-            </div>
-            <div class="companion-stats-grid">
-              <div class="companion-stat-item">
-                <span class="stat-big-num" id="companion-stat-hours">-</span>
-                <span class="stat-sub-label">Ore Lezione</span>
-              </div>
-              <div class="companion-stat-item">
-                <span class="stat-big-num" id="companion-stat-labs">-</span>
-                <span class="stat-sub-label">Laboratori</span>
-              </div>
-              <div class="companion-stat-item">
-                <span class="stat-big-num" id="companion-stat-breaks">1</span>
-                <span class="stat-sub-label">Ricreazioni</span>
-              </div>
-            </div>
-          </div>
-
-          <!-- 5. Mini Scorciatoie Tastiera -->
-          <div class="companion-card companion-shortcuts-card">
-            <div class="companion-card-header">
-              <span class="companion-card-tag">SCORCIATOIE DA TASTIERA</span>
-              <button id="btn-companion-open-shortcuts" class="btn-companion-link" title="Mostra tutte le scorciatoie">Tutte (?)</button>
-            </div>
-            <div class="companion-shortcuts-list">
-              <div class="shortcut-mini-row"><span class="mini-kbd-pair"><kbd>1</kbd> / <kbd>2</kbd></span><span>Giorno / Settimana</span></div>
-              <div class="shortcut-mini-row"><span class="mini-kbd-pair"><kbd>←</kbd> / <kbd>→</kbd></span><span>Giorno prec / succ</span></div>
-              <div class="shortcut-mini-row"><span class="mini-kbd-pair"><kbd>T</kbd></span><span>Vai a Oggi</span></div>
-              <div class="shortcut-mini-row"><span class="mini-kbd-pair"><kbd>P</kbd></span><span>Stampa orario A4</span></div>
-              <div class="shortcut-mini-row"><span class="mini-kbd-pair"><kbd>C</kbd></span><span>Cambia orario</span></div>
-            </div>
-          </div>
-
-        </aside>
-
-        <!-- Stage Principale Timeline Giornaliera -->
-        <div class="daily-main-stage">
-          <!-- Intestazione Data (es. LUNEDÌ 14 SETTEMBRE) -->
-          <section class="daily-header-bar">
-            <button id="btn-prev-day" class="day-nav-arrow" aria-label="Giorno precedente" title="Giorno precedente (Freccia Sinistra)">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                <polyline points="15 18 9 12 15 6"></polyline>
-              </svg>
-            </button>
-            <h1 id="daily-date-title" class="daily-date-title"></h1>
-            <button id="btn-next-day" class="day-nav-arrow" aria-label="Giorno successivo" title="Giorno successivo (Freccia Destra)">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                <polyline points="9 18 15 12 9 6"></polyline>
-              </svg>
-            </button>
-          </section>
-
-          <!-- Selettore rapido compatto giorni (Lunedì - Venerdì) -->
-          <nav class="days-nav" aria-label="Selettore rapido giorno">
-            <button class="day-chip" data-day="Lunedì">LUN</button>
-            <button class="day-chip" data-day="Martedì">MAR</button>
-            <button class="day-chip" data-day="Mercoledì">MER</button>
-            <button class="day-chip" data-day="Giovedì">GIO</button>
-            <button class="day-chip" data-day="Venerdì">VEN</button>
-          </nav>
-
-          <!-- Contenitore Timeline Verticale -->
-          <div class="timeline-viewport" id="timeline-viewport">
-            <div class="timeline-container" id="timeline-container">
-              
-              <!-- Asse Orario Verticale (popolato dinamicamente con ore 08:00, 08:58, ecc.) -->
-              <div class="timeline-time-column" id="timeline-time-column">
-                <!-- I marker orari sono generati da JS -->
-              </div>
-
-              <!-- Cursore Dinamico Live (Badge blu + Raggio Laser Orizzontale) -->
-              <div class="live-timeline-line" id="live-timeline-line"></div>
-              <div class="live-cursor" id="live-cursor">
-                <span class="cursor-dot"></span>
-                <span class="cursor-time" id="cursor-time">09:23</span>
-              </div>
-
-              <!-- Lista Card Lezioni Pastello -->
-              <div class="lessons-list" id="lessons-list">
-                <!-- Popolato dinamicamente da JS -->
-              </div>
-
-            </div>
-          </div>
         </div>
-
       </div>
     </main>
 
@@ -283,20 +101,6 @@
          VISTA 2: SETTIMANA (GRIGLIA A MATRICE CON CELLE COLORATE PASTELLO)
          ========================================================================== -->
     <main id="view-weekly" class="view-container hidden-view">
-      
-      <!-- Intestazione per la Stampa Professionale A4 (Visibile solo in Stampa) -->
-      <div class="print-only-header">
-        <div class="print-header-top">
-          <div class="print-school-name">I.T.T.S. ALESSANDRO VOLTA • PERUGIA</div>
-          <div class="print-doc-title" id="print-doc-title">ORARIO SCOLASTICO SETTIMANALE</div>
-        </div>
-        <div class="print-header-meta">
-          <span class="print-meta-item" id="print-class-badge">CLASSE: 4 BINF</span>
-          <span class="print-meta-item" id="print-date-info">In vigore dal 14 Settembre 2026</span>
-          <span class="print-meta-item" id="print-timestamp">Generato il 22/09/2026</span>
-        </div>
-      </div>
-
       <div class="weekly-scroll-wrapper" id="weekly-scroll-wrapper">
         <div class="weekly-grid-container" id="weekly-grid-container">
           <!-- Cursore e Raggio Live anche nella Settimana -->
@@ -1111,70 +915,6 @@ const BASE_URL = "..."; // Configurato automaticamente
       </div>
     </div>
 
-    <!-- Modale Scorciatoie da Tastiera Desktop -->
-    <div id="modal-shortcuts" class="modal-backdrop">
-      <div class="modal-card modal-card-shortcuts">
-        <div class="modal-header">
-          <div class="modal-title-with-icon">
-            <span style="font-size: 1.25rem;">⌨️</span>
-            <h3>Scorciatoie da Tastiera</h3>
-          </div>
-          <button class="modal-close-btn" id="btn-close-modal-shortcuts" aria-label="Chiudi scorciatoie">✕</button>
-        </div>
-        <div class="modal-body">
-          <p class="modal-desc" style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 16px;">
-            Naviga comodamente nell'orario scolastico da PC tramite la tastiera:
-          </p>
-          <div class="shortcuts-guide-list">
-            <div class="shortcut-guide-row">
-              <span class="guide-keys"><kbd>1</kbd> / <kbd>G</kbd></span>
-              <span class="guide-desc">Passa alla <strong>Vista Giorno</strong></span>
-            </div>
-            <div class="shortcut-guide-row">
-              <span class="guide-keys"><kbd>2</kbd> / <kbd>S</kbd></span>
-              <span class="guide-desc">Passa alla <strong>Vista Settimana</strong></span>
-            </div>
-            <div class="shortcut-guide-row">
-              <span class="guide-keys"><kbd>←</kbd> <kbd>→</kbd></span>
-              <span class="guide-desc">Giorno precedente / successivo</span>
-            </div>
-            <div class="shortcut-guide-row">
-              <span class="guide-keys"><kbd>T</kbd></span>
-              <span class="guide-desc">Torna alla data odierna (<strong>Oggi</strong>)</span>
-            </div>
-            <div class="shortcut-guide-row">
-              <span class="guide-keys"><kbd>C</kbd></span>
-              <span class="guide-desc">Apri la pagina <strong>Cambia Orario / Classe</strong></span>
-            </div>
-            <div class="shortcut-guide-row">
-              <span class="guide-keys"><kbd>O</kbd></span>
-              <span class="guide-desc">Visualizza l'<strong>Orario originale Spaggiari EDT</strong></span>
-            </div>
-            <div class="shortcut-guide-row">
-              <span class="guide-keys"><kbd>R</kbd></span>
-              <span class="guide-desc"><strong>Sincronizza / Ricarica</strong> l'orario</span>
-            </div>
-            <div class="shortcut-guide-row">
-              <span class="guide-keys"><kbd>P</kbd> o <kbd>Ctrl</kbd>+<kbd>P</kbd></span>
-              <span class="guide-desc"><strong>Stampa</strong> l'orario in formato A4 orizzontale</span>
-            </div>
-            <div class="shortcut-guide-row">
-              <span class="guide-keys"><kbd>M</kbd></span>
-              <span class="guide-desc">Apri / chiudi il menu laterale</span>
-            </div>
-            <div class="shortcut-guide-row">
-              <span class="guide-keys"><kbd>Esc</kbd></span>
-              <span class="guide-desc">Chiudi finestre o torna all'orario principale</span>
-            </div>
-            <div class="shortcut-guide-row">
-              <span class="guide-keys"><kbd>?</kbd></span>
-              <span class="guide-desc">Mostra questa finestra di aiuto</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
   </div>
 
   <!-- Pop-up Notifica Sincronizzazione con Backdrop Sfumato al Centro dello Schermo -->
@@ -1204,6 +944,6 @@ const BASE_URL = "..."; // Configurato automaticamente
     </div>
   </div>
 
-  <script type="module" src="js/app.js?v=41"></script>
+  <script type="module" src="js/app.js?v=40"></script>
 </body>
 </html>
