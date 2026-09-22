@@ -3248,4 +3248,66 @@ body {
   -webkit-overflow-scrolling: touch;
 }
 
+/* ==========================================================================
+   VISUALIZZAZIONE RESPONSIVE SU SCHERMI AMPI / PC (ZERO MODIFICHE UI)
+   - L'orario settimanale si estende su tutta la pagina senza dover scorrere
+   - La vista giornaliera e le altre sezioni restano centrate con la UI originale
+   ========================================================================== */
+@media (min-width: 700px) {
+  .app-layout {
+    max-width: 100%;
+    padding-left: 20px;
+    padding-right: 20px;
+  }
+
+  .app-header {
+    max-width: 1300px;
+    width: 100%;
+    margin: 0 auto;
+  }
+
+  /* La vista giornaliera resta centrata e identica alla visualizzazione originale */
+  #view-daily {
+    max-width: 500px;
+    margin: 0 auto;
+    width: 100%;
+  }
+
+  /* La vista settimanale si visualizza su tutta la larghezza della pagina senza scroll orizzontale */
+  #view-weekly {
+    max-width: 1300px;
+    margin: 0 auto;
+    width: 100%;
+  }
+
+  .weekly-scroll-wrapper {
+    overflow-x: visible;
+    padding: 10px 0 20px 0;
+    width: 100%;
+  }
+
+  .weekly-grid-container {
+    min-width: unset;
+    width: 100%;
+  }
+
+  /* Nascondi il suggerimento di scorrimento orizzontale su schermi ampi */
+  .weekly-scroll-hint {
+    display: none;
+  }
+
+  .grid-cell-lesson.compact-text .grid-lesson-name,
+  .grid-cell-lesson.very-compact-text .grid-lesson-name {
+    font-size: 0.74rem;
+  }
+
+  /* Centra le altre viste su schermi larghi mantenendo le proporzioni originali */
+  .change-schedule-view {
+    max-width: 600px;
+    margin: 0 auto;
+    width: 100%;
+  }
+}
+
+
 
