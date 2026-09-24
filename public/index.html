@@ -13,7 +13,7 @@
   <meta name="apple-mobile-web-app-title" content="OrarioScuola">
   <link rel="icon" type="image/svg+xml" href="icons/icon.svg">
 
-  <link rel="stylesheet" href="css/style.css?v=41">
+  <link rel="stylesheet" href="css/style.css?v=42">
 </head>
 <body>
   <div id="app" class="app-layout">
@@ -116,6 +116,26 @@
         <span>‹</span> Scorri per vedere la settimana <span>›</span>
       </div>
     </main>
+
+    <!-- Rilevamento immediato PC per apertura diretta in Vista Settimanale senza sfarfallio -->
+    <script>
+      (function() {
+        try {
+          var isMobile = /Android|webOS|iPhone|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+          var isPc = (!isMobile && (window.innerWidth >= 700 || (window.screen && window.screen.width >= 1024))) || window.innerWidth >= 1024;
+          if (isPc) {
+            var vDaily = document.getElementById('view-daily');
+            var vWeekly = document.getElementById('view-weekly');
+            var bDaily = document.getElementById('btn-view-daily');
+            var bWeekly = document.getElementById('btn-view-weekly');
+            if (vDaily) { vDaily.classList.add('hidden-view'); vDaily.classList.remove('active-view'); }
+            if (vWeekly) { vWeekly.classList.remove('hidden-view'); vWeekly.classList.add('active-view'); }
+            if (bDaily) { bDaily.classList.remove('active'); bDaily.setAttribute('aria-selected', 'false'); }
+            if (bWeekly) { bWeekly.classList.add('active'); bWeekly.setAttribute('aria-selected', 'true'); }
+          }
+        } catch (_) {}
+      })();
+    </script>
 
     <!-- ==========================================================================
          VISTA 3: DEDICATA CAMBIA ORARIO (PAGINA COMPLETA)
@@ -944,6 +964,6 @@ const BASE_URL = "..."; // Configurato automaticamente
     </div>
   </div>
 
-  <script type="module" src="js/app.js?v=40"></script>
+  <script type="module" src="js/app.js?v=42"></script>
 </body>
 </html>

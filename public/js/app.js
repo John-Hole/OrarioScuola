@@ -36,11 +36,68 @@ import {
   VOLTA_PRESET_ID
 } from './timetable_store.js';
 
+/**
+ * Gestione Cookie e Rilevamento PC / Dispositivo Desktop
+ */
+function getCookie(name) {
+  try {
+    const match = document.cookie.match(new RegExp('(^|;\\s*)' + name + '=([^;]*)'));
+    return match ? decodeURIComponent(match[2]) : null;
+  } catch (_) {
+    return null;
+  }
+}
+
+function setCookie(name, value, days = 365) {
+  try {
+    const d = new Date();
+    d.setTime(d.getTime() + (days * 24 * 60 * 60 * 1000));
+    document.cookie = `${name}=${encodeURIComponent(value)};expires=${d.toUTCString()};path=/;SameSite=Lax`;
+  } catch (_) {}
+}
+
+function isDesktopDevice() {
+  const isMobileUA = /Android|webOS|iPhone|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+  if (isMobileUA) {
+    return window.innerWidth >= 1024;
+  }
+  // Su PC: finestra desktop >= 700px oppure schermo monitor >= 1024px
+  if (window.innerWidth >= 700 || (window.screen && window.screen.width >= 1024)) {
+    return true;
+  }
+  return false;
+}
+
+function getInitialView() {
+  const isPc = isDesktopDevice();
+  if (isPc) {
+    // Salva cookie e localStorage per marcare il PC e la prima visualizzazione settimanale
+    setCookie('orario_initial_view', 'weekly', 365);
+    setCookie('orario_device', 'pc', 365);
+    try {
+      localStorage.setItem('orario_initial_view', 'weekly');
+      localStorage.setItem('orario_device', 'pc');
+    } catch (_) {}
+    return 'weekly';
+  } else {
+    setCookie('orario_initial_view', 'daily', 365);
+    setCookie('orario_device', 'mobile', 365);
+    try {
+      localStorage.setItem('orario_initial_view', 'daily');
+      localStorage.setItem('orario_device', 'mobile');
+    } catch (_) {}
+    return 'daily';
+  }
+}
+
+const initialView = getInitialView();
+
 // Stato globale dell'applicazione
 const state = {
   timetable: null,
   currentClass: localStorage.getItem('school_class') || '4 BINF',
-  currentView: 'daily', // 'daily' | 'weekly'
+  currentView: initialView, // 'daily' | 'weekly'
+  lastScheduleView: initialView,
   selectedDay: 'Lunedì',
   lastCalendarDay: null,
   simulatedTime: null, // null = ora reale, altrimenti Date
@@ -364,6 +421,9 @@ function getCurrentDate() {
 async function init() {
   registerServiceWorker();
   setupEventListeners();
+
+  // Applica la visualizzazione iniziale (settimanale da PC, giornaliera da smartphone)
+  applyView(state.currentView);
 
   const initialNow = getCurrentDate();
   state.lastCalendarDay = initialNow.toDateString();
@@ -817,6 +877,9 @@ function createTimetableCardElement(item, activeId, onSelect) {
  * Gestione Pagina Dedicata Cambia Orario (Schermata Intera)
  */
 function openChangeScheduleView(tab = 'image') {
+  if (state.currentView === 'daily' || state.currentView === 'weekly') {
+    state.lastScheduleView = state.currentView;
+  }
   state.currentView = 'change-schedule';
   if (elements.viewDaily) {
     elements.viewDaily.classList.add('hidden-view');
@@ -846,6 +909,9 @@ function openChangeScheduleView(tab = 'image') {
  * Gestione Pagina Dedicata Orario Originale Scuola (Portale EDT)
  */
 function openOriginalScheduleView() {
+  if (state.currentView === 'daily' || state.currentView === 'weekly') {
+    state.lastScheduleView = state.currentView;
+  }
   state.currentView = 'original-schedule';
   if (elements.viewDaily) {
     elements.viewDaily.classList.add('hidden-view');
@@ -876,7 +942,8 @@ function openOriginalScheduleView() {
 }
 
 function returnToScheduleView() {
-  state.currentView = 'daily';
+  const targetView = state.lastScheduleView || (isDesktopDevice() ? 'weekly' : 'daily');
+  applyView(targetView);
   if (elements.viewOriginalSchedule) {
     elements.viewOriginalSchedule.classList.add('hidden-view');
     elements.viewOriginalSchedule.classList.remove('active-view');
@@ -885,16 +952,6 @@ function returnToScheduleView() {
     elements.viewChangeSchedule.classList.add('hidden-view');
     elements.viewChangeSchedule.classList.remove('active-view');
   }
-  if (elements.viewWeekly) {
-    elements.viewWeekly.classList.add('hidden-view');
-    elements.viewWeekly.classList.remove('active-view');
-  }
-  if (elements.viewDaily) {
-    elements.viewDaily.classList.remove('hidden-view');
-    elements.viewDaily.classList.add('active-view');
-  }
-  if (elements.btnViewDaily) elements.btnViewDaily.classList.add('active');
-  if (elements.btnViewWeekly) elements.btnViewWeekly.classList.remove('active');
   if (elements.appHeader) {
     elements.appHeader.style.display = '';
   }
@@ -1023,6 +1080,31 @@ function groupConsecutiveLessons(lessons) {
 }
 
 /**
+ * Applica la modalità di visualizzazione (Giorno vs Settimana)
+ * Sincronizza i selettori a capsula nell'header e i contenitori principali
+ */
+function applyView(viewMode) {
+  state.currentView = viewMode;
+  const isWeekly = viewMode === 'weekly';
+  if (elements.viewDaily) {
+    elements.viewDaily.classList.toggle('hidden-view', isWeekly);
+    elements.viewDaily.classList.toggle('active-view', !isWeekly);
+  }
+  if (elements.viewWeekly) {
+    elements.viewWeekly.classList.toggle('hidden-view', !isWeekly);
+    elements.viewWeekly.classList.toggle('active-view', isWeekly);
+  }
+  if (elements.btnViewDaily) {
+    elements.btnViewDaily.classList.toggle('active', !isWeekly);
+    elements.btnViewDaily.setAttribute('aria-selected', !isWeekly ? 'true' : 'false');
+  }
+  if (elements.btnViewWeekly) {
+    elements.btnViewWeekly.classList.toggle('active', isWeekly);
+    elements.btnViewWeekly.setAttribute('aria-selected', isWeekly ? 'true' : 'false');
+  }
+}
+
+/**
  * Render dell'intera interfaccia
  */
 function render() {
@@ -1030,6 +1112,8 @@ function render() {
 
   renderDailyHeader();
   renderDaysNav();
+
+  applyView(state.currentView);
 
   if (state.currentView === 'daily') {
     renderDailyTimeline();
@@ -1352,15 +1436,6 @@ function renderWeeklyView() {
   cornerHeader.style.gridColumn = '1';
   elements.weeklyGridContainer.appendChild(cornerHeader);
 
-  const dateMap = {
-    'Lunedì': '14/09',
-    'Martedì': '15/09',
-    'Mercoledì': '16/09',
-    'Giovedì': '17/09',
-    'Venerdì': '18/09',
-    'Sabato': '19/09'
-  };
-
   giorni.forEach((day, dIdx) => {
     const colHeader = document.createElement('div');
     const isToday = (dIdx + 1) === currentDayIndex;
@@ -1369,12 +1444,10 @@ function renderWeeklyView() {
     colHeader.style.gridColumn = String(dIdx + 2);
 
     const shortDay = day.giorno.slice(0, 3).toUpperCase();
-    const dateStr = day.data_str || dateMap[day.giorno] || '';
     const todayBadgeHtml = isToday ? `<div class="today-chip-badge">OGGI</div>` : '';
 
     colHeader.innerHTML = `
       <div class="grid-day-name">${shortDay}</div>
-      <div class="grid-day-date">${dateStr}</div>
       ${todayBadgeHtml}
     `;
     elements.weeklyGridContainer.appendChild(colHeader);
@@ -1549,16 +1622,14 @@ function tick() {
 function setupEventListeners() {
   // Switch vista Giorno / Settimana
   elements.btnViewDaily.addEventListener('click', () => {
-    state.currentView = 'daily';
-    elements.btnViewDaily.classList.add('active');
-    elements.btnViewWeekly.classList.remove('active');
+    state.lastScheduleView = 'daily';
+    applyView('daily');
     render();
   });
 
   elements.btnViewWeekly.addEventListener('click', () => {
-    state.currentView = 'weekly';
-    elements.btnViewWeekly.classList.add('active');
-    elements.btnViewDaily.classList.remove('active');
+    state.lastScheduleView = 'weekly';
+    applyView('weekly');
     render();
   });
 
