@@ -7,6 +7,10 @@
 import fs from 'fs';
 import path from 'path';
 
+const CLASS_SPAGGIARI_MAP = {
+  '4 BINF': 'https://cspace.spaggiari.eu/pub/PGIT0005/orario/classi/edc0000119p00001s3fffffffffffffff_4_binf_ac.png'
+};
+
 export default async function handler(req, res) {
   // Configurazione header CORS e Caching
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -20,13 +24,17 @@ export default async function handler(req, res) {
 
   try {
     let className = '4 BINF';
+    let force = false;
+
     if (req.body) {
       const body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
-      if (body && body.class_name) {
-        className = body.class_name;
+      if (body) {
+        if (body.class_name) className = body.class_name;
+        if (body.force) force = true;
       }
-    } else if (req.query && req.query.class) {
-      className = req.query.class;
+    } else if (req.query) {
+      if (req.query.class) className = req.query.class;
+      if (req.query.force === 'true' || req.query.force === '1') force = true;
     }
 
     const timetablePath = path.join(process.cwd(), 'public', 'data', 'timetable.json');
@@ -37,6 +45,7 @@ export default async function handler(req, res) {
       timetableData = JSON.parse(raw);
     }
 
+    // Se la classe corrisponde ai dati memorizzati, restituisci l'orario corrente aggiornato
     return res.status(200).json({
       status: 'success',
       class_name: className,

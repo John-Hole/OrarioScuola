@@ -1,16 +1,9 @@
 {
   "classe": "4 BINF",
-  "stato_orario": "Orario Provvisorio",
-  "data_decorrenza": "In vigore dal 14 Settembre 2026",
-  "data_aggiornamento": "2026-09-21 10:06",
-  "classi_disponibili": [
-    "4 BINF",
-    "4 AINF",
-    "3 BINF",
-    "5 BINF",
-    "4 AELT",
-    "4 AMEC"
-  ],
+  "stato_orario": "Orario provvisorio",
+  "data_decorrenza": "dal 28 settembre 2026",
+  "data_aggiornamento": "Index Education 2026",
+  "classi_disponibili": null,
   "giorni": [
     {
       "giorno": "Lunedì",
@@ -19,53 +12,78 @@
           "ora": 1,
           "inizio": "08:00",
           "fine": "08:54",
-          "materia": "SISTEMI E RETI LAB",
+          "materia": "SISTEMI E RETI LAB.",
           "docenti": [
+            "DI GRAZIA N.",
             "MANCINO R.",
             "RIGHI A."
           ],
-          "aula": "B 010",
+          "aula": "B 010 - P. T. EST) Lab. Reti",
           "is_lab": true,
-          "note": ""
+          "note": "20 alunni"
         },
         {
           "ora": 2,
           "inizio": "08:58",
           "fine": "09:48",
-          "materia": "SISTEMI E RETI LAB",
+          "materia": "SISTEMI E RETI LAB.",
           "docenti": [
+            "DI GRAZIA N.",
             "MANCINO R.",
             "RIGHI A."
           ],
-          "aula": "B 010",
+          "aula": "B 010 - P. T. EST) Lab. Reti",
           "is_lab": true,
-          "note": ""
+          "note": "20 alunni"
         },
         {
           "ora": 3,
           "inizio": "09:58",
           "fine": "10:48",
-          "materia": "INFORMATICA LAB",
+          "materia": "ITALIANO",
           "docenti": [
-            "BATOCCHI M.",
-            "GIAPPICHINI A."
+            "TOMASSONI V."
           ],
-          "aula": "C 170",
-          "is_lab": true,
-          "note": ""
+          "aula": "B 055 (P. T. EST)",
+          "is_lab": false,
+          "note": "20 alunni"
         },
         {
           "ora": 4,
           "inizio": "10:52",
           "fine": "11:42",
-          "materia": "INFORMATICA LAB",
+          "materia": "ITALIANO",
+          "docenti": [
+            "TOMASSONI V."
+          ],
+          "aula": "B 055 (P. T. EST)",
+          "is_lab": false,
+          "note": "20 alunni"
+        },
+        {
+          "ora": 5,
+          "inizio": "11:52",
+          "fine": "12:42",
+          "materia": "INFORMATICA LAB.",
           "docenti": [
             "BATOCCHI M.",
             "GIAPPICHINI A."
           ],
-          "aula": "C 170",
+          "aula": "C 170 WIN - 1° P. OVEST",
           "is_lab": true,
-          "note": ""
+          "note": "20 alunni"
+        },
+        {
+          "ora": 6,
+          "inizio": "12:46",
+          "fine": "13:36",
+          "materia": "INGLESE",
+          "docenti": [
+            "GUERCINI C."
+          ],
+          "aula": "B 030 (P. T. EST)",
+          "is_lab": false,
+          "note": "20 alunni"
         }
       ]
     },
@@ -76,49 +94,114 @@
           "ora": 1,
           "inizio": "08:00",
           "fine": "08:54",
-          "materia": "ITALIANO",
+          "materia": "RELIGIONE",
           "docenti": [
-            "TOMASSONI V."
+            "VIOLA A."
           ],
-          "aula": "B 115",
+          "aula": "B 060 (P. T. EST)",
           "is_lab": false,
-          "note": ""
+          "note": "20 alunni"
         },
         {
           "ora": 2,
           "inizio": "08:58",
           "fine": "09:48",
-          "materia": "ITALIANO",
+          "materia": "INFORMATICA",
           "docenti": [
-            "TOMASSONI V."
+            "BATOCCHI M."
           ],
-          "aula": "B 115",
+          "aula": "B 060 (P. T. EST)",
           "is_lab": false,
-          "note": ""
+          "note": "20 alunni"
         },
         {
           "ora": 3,
           "inizio": "09:58",
           "fine": "10:48",
-          "materia": "RELIGIONE",
+          "materia": "TPSIT LAB.",
           "docenti": [
-            "VIOLA A."
+            "CIUCHETTI M.",
+            "CRISPOLTI M."
           ],
-          "aula": "B 115",
-          "is_lab": false,
-          "note": ""
+          "aula": "B 045 - P. T. EST",
+          "is_lab": true,
+          "note": "20 alunni"
         },
         {
           "ora": 4,
           "inizio": "10:52",
           "fine": "11:42",
-          "materia": "INGLESE",
+          "materia": "TPSIT LAB.",
           "docenti": [
-            "GUERCINI C."
+            "CIUCHETTI M.",
+            "CRISPOLTI M."
           ],
-          "aula": "B 115",
+          "aula": "B 045 - P. T. EST",
+          "is_lab": true,
+          "note": "20 alunni"
+        },
+        {
+          "ora": 5,
+          "inizio": "11:52",
+          "fine": "12:42",
+          "materia": "ITALIANO",
+          "docenti": [
+            "LONZINI S.",
+            "TOMASSONI V."
+          ],
+          "aula": "B 040 (P. T. EST)",
           "is_lab": false,
-          "note": ""
+          "note": "20 alunni"
+        },
+        {
+          "ora": 6,
+          "inizio": "12:46",
+          "fine": "13:36",
+          "materia": "MATEMATICA",
+          "docenti": [
+            "POGGIONI M."
+          ],
+          "aula": "C 195 (1° P. OVEST)",
+          "is_lab": false,
+          "note": "20 alunni"
+        },
+        {
+          "ora": 7,
+          "inizio": "13:36",
+          "fine": "13:48",
+          "materia": "Terza ricreazione",
+          "docenti": [
+            "POGGIONI M."
+          ],
+          "aula": "C 195 (1° P. OVEST)",
+          "is_lab": false,
+          "note": "20 alunni"
+        },
+        {
+          "ora": 8,
+          "inizio": "13:48",
+          "fine": "14:00",
+          "materia": "Terza ricreazione",
+          "docenti": [
+            "GAGLIARDI M.",
+            "PERICOLINI A."
+          ],
+          "aula": "C 195 (1° P. OVEST)",
+          "is_lab": false,
+          "note": "20 alunni"
+        },
+        {
+          "ora": 9,
+          "inizio": "14:00",
+          "fine": "14:50",
+          "materia": "TELECOMUNICAZIONI LAB.",
+          "docenti": [
+            "GAGLIARDI M.",
+            "PERICOLINI A."
+          ],
+          "aula": "L030) Lab. el. Tele",
+          "is_lab": true,
+          "note": "20 alunni"
         }
       ]
     },
@@ -129,51 +212,76 @@
           "ora": 1,
           "inizio": "08:00",
           "fine": "08:54",
-          "materia": "TPSIT LAB",
+          "materia": "INGLESE",
           "docenti": [
-            "CIUCHETTI M.",
-            "CRISPOLTI M."
+            "GUERCINI C.",
+            "LONZINI S."
           ],
-          "aula": "B 045",
-          "is_lab": true,
-          "note": ""
+          "aula": "B 061 (P. T. EST)",
+          "is_lab": false,
+          "note": "20 alunni"
         },
         {
           "ora": 2,
           "inizio": "08:58",
           "fine": "09:48",
-          "materia": "TPSIT LAB",
+          "materia": "ITALIANO",
           "docenti": [
-            "CIUCHETTI M.",
-            "CRISPOLTI M."
+            "LONZINI S.",
+            "TOMASSONI V."
           ],
-          "aula": "B 045",
-          "is_lab": true,
-          "note": ""
+          "aula": "B 061 (P. T. EST)",
+          "is_lab": false,
+          "note": "20 alunni"
         },
         {
           "ora": 3,
           "inizio": "09:58",
           "fine": "10:48",
-          "materia": "MATEMATICA",
+          "materia": "STORIA",
           "docenti": [
-            "POGGIONI M."
+            "CAVALLUCCI V.",
+            "LONZINI S."
           ],
-          "aula": "C 180",
+          "aula": "B 061 (P. T. EST)",
           "is_lab": false,
-          "note": ""
+          "note": "20 alunni"
         },
         {
           "ora": 4,
           "inizio": "10:52",
           "fine": "11:42",
-          "materia": "MATEMATICA",
+          "materia": "TPSIT",
           "docenti": [
-            "POGGIONI M."
+            "CIUCHETTI M."
           ],
-          "aula": "C 180",
+          "aula": "B 140 (1° P. EST)",
           "is_lab": false,
-          "note": ""
+          "note": "20 alunni"
+        },
+        {
+          "ora": 5,
+          "inizio": "11:52",
+          "fine": "12:42",
+          "materia": "SISTEMI e RETI",
+          "docenti": [
+            "MANCINO R."
+          ],
+          "aula": "B 140 (1° P. EST)",
+          "is_lab": false,
+          "note": "20 alunni"
+        },
+        {
+          "ora": 6,
+          "inizio": "12:46",
+          "fine": "13:36",
+          "materia": "TELECOMUNICAZIONI",
+          "docenti": [
+            "PERICOLINI A."
+          ],
+          "aula": "B 140 (1° P. EST)",
+          "is_lab": false,
+          "note": "20 alunni"
         }
       ]
     },
@@ -184,49 +292,78 @@
           "ora": 1,
           "inizio": "08:00",
           "fine": "08:54",
-          "materia": "ITALIANO",
+          "materia": "INFORMATICA LAB.",
           "docenti": [
-            "TOMASSONI V."
+            "BATOCCHI M.",
+            "DI GRAZIA N."
           ],
-          "aula": "B 060",
-          "is_lab": false,
-          "note": ""
+          "aula": "C 170 WIN - 1° P. OVEST",
+          "is_lab": true,
+          "note": "20 alunni"
         },
         {
           "ora": 2,
           "inizio": "08:58",
           "fine": "09:48",
-          "materia": "INGLESE",
+          "materia": "INFORMATICA LAB.",
           "docenti": [
-            "GUERCINI C."
+            "BATOCCHI M.",
+            "DI GRAZIA N."
           ],
-          "aula": "B 060",
-          "is_lab": false,
-          "note": ""
+          "aula": "C 170 WIN - 1° P. OVEST",
+          "is_lab": true,
+          "note": "20 alunni"
         },
         {
           "ora": 3,
           "inizio": "09:58",
           "fine": "10:48",
-          "materia": "MATEMATICA",
+          "materia": "STORIA",
           "docenti": [
-            "POGGIONI M."
+            "CAVALLUCCI V.",
+            "LONZINI S."
           ],
-          "aula": "C 220",
+          "aula": "B 115 (1° P. EST)",
           "is_lab": false,
-          "note": ""
+          "note": "20 alunni"
         },
         {
           "ora": 4,
           "inizio": "10:52",
           "fine": "11:42",
-          "materia": "SISTEMI E RETI",
+          "materia": "MATEMATICA",
           "docenti": [
+            "POGGIONI M."
+          ],
+          "aula": "C 230 (2° P. OVEST)",
+          "is_lab": false,
+          "note": "20 alunni"
+        },
+        {
+          "ora": 5,
+          "inizio": "11:52",
+          "fine": "12:42",
+          "materia": "INGLESE",
+          "docenti": [
+            "GUERCINI C.",
+            "LONZINI S."
+          ],
+          "aula": "B 020 (P. T. EST)",
+          "is_lab": false,
+          "note": "20 alunni"
+        },
+        {
+          "ora": 6,
+          "inizio": "12:46",
+          "fine": "13:36",
+          "materia": "SISTEMI e RETI",
+          "docenti": [
+            "DI GRAZIA N.",
             "MANCINO R."
           ],
-          "aula": "C 220",
-          "is_lab": false,
-          "note": ""
+          "aula": "B 015 - P. T. EST) Lab. Inf.",
+          "is_lab": true,
+          "note": "20 alunni"
         }
       ]
     },
@@ -241,9 +378,9 @@
           "docenti": [
             "PAPINI S."
           ],
-          "aula": "Palestra ITTS",
-          "is_lab": true,
-          "note": ""
+          "aula": "Palestra OLMO",
+          "is_lab": false,
+          "note": "20 alunni"
         },
         {
           "ora": 2,
@@ -253,42 +390,71 @@
           "docenti": [
             "PAPINI S."
           ],
-          "aula": "Palestra ITTS",
-          "is_lab": true,
-          "note": ""
+          "aula": "Palestra OLMO",
+          "is_lab": false,
+          "note": "20 alunni"
         },
         {
           "ora": 3,
           "inizio": "09:58",
           "fine": "10:48",
-          "materia": "TELECOMUNICAZIONI",
+          "materia": "INFORMATICA",
           "docenti": [
-            "PERICOLINI A."
+            "BATOCCHI M.",
+            "DI GRAZIA N."
           ],
-          "aula": "L 030",
+          "aula": "OLMO 303",
           "is_lab": true,
-          "note": ""
+          "note": "20 alunni"
         },
         {
           "ora": 4,
           "inizio": "10:52",
           "fine": "11:42",
-          "materia": "ITALIANO",
+          "materia": "INFORMATICA",
           "docenti": [
-            "TOMASSONI V."
+            "BATOCCHI M.",
+            "DI GRAZIA N."
           ],
-          "aula": "B 030",
-          "is_lab": false,
-          "note": ""
+          "aula": "OLMO 303",
+          "is_lab": true,
+          "note": "20 alunni"
+        },
+        {
+          "ora": 5,
+          "inizio": "11:52",
+          "fine": "12:42",
+          "materia": "MATEMATICA",
+          "docenti": [
+            "DI GRAZIA N.",
+            "POGGIONI M."
+          ],
+          "aula": "OLMO 303",
+          "is_lab": true,
+          "note": "20 alunni"
+        },
+        {
+          "ora": 6,
+          "inizio": "12:46",
+          "fine": "13:36",
+          "materia": "MATEMATICA",
+          "docenti": [
+            "DI GRAZIA N.",
+            "POGGIONI M."
+          ],
+          "aula": "OLMO 303",
+          "is_lab": true,
+          "note": "20 alunni"
         }
       ]
     }
   ],
   "verification": {
     "verified": true,
-    "scan_mode": "double",
+    "scan_mode": "single",
     "consensus": 1.0,
-    "status": "DEMO_FALLBACK",
-    "verified_at": "2026-09-21 10:06:09"
+    "status": "SINGLE_PASS",
+    "model": "gemini-3.5-flash-lite",
+    "verified_at": "2026-09-26 19:59:17"
   }
 }

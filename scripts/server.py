@@ -61,6 +61,7 @@ class TimetableRequestHandler(SimpleHTTPRequestHandler):
         scan_mode = post_data.get("mode") or query_params.get("mode", ["single"])[0]
         class_name = post_data.get("class_name") or query_params.get("class", ["4 BINF"])[0]
         force = post_data.get("force", False)
+        remote_url = post_data.get("url") or query_params.get("url", [None])[0]
 
         print(f"\n[SERVER] Richiesta di sincronizzazione ricevuta per classe '{class_name}' (Modalità: {scan_mode.upper()})...")
 
@@ -71,6 +72,8 @@ class TimetableRequestHandler(SimpleHTTPRequestHandler):
             "--class-name", class_name,
             "--scan-mode", scan_mode
         ]
+        if remote_url:
+            cmd.extend(["--url", remote_url])
         if force:
             cmd.append("--force")
 

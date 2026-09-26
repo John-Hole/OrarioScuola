@@ -13,7 +13,7 @@
   <meta name="apple-mobile-web-app-title" content="OrarioScuola">
   <link rel="icon" type="image/svg+xml" href="icons/icon.svg">
 
-  <link rel="stylesheet" href="css/style.css?v=42">
+  <link rel="stylesheet" href="css/style.css?v=43">
 </head>
 <body>
   <div id="app" class="app-layout">
@@ -117,13 +117,29 @@
       </div>
     </main>
 
-    <!-- Rilevamento immediato PC per apertura diretta in Vista Settimanale senza sfarfallio -->
+    <!-- Rilevamento immediato PC vs iPad/Mobile per apertura diretta -->
     <script>
       (function() {
         try {
-          var isMobile = /Android|webOS|iPhone|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-          var isPc = (!isMobile && (window.innerWidth >= 700 || (window.screen && window.screen.width >= 1024))) || window.innerWidth >= 1024;
-          if (isPc) {
+          var ua = navigator.userAgent || '';
+          var platform = navigator.platform || '';
+          var maxTouch = navigator.maxTouchPoints || 0;
+          
+          var isIPad = /iPad/i.test(ua) || (platform === 'MacIntel' && maxTouch > 1) || (/Macintosh/i.test(ua) && maxTouch > 1);
+          var isMobileOrTablet = isIPad || /Android|iPhone|iPod|BlackBerry|IEMobile|Opera Mini|Tablet|Silk/i.test(ua) || (('ontouchstart' in window) && maxTouch > 1);
+
+          // Su iPad (qualsiasi orientamento, orizzontale o verticale) e su mobile: SEMPRE GIORNO
+          if (isMobileOrTablet) {
+            try {
+              localStorage.removeItem('orario_initial_view');
+              localStorage.removeItem('orario_preferred_view');
+            } catch (_) {}
+            return; // Resta garantito in vista Giorno (view-daily attivo di default)
+          }
+
+          // Solo su PC desktop/laptop widescreen reali (Windows, Mac con 0 touch points, Linux) attiva la vista Settimana
+          var isRealPC = (/Windows NT/i.test(ua) || (/Macintosh/i.test(ua) && maxTouch === 0) || (/Linux/i.test(ua) && !/Android/i.test(ua))) && window.innerWidth >= 900;
+          if (isRealPC) {
             var vDaily = document.getElementById('view-daily');
             var vWeekly = document.getElementById('view-weekly');
             var bDaily = document.getElementById('btn-view-daily');
@@ -964,6 +980,6 @@ const BASE_URL = "..."; // Configurato automaticamente
     </div>
   </div>
 
-  <script type="module" src="js/app.js?v=42"></script>
+  <script type="module" src="js/app.js?v=43"></script>
 </body>
 </html>

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'smart-timetable-v42';
+const CACHE_NAME = 'smart-timetable-v43';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
@@ -83,8 +83,8 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // 3. Pagine e navigazione HTML: Network-First con fallback su index.html in cache
-  if (event.request.mode === 'navigate' || url.pathname.endsWith('.html') || url.pathname === '/') {
+  // 3. Pagine HTML e Orario Originale: Network-First con fallback su cache per dati sempre aggiornati
+  if (event.request.mode === 'navigate' || url.pathname.endsWith('.html') || url.pathname === '/' || url.pathname.includes('/orario-originale/')) {
     event.respondWith(
       fetch(event.request)
         .then((response) => {
@@ -96,7 +96,7 @@ self.addEventListener('fetch', (event) => {
           }
           return response;
         })
-        .catch(() => caches.match(event.request, { ignoreSearch: true }).then((cached) => cached || caches.match('/index.html') || caches.match('/')))
+        .catch(() => caches.match(event.request, { ignoreSearch: true }).then((cached) => cached || (url.pathname.includes('/orario-originale/') ? (caches.match('/orario-originale/index.html') || caches.match('/orario-originale/')) : (caches.match('/index.html') || caches.match('/')))))
     );
     return;
   }

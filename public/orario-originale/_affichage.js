@@ -126,11 +126,13 @@ function composerGrille (aCle) {
 	    if (listeGrilles[i].cleGrille == aCle) {
         genrePub = listeGrilles[i].genre; 
         var nomFichier = listeGrilles[i].nomFichier;
-        var remoteFallback = 'https://cspace.spaggiari.eu/pub/PGIT0005/orario/' + nomFichier;
+        var timestamp = Date.now();
+        var remoteLiveUrl = 'https://cspace.spaggiari.eu/pub/PGIT0005/orario/' + nomFichier + '?_t=' + timestamp;
+        var localFallback = nomFichier + '?_t=' + timestamp;
                
         strHtml += '<table class="marges grille-table" cellspacing="0" cellpadding="0">';	
         strHtml += '  <tr>';
-        strHtml += '    <td><img id="imgGrilleOrario" src="' + nomFichier + '" onerror="if(!this.dataset.fallback){this.dataset.fallback=\'1\';this.src=\'' + remoteFallback + '\';}" alt="Orario scolastico"></img></td>';
+        strHtml += '    <td><img id="imgGrilleOrario" src="' + remoteLiveUrl + '" onerror="if(!this.dataset.localFallback){this.dataset.localFallback=\'1\';this.src=\'' + localFallback + '\';}" alt="Orario scolastico"></img></td>';
         strHtml += '  </tr>';
         if (listeGrilles[i].renvois.length > 0) 
           for (var j=0; j < listeGrilles[i].renvois.length; j++) {	          
@@ -214,4 +216,16 @@ function AfficherPage () {
   var targetCode = trovaCodiceClasse(targetClass);
   // Preimposta la scheda CLASSI e seleziona 4 BINF
   composerBandeauRessource('grClasse', targetCode);
+
+  // Tentativo di refresh asincrono della data aggiornamento direttamente da Spaggiari
+  try {
+    if (typeof document !== 'undefined' && document.createElement) {
+      var s = document.createElement('script');
+      s.src = 'https://cspace.spaggiari.eu/pub/PGIT0005/orario/_bandeau.js?_t=' + Date.now();
+      s.onload = function() {
+        composerBandeauTitre();
+      };
+      document.head.appendChild(s);
+    }
+  } catch (_) {}
 };

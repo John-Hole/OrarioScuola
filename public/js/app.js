@@ -56,38 +56,51 @@ function setCookie(name, value, days = 365) {
   } catch (_) {}
 }
 
+function isIPadDevice() {
+  const ua = navigator.userAgent || '';
+  const platform = navigator.platform || '';
+  const maxTouch = navigator.maxTouchPoints || 0;
+  return /iPad/i.test(ua) || (platform === 'MacIntel' && maxTouch > 1) || (/Macintosh/i.test(ua) && maxTouch > 1);
+}
+
+function isTabletOrMobileDevice() {
+  if (isIPadDevice()) return true;
+  const ua = navigator.userAgent || '';
+  if (/Android|iPhone|iPod|BlackBerry|IEMobile|Opera Mini|Tablet|Silk/i.test(ua)) return true;
+  const maxTouch = navigator.maxTouchPoints || 0;
+  return ('ontouchstart' in window) && maxTouch > 1;
+}
+
 function isDesktopDevice() {
-  const isMobileUA = /Android|webOS|iPhone|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-  if (isMobileUA) {
-    return window.innerWidth >= 1024;
+  if (isIPadDevice() || isTabletOrMobileDevice()) {
+    return false; // iPad (sia orizzontale che verticale) e smartphone: SEMPRE GIORNO
   }
-  // Su PC: finestra desktop >= 700px oppure schermo monitor >= 1024px
-  if (window.innerWidth >= 700 || (window.screen && window.screen.width >= 1024)) {
-    return true;
-  }
-  return false;
+  const ua = navigator.userAgent || '';
+  const maxTouch = navigator.maxTouchPoints || 0;
+  const isRealDesktopOS = /Windows NT/i.test(ua) || (/Macintosh/i.test(ua) && maxTouch === 0) || (/Linux/i.test(ua) && !/Android/i.test(ua));
+  return isRealDesktopOS && window.innerWidth >= 900;
 }
 
 function getInitialView() {
-  const isPc = isDesktopDevice();
-  if (isPc) {
-    // Salva cookie e localStorage per marcare il PC e la prima visualizzazione settimanale
-    setCookie('orario_initial_view', 'weekly', 365);
-    setCookie('orario_device', 'pc', 365);
+  // Su iPad (qualsiasi orientamento, sia verticale che orizzontale) e su mobile: SEMPRE GIORNO
+  if (isIPadDevice() || isTabletOrMobileDevice()) {
     try {
-      localStorage.setItem('orario_initial_view', 'weekly');
-      localStorage.setItem('orario_device', 'pc');
-    } catch (_) {}
-    return 'weekly';
-  } else {
-    setCookie('orario_initial_view', 'daily', 365);
-    setCookie('orario_device', 'mobile', 365);
-    try {
-      localStorage.setItem('orario_initial_view', 'daily');
-      localStorage.setItem('orario_device', 'mobile');
+      localStorage.removeItem('orario_initial_view');
+      localStorage.removeItem('orario_preferred_view');
+      setCookie('orario_initial_view', 'daily', 365);
+      setCookie('orario_device', 'ipad', 365);
     } catch (_) {}
     return 'daily';
   }
+
+  // Su PC Desktop: SEMPRE SETTIMANA
+  if (isDesktopDevice()) {
+    setCookie('orario_initial_view', 'weekly', 365);
+    setCookie('orario_device', 'pc', 365);
+    return 'weekly';
+  }
+
+  return 'daily';
 }
 
 const initialView = getInitialView();
@@ -934,10 +947,9 @@ function openOriginalScheduleView() {
   }
 
   if (elements.iframeOriginalSchedule) {
-    const targetUrl = '/orario-originale/?classe=4%20BINF';
-    if (!elements.iframeOriginalSchedule.src || elements.iframeOriginalSchedule.src === 'about:blank' || !elements.iframeOriginalSchedule.src.includes('/orario-originale/?classe=')) {
-      elements.iframeOriginalSchedule.src = targetUrl;
-    }
+    const targetClass = state.currentClass || (state.timetable && state.timetable.classe) || '4 BINF';
+    const targetUrl = `/orario-originale/?classe=${encodeURIComponent(targetClass)}&_t=${Date.now()}`;
+    elements.iframeOriginalSchedule.src = targetUrl;
   }
 }
 
@@ -1623,12 +1635,14 @@ function setupEventListeners() {
   // Switch vista Giorno / Settimana
   elements.btnViewDaily.addEventListener('click', () => {
     state.lastScheduleView = 'daily';
+    try { localStorage.setItem('orario_preferred_view', 'daily'); } catch (_) {}
     applyView('daily');
     render();
   });
 
   elements.btnViewWeekly.addEventListener('click', () => {
     state.lastScheduleView = 'weekly';
+    try { localStorage.setItem('orario_preferred_view', 'weekly'); } catch (_) {}
     applyView('weekly');
     render();
   });
@@ -1840,7 +1854,8 @@ function setupEventListeners() {
   // Pulsante Ricarica Iframe Orario Originale
   if (elements.btnReloadOriginalIframe && elements.iframeOriginalSchedule) {
     elements.btnReloadOriginalIframe.addEventListener('click', () => {
-      elements.iframeOriginalSchedule.src = `orario-originale/?classe=4%20BINF&_t=${Date.now()}`;
+      const targetClass = state.currentClass || (state.timetable && state.timetable.classe) || '4 BINF';
+      elements.iframeOriginalSchedule.src = `/orario-originale/?classe=${encodeURIComponent(targetClass)}&_t=${Date.now()}`;
     });
   }
 
@@ -2754,33 +2769,70 @@ async function triggerSync() {
   let errorMsg = 'Impossibile aggiornare l\'orario';
 
   try {
-    const response = await fetch('/api/sync', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        class_name: state.currentClass,
-        mode: 'single',
-        force: true
-      })
-    });
+    // 1. Chiamata API serverless di sync
+    try {
+      const response = await fetch('/api/sync', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          class_name: state.currentClass,
+          mode: 'single',
+          force: true
+        })
+      });
 
-    if (response.ok) {
-      const data = await response.json();
-      if (data && data.timetable) {
-        state.timetable = normalizeTimetableMultiHourSlots(data.timetable);
+      if (response.ok) {
+        const data = await response.json();
+        if (data && data.timetable && data.timetable.giorni) {
+          state.timetable = normalizeTimetableMultiHourSlots(data.timetable);
+          localStorage.setItem('cached_timetable', JSON.stringify(state.timetable));
+          
+          const activeId = getActiveTimetableId() || VOLTA_PRESET_ID;
+          let item = getTimetableById(activeId);
+          if (item) {
+            item.data = state.timetable;
+            saveOrUpdateTimetable(item, false);
+          }
+
+          render();
+          success = true;
+        }
+      }
+    } catch (_) {}
+
+    // 2. Fetch diretto anti-cache su data/timetable.json con timestamp
+    const directResp = await fetch(`data/timetable.json?_t=${Date.now()}`, { cache: 'no-store' });
+    if (directResp.ok) {
+      const freshData = await directResp.json();
+      if (freshData && freshData.giorni) {
+        state.timetable = normalizeTimetableMultiHourSlots(freshData);
         localStorage.setItem('cached_timetable', JSON.stringify(state.timetable));
+        
+        const activeId = getActiveTimetableId() || VOLTA_PRESET_ID;
+        let item = getTimetableById(activeId);
+        if (item) {
+          item.data = state.timetable;
+          saveOrUpdateTimetable(item, false);
+        }
+
         render();
         success = true;
-      } else {
-        await loadTimetableData();
-        success = true;
       }
-    } else {
+    }
+
+    // Aggiorna il Service Worker in background per invalidare vecchie cache
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistration().then(reg => {
+        if (reg) reg.update().catch(() => {});
+      }).catch(() => {});
+    }
+
+    if (!success) {
       await loadTimetableData();
       success = true;
     }
   } catch (err) {
-    console.log('[SYNC] Endpoint /api/sync non attivo o offline, fallback locale:', err.message);
+    console.log('[SYNC] Errore di sincronizzazione:', err.message);
     try {
       await loadTimetableData();
       success = true;
