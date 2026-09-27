@@ -1,4 +1,4 @@
-const CACHE_NAME = 'smart-timetable-v45';
+const CACHE_NAME = 'smart-timetable-v46';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
@@ -59,8 +59,8 @@ self.addEventListener('fetch', (event) => {
 
   const url = new URL(event.request.url);
 
-  // 1. Endpoint API serverless: bypass totale del SW (sempre da rete, mai cached nel SW)
-  if (url.pathname.startsWith('/api/')) {
+  // 1. Endpoint API serverless e Ambiente di Test / Preview: bypass totale del SW (sempre da rete, mai cached nel SW)
+  if (url.pathname.startsWith('/api/') || url.pathname.startsWith('/test') || url.pathname === '/preview' || url.pathname === '/preview-test') {
     event.respondWith(fetch(event.request));
     return;
   }

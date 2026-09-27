@@ -1,0 +1,68 @@
+/* ==========================================================================
+   test_style.css - Foglio di stile dedicato alla Versione Test / Preview
+   Tutte le nuove modifiche grafiche possono essere sperimentate qui liberamente
+   senza impattare la versione di produzione.
+   ========================================================================== */
+
+/* Badge Flottante Versione Test */
+.preview-test-badge {
+  position: fixed;
+  bottom: 18px;
+  right: 18px;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(14, 18, 24, 0.92);
+  border: 1px solid rgba(59, 130, 246, 0.55);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.65), 0 0 14px rgba(59, 130, 246, 0.35);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  padding: 8px 16px;
+  border-radius: 999px;
+  animation: pulseTestBorder 3s infinite ease-in-out;
+  pointer-events: auto;
+}
+
+.preview-test-badge .badge-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background-color: #3b82f6;
+  box-shadow: 0 0 10px #3b82f6;
+}
+
+.preview-test-badge .badge-title {
+  font-size: 0.76rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  color: #93c5fd;
+  text-transform: uppercase;
+}
+
+.preview-test-badge .badge-link {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #e2e8f0;
+  text-decoration: none;
+  background: rgba(255, 255, 255, 0.08);
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  transition: all 0.2s ease;
+}
+
+.preview-test-badge .badge-link:hover {
+  background: rgba(255, 255, 255, 0.18);
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+@keyframes pulseTestBorder {
+  0%, 100% {
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.65), 0 0 12px rgba(59, 130, 246, 0.25);
+  }
+  50% {
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.65), 0 0 18px rgba(59, 130, 246, 0.55);
+  }
+}

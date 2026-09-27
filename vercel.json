@@ -2,6 +2,10 @@
   "version": 2,
   "cleanUrls": true,
   "outputDirectory": "public",
+  "rewrites": [
+    { "source": "/preview", "destination": "/test/index.html" },
+    { "source": "/preview-test", "destination": "/test/index.html" }
+  ],
   "headers": [
     {
       "source": "/sw.js",
@@ -13,6 +17,24 @@
         {
           "key": "Service-Worker-Allowed",
           "value": "/"
+        }
+      ]
+    },
+    {
+      "source": "/test/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=0, must-revalidate"
+        }
+      ]
+    },
+    {
+      "source": "/test",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=0, must-revalidate"
         }
       ]
     },
