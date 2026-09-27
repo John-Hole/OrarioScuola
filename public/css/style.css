@@ -55,35 +55,41 @@
   --subject-sistemi-bg: #82B2E4;
   --subject-sistemi-text: #081524;
 
-  --subject-tpsit-bg: #F7E388;
-  --subject-tpsit-text: #2B2306;
+  --subject-tpsit-bg: #FDE047;
+  --subject-tpsit-text: #3D2204;
 
-  --subject-matematica-bg: #7ED68B;
-  --subject-matematica-text: #0B2810;
+  --subject-matematica-bg: #86EFAC;
+  --subject-matematica-text: #064E3B;
 
-  --subject-inglese-bg: #89E098;
-  --subject-inglese-text: #0A2810;
+  --subject-inglese-bg: #7DD3FC;
+  --subject-inglese-text: #082F49;
 
-  --subject-lettere-bg: #BBB6EB;
-  --subject-lettere-text: #191433;
+  --subject-lettere-bg: #C4B5FD;
+  --subject-lettere-text: #2E1065;
 
-  --subject-informatica-bg: #73CBBE;
-  --subject-informatica-text: #092722;
+  --subject-storia-bg: #FDBA74;
+  --subject-storia-text: #431407;
 
-  --subject-motoria-bg: #F6B1BC;
-  --subject-motoria-text: #341016;
+  --subject-diritto-bg: #FCD34D;
+  --subject-diritto-text: #451A03;
 
-  --subject-scienze-bg: #F5A7B8;
-  --subject-scienze-text: #320E15;
+  --subject-informatica-bg: #5EEAD4;
+  --subject-informatica-text: #042F2E;
 
-  --subject-religione-bg: #DCE7DF;
-  --subject-religione-text: #142318;
+  --subject-motoria-bg: #FDA4AF;
+  --subject-motoria-text: #4C0519;
 
-  --subject-telecom-bg: #AFA8EA;
-  --subject-telecom-text: #181334;
+  --subject-scienze-bg: #F9A8D4;
+  --subject-scienze-text: #4A044E;
 
-  --subject-default-bg: #C5CDD8;
-  --subject-default-text: #18202A;
+  --subject-religione-bg: #E2E8F0;
+  --subject-religione-text: #0F172A;
+
+  --subject-telecom-bg: #F0ABFC;
+  --subject-telecom-text: #4A044E;
+
+  --subject-default-bg: #CBD5E1;
+  --subject-default-text: #0F172A;
 
   /* Geometry & Radii */
   --radius-sm: 8px;
@@ -393,6 +399,16 @@ body {
 .theme-lettere {
   background-color: var(--subject-lettere-bg) !important;
   color: var(--subject-lettere-text) !important;
+}
+
+.theme-storia {
+  background-color: var(--subject-storia-bg) !important;
+  color: var(--subject-storia-text) !important;
+}
+
+.theme-diritto {
+  background-color: var(--subject-diritto-bg) !important;
+  color: var(--subject-diritto-text) !important;
 }
 
 .theme-informatica {
@@ -1090,9 +1106,9 @@ body {
   line-height: 1;
 }
 
-/* Cella Ricreazione Settimanale */
+/* Cella Ricreazione Settimanale (blocco continuo a tutta larghezza, senza bordi smussati né spazietti) */
 .grid-cell-break {
-  grid-column: 2 / span 5;
+  grid-column: 2 / -1;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1100,21 +1116,25 @@ body {
   padding: 4px 12px;
   border-bottom: 1px solid var(--border-guide-line);
   border-right: 1px solid var(--border-guide-line);
-  background-color: var(--bg-surface);
-  background-image: linear-gradient(rgba(245, 158, 11, 0.08), rgba(245, 158, 11, 0.08));
-  border-radius: 4px;
-  margin: 2px 3px;
+  background-color: #171612;
+  background-image: linear-gradient(rgba(245, 158, 11, 0.12), rgba(245, 158, 11, 0.12));
+  border-radius: 0 !important;
+  margin: 0 !important;
+  width: 100%;
+  height: 100%;
+  min-height: 32px;
+  box-sizing: border-box;
   font-size: 0.72rem;
   font-weight: 800;
   color: var(--accent-amber);
-  min-height: 28px;
+  letter-spacing: 0.3px;
   z-index: 10;
 }
 
 .grid-cell-break.is-active-break {
-  background-color: var(--bg-surface);
-  background-image: linear-gradient(rgba(245, 158, 11, 0.22), rgba(245, 158, 11, 0.22));
-  box-shadow: 0 0 12px rgba(245, 158, 11, 0.4);
+  background-color: #211c13;
+  background-image: linear-gradient(rgba(245, 158, 11, 0.28), rgba(245, 158, 11, 0.28));
+  box-shadow: inset 0 0 16px rgba(245, 158, 11, 0.25);
 }
 
 .grid-break-time-label {
