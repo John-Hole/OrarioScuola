@@ -846,8 +846,8 @@ body {
 
 .timeline-break-bar.is-active-break {
   background-color: var(--bg-app);
-  background-image: linear-gradient(rgba(245, 158, 11, 0.22), rgba(245, 158, 11, 0.22));
-  box-shadow: 0 0 12px rgba(245, 158, 11, 0.4);
+  background-image: linear-gradient(rgba(245, 158, 11, 0.08), rgba(245, 158, 11, 0.08));
+  box-shadow: none !important;
 }
 
 .lesson-card-header {
@@ -1134,9 +1134,9 @@ body {
 }
 
 .grid-cell-break.is-active-break {
-  background-color: #211c13;
-  background-image: linear-gradient(rgba(245, 158, 11, 0.28), rgba(245, 158, 11, 0.28));
-  box-shadow: inset 0 0 16px rgba(245, 158, 11, 0.25);
+  background-color: #171612;
+  background-image: linear-gradient(rgba(245, 158, 11, 0.12), rgba(245, 158, 11, 0.12));
+  box-shadow: none !important;
 }
 
 .grid-break-time-label {
