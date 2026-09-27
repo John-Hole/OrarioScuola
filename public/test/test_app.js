@@ -1290,6 +1290,7 @@ function renderDailyTimeline() {
 
   const grid = document.createElement('div');
   grid.className = 'daily-timeline-grid';
+  grid.setAttribute('data-day', state.selectedDay);
 
   const dayLessons = dayData.lezioni || [];
   const maxDayHour = Math.max(6, ...dayLessons.map(l => l.ora || 0));

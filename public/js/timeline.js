@@ -322,7 +322,15 @@ export function updateTimelineCursor(containerElement, now = new Date()) {
     if (breakBar) breakBar.classList.remove('is-active-break');
   });
 
-  if (currentMinutes >= schoolStart && currentMinutes <= schoolEnd) {
+  // Verifica se il giorno mostrato corrisponde esattamente a oggi
+  const dayOfWeek = now.getDay(); // 0 = Dom, 1 = Lun, ..., 6 = Sab
+  const todayName = IT_DAYS[dayOfWeek];
+  const gridEl = containerElement.querySelector('.daily-timeline-grid');
+  const displayedDay = gridEl ? gridEl.getAttribute('data-day') : null;
+  const isViewingToday = !displayedDay || displayedDay === todayName;
+  const isSchoolDay = dayOfWeek >= 1 && dayOfWeek <= 5;
+
+  if (isViewingToday && isSchoolDay && currentMinutes >= schoolStart && currentMinutes <= schoolEnd) {
     for (let i = 0; i < rows.length; i++) {
       const row = rows[i];
       const start = timeToMinutes(row.getAttribute('data-start'));
