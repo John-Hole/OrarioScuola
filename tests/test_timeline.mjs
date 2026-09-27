@@ -79,6 +79,43 @@ assert.strictEqual(breaks5[0].duration, 15, 'La ricreazione rilevata deve essere
 assert.strictEqual(lessons5[0].start, '08:15', 'La prima ora deve iniziare alle 08:15 e non alle 08:00');
 assert.strictEqual(lessons5[4].end, '13:05', 'La quinta ora deve terminare alle 13:05');
 
+// Test 2: Orario Volta 4 BINF con 7ª ora (Telecomunicazioni 14:00 - 14:50) e 3ª ricreazione (13:36 - 14:00)
+import fs from 'fs';
+const timetableData = JSON.parse(fs.readFileSync('./public/data/timetable.json', 'utf-8'));
+const structVolta = extractTimetableStructure(timetableData);
+const lessonsVolta = structVolta.filter(s => s.type === 'lesson');
+const breaksVolta = structVolta.filter(s => s.type === 'break');
+
+assert.strictEqual(lessonsVolta.length, 7, 'Deve rilevare 7 ore di lezione (ora 1..7)');
+assert.strictEqual(breaksVolta.length, 3, 'Deve rilevare esattamente 3 ricreazioni');
+assert.strictEqual(breaksVolta[0].label, '1ª RICREAZIONE');
+assert.strictEqual(breaksVolta[0].start, '09:48');
+assert.strictEqual(breaksVolta[0].end, '09:58');
+assert.strictEqual(breaksVolta[1].label, '2ª RICREAZIONE');
+assert.strictEqual(breaksVolta[1].start, '11:42');
+assert.strictEqual(breaksVolta[1].end, '11:52');
+assert.strictEqual(breaksVolta[2].label, '3ª RICREAZIONE');
+assert.strictEqual(breaksVolta[2].start, '13:36');
+assert.strictEqual(breaksVolta[2].end, '14:00');
+assert.strictEqual(breaksVolta[2].duration, 24);
+
+// Test 3: Verifica che non ci sia alcuna ricreazione tra ora 3 e ora 4 (consente unione Italiano / TPSIT)
+const slotOra3 = lessonsVolta.find(l => l.ora === 3);
+const slotOra4 = lessonsVolta.find(l => l.ora === 4);
+const hasBreakBetween3and4 = structVolta.some(s => s.type === 'break' && s.startMin >= slotOra3.endMin && s.endMin <= slotOra4.startMin);
+assert.strictEqual(hasBreakBetween3and4, false, 'NON deve esserci ricreazione tra ora 3 e ora 4');
+
+// Test 4: Tra ora 4 e ora 5 deve esserci la 2ª ricreazione
+const slotOra5 = lessonsVolta.find(l => l.ora === 5);
+const hasBreakBetween4and5 = structVolta.some(s => s.type === 'break' && s.startMin >= slotOra4.endMin && s.endMin <= slotOra5.startMin);
+assert.strictEqual(hasBreakBetween4and5, true, 'Deve esserci ricreazione tra ora 4 e ora 5');
+
+// Test 5: Tra ora 6 e ora 7 deve esserci la 3ª ricreazione
+const slotOra6 = lessonsVolta.find(l => l.ora === 6);
+const slotOra7 = lessonsVolta.find(l => l.ora === 7);
+const hasBreakBetween6and7 = structVolta.some(s => s.type === 'break' && s.startMin >= slotOra6.endMin && s.endMin <= slotOra7.startMin);
+assert.strictEqual(hasBreakBetween6and7, true, 'Deve esserci 3ª ricreazione tra ora 6 e ora 7');
+
 console.log('Tutti i test di extractTimetableStructure sono passati con successo!');
 
 import { getFormattedDateForDay } from '../public/js/timeline.js';

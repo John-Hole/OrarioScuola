@@ -167,31 +167,6 @@
         },
         {
           "ora": 7,
-          "inizio": "13:36",
-          "fine": "13:48",
-          "materia": "Terza ricreazione",
-          "docenti": [
-            "POGGIONI M."
-          ],
-          "aula": "C 195 (1° P. OVEST)",
-          "is_lab": false,
-          "note": "20 alunni"
-        },
-        {
-          "ora": 8,
-          "inizio": "13:48",
-          "fine": "14:00",
-          "materia": "Terza ricreazione",
-          "docenti": [
-            "GAGLIARDI M.",
-            "PERICOLINI A."
-          ],
-          "aula": "C 195 (1° P. OVEST)",
-          "is_lab": false,
-          "note": "20 alunni"
-        },
-        {
-          "ora": 9,
           "inizio": "14:00",
           "fine": "14:50",
           "materia": "TELECOMUNICAZIONI LAB.",
@@ -199,7 +174,7 @@
             "GAGLIARDI M.",
             "PERICOLINI A."
           ],
-          "aula": "L030) Lab. el. Tele",
+          "aula": "(L030) Lab. el. Tele",
           "is_lab": true,
           "note": "20 alunni"
         }

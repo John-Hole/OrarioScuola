@@ -738,7 +738,10 @@ STANDARD_SCHOOL_HOURS = [
     {"ora": 3, "start": "09:58", "end": "10:48", "startMin": 598, "endMin": 648},
     {"ora": 4, "start": "10:52", "end": "11:42", "startMin": 652, "endMin": 702},
     {"ora": 5, "start": "11:52", "end": "12:42", "startMin": 712, "endMin": 762},
-    {"ora": 6, "start": "12:46", "end": "13:36", "startMin": 766, "endMin": 816}
+    {"ora": 6, "start": "12:46", "end": "13:36", "startMin": 766, "endMin": 816},
+    {"ora": 7, "start": "14:00", "end": "14:50", "startMin": 840, "endMin": 890},
+    {"ora": 8, "start": "14:50", "end": "15:40", "startMin": 890, "endMin": 940},
+    {"ora": 9, "start": "15:40", "end": "16:30", "startMin": 940, "endMin": 990}
 ]
 
 
@@ -757,6 +760,25 @@ def normalize_timetable_multihour_slots(timetable: Dict[str, Any]) -> Dict[str, 
     """
     if not timetable or not isinstance(timetable, dict) or not timetable.get("giorni"):
         return timetable
+
+    # 0. Rimuovi eventuali caselle di ricreazione o intervallo erroneamente estratte come lezioni
+    recess_pattern = re.compile(r'ricreazion|intervallo|pausa\s*pranzo', re.IGNORECASE)
+    for day in timetable.get("giorni", []):
+        raw_lezioni = day.get("lezioni", [])
+        filtered = [l for l in raw_lezioni if not recess_pattern.search(l.get("materia", ""))]
+        filtered.sort(key=lambda x: time_to_minutes(x.get("inizio", "00:00")))
+        for idx, l in enumerate(filtered):
+            s_min = time_to_minutes(l.get("inizio", "00:00"))
+            matched_std = None
+            for std in STANDARD_SCHOOL_HOURS:
+                if abs(std["startMin"] - s_min) <= 10:
+                    matched_std = std
+                    break
+            if matched_std:
+                l["ora"] = matched_std["ora"]
+            elif not l.get("ora") or l.get("ora", 0) > idx + 1:
+                l["ora"] = idx + 1
+        day["lezioni"] = filtered
 
     # 1. Ricava la griglia oraria dalle ore singole già presenti
     known_hours = {}
@@ -1041,6 +1063,7 @@ def extract_timetable_with_gemini(
     3. Per le materie svolte in laboratorio con compresenza docenti (es. Sistemi e Reti, Informatica, TPSIT, Telecomunicazioni con insegnante teorico + ITP), estrai entrambi i docenti e imposta is_lab = true.
     4. Estrai con la massima precisione il nome o codice dell'aula/laboratorio (es. 'B 010', 'B 045', 'C 170', 'Aula B 115', 'Palestra ITTS').
     5. Cerca la data di decorrenza (es. 'In vigore dal...') o stato ('Orario Provvisorio' o 'Orario Definitivo') se indicati nell'intestazione o nel piè di pagina.
+    6. NON estrarre caselle di ricreazione, intervallo o pause (es. 'Ricreazione', '1ª ricreazione', 'Terza ricreazione', 'Pausa pranzo', ecc.) come ore di lezione, anche se nel riquadro compaiono nominativi di docenti per la sorveglianza. Le ricreazioni sono pause tra le lezioni, NON ore di lezione. Le lezioni pomeridiane svolte dopo la ricreazione (es. Telecomunicazioni alle 14:00) sono normali ore di lezione progressive (es. 7ª ora).
     """
 
     if scan_mode == "double":

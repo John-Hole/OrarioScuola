@@ -16,7 +16,10 @@ export const DEFAULT_SCHOOL_HOURS = [
   { ora: 3, start: '09:58', end: '10:48', startMin: 598, endMin: 648 },
   { ora: 4, start: '10:52', end: '11:42', startMin: 652, endMin: 702 },
   { ora: 5, start: '11:52', end: '12:42', startMin: 712, endMin: 762 },
-  { ora: 6, start: '12:46', end: '13:36', startMin: 766, endMin: 816 }
+  { ora: 6, start: '12:46', end: '13:36', startMin: 766, endMin: 816 },
+  { ora: 7, start: '14:00', end: '14:50', startMin: 840, endMin: 890 },
+  { ora: 8, start: '14:50', end: '15:40', startMin: 890, endMin: 940 },
+  { ora: 9, start: '15:40', end: '16:30', startMin: 940, endMin: 990 }
 ];
 
 /**
@@ -28,6 +31,24 @@ export function normalizeTimetableMultiHourSlots(timetable) {
   if (!timetable || !Array.isArray(timetable.giorni)) {
     return timetable;
   }
+
+  // 0. Rimuovi eventuali caselle di ricreazione o intervallo erroneamente registrate come lezioni ordinarie
+  const recessRegex = /ricreazion|intervallo|pausa\s*pranzo/i;
+  timetable.giorni.forEach(day => {
+    if (Array.isArray(day.lezioni)) {
+      day.lezioni = day.lezioni.filter(l => !recessRegex.test(l.materia || ''));
+      day.lezioni.sort((a, b) => (timeToMinutes(a.inizio) || 0) - (timeToMinutes(b.inizio) || 0));
+      day.lezioni.forEach((l, idx) => {
+        const sMin = timeToMinutes(l.inizio);
+        const matchedStd = DEFAULT_SCHOOL_HOURS.find(std => Math.abs(std.startMin - sMin) <= 10);
+        if (matchedStd) {
+          l.ora = matchedStd.ora;
+        } else if (!l.ora || l.ora > idx + 1) {
+          l.ora = idx + 1;
+        }
+      });
+    }
+  });
 
   // 1. Raccoglie la griglia oraria dalle ore singole già presenti
   const knownHours = new Map();

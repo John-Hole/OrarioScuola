@@ -1291,9 +1291,23 @@ function renderDailyTimeline() {
   const grid = document.createElement('div');
   grid.className = 'daily-timeline-grid';
 
-  // 1. Estrai la struttura completa a 6 ore (o superiore se presente nell'orario)
+  const dayLessons = dayData.lezioni || [];
+  const maxDayHour = Math.max(6, ...dayLessons.map(l => l.ora || 0));
+
+  // 1. Estrai la struttura completa (minimo 6 ore) e adattala alla giornata corrente
   const structure = extractTimetableStructure(state.timetable, 6);
   if (structure.length === 0) return;
+
+  const dayStructure = structure.filter(item => {
+    if (item.type === 'lesson') {
+      return item.ora <= maxDayHour;
+    }
+    if (item.type === 'break') {
+      // Includi la ricreazione solo se c'è almeno una lezione che inizia alla o dopo la fine della pausa
+      return dayLessons.some(l => timeToMinutes(l.inizio) >= item.endMin);
+    }
+    return true;
+  });
 
   const templateRows = ['0px']; // Row 1: Edge Top
   const hourRowMap = new Map();  // ora -> gridRow
@@ -1301,8 +1315,8 @@ function renderDailyTimeline() {
   let dividerCount = 0;
 
   // Costruisci le righe della griglia CSS, divisori e ricreazioni
-  for (let sIdx = 0; sIdx < structure.length; sIdx++) {
-    const item = structure[sIdx];
+  for (let sIdx = 0; sIdx < dayStructure.length; sIdx++) {
+    const item = dayStructure[sIdx];
 
     if (item.type === 'lesson') {
       hourRowMap.set(item.ora, currentRow);
@@ -1310,7 +1324,7 @@ function renderDailyTimeline() {
       currentRow++;
 
       // Se il prossimo elemento è anch'esso una lezione, aggiungiamo il cambio ora ordinario (0px)
-      const nextItem = structure[sIdx + 1];
+      const nextItem = dayStructure[sIdx + 1];
       if (nextItem && nextItem.type === 'lesson') {
         dividerCount++;
         const div = createDailyDivider(item.end, nextItem.start, `divider-${dividerCount}`);
@@ -1329,27 +1343,26 @@ function renderDailyTimeline() {
     }
   }
 
-  // Riga finale: Edge Bottom (orario fine 6ª ora, es. 13:36)
+  // Riga finale: Edge Bottom (orario fine ultima ora del giorno, es. 13:36 o 14:50)
   const edgeBottomRow = currentRow;
   templateRows.push('0px');
   grid.style.gridTemplateRows = templateRows.join(' ');
 
   // 2. Inizio Giornata (Edge Top: inizio ora 1, es. 08:00)
-  const firstSlot = structure.find(s => s.type === 'lesson' && s.ora === 1) || structure[0];
+  const firstSlot = dayStructure.find(s => s.type === 'lesson' && s.ora === 1) || dayStructure[0];
   const edgeTop = createDailyEdge(firstSlot.start, false);
   edgeTop.style.gridRow = '1';
   grid.appendChild(edgeTop);
 
-  // 3. Fine Giornata (Edge Bottom: fine ora 6, es. 13:36)
-  const lastSlot = structure.filter(s => s.type === 'lesson').pop() || structure[structure.length - 1];
+  // 3. Fine Giornata (Edge Bottom: fine ultima ora del giorno)
+  const lastSlot = dayStructure.filter(s => s.type === 'lesson').pop() || dayStructure[dayStructure.length - 1];
   const edgeBottom = createDailyEdge(lastSlot.end, true);
   edgeBottom.style.gridRow = String(edgeBottomRow);
   grid.appendChild(edgeBottom);
 
   // 4. Inserimento Card per il giorno selezionato:
   // Valuta dinamicamente blocchi a ore doppie o singole per qualsiasi numero di ore (es. 4, 5, 6, 7 o 8)
-  const dayLessons = dayData.lezioni || [];
-  const lessonSlots = structure.filter(s => s.type === 'lesson');
+  const lessonSlots = dayStructure.filter(s => s.type === 'lesson');
   const handledHours = new Set();
 
   for (let i = 0; i < lessonSlots.length; i++) {
@@ -1364,11 +1377,15 @@ function renderDailyTimeline() {
     const rA = hourRowMap.get(hA);
     const rB = hB ? hourRowMap.get(hB) : null;
 
-    // Controlla se c'è una ricreazione tra slotA e slotB
-    const hasBreakBetween = structure.some(s => s.type === 'break' && s.gridRow > rA && s.gridRow < rB);
+    // Controlla se c'è una ricreazione tra slotA e slotB confrontando i minuti reali
+    const hasBreakBetween = dayStructure.some(s => s.type === 'break' && s.startMin >= slotA.endMin && s.endMin <= (slotB ? slotB.startMin : 0));
 
-    if (slotB && !hasBreakBetween && lA && lB && lA.materia === lB.materia && lA.aula === lB.aula && rA && rB) {
-      // Blocco doppio continuo (stessa materia e aula)
+    const isSameSubject = lA && lB && (lA.materia || '').trim().toLowerCase() === (lB.materia || '').trim().toLowerCase();
+    const isSameRoom = !lA?.aula || !lB?.aula || (lA.aula || '').trim().toLowerCase() === (lB.aula || '').trim().toLowerCase();
+    const isConsecutive = hB === hA + 1;
+
+    if (slotB && !hasBreakBetween && isSameSubject && isSameRoom && isConsecutive && rA && rB) {
+      // Blocco doppio continuo (stessa materia e aula senza ricreazione in mezzo)
       const slot = createDailyLessonSlot(lA, lA.inizio, lB.fine, 'lesson-slot-double');
       slot.style.gridRow = `${rA} / ${rB + 1}`;
       grid.appendChild(slot);
@@ -1522,7 +1539,9 @@ function renderWeeklyView() {
       // - ore consecutive (next.ora === curr.ora + 1)
       // - nessuna ricreazione presente tra la fine di curr e l'inizio di next
       const hasBreakBetween = structure.some(s => s.type === 'break' && s.startMin >= timeToMinutes(curr.fine) && s.endMin <= timeToMinutes(next?.inizio));
-      const isDouble = next && curr.materia === next.materia && curr.aula === next.aula && (next.ora === curr.ora + 1) && !hasBreakBetween;
+      const isSameSubject = next && (curr.materia || '').trim().toLowerCase() === (next.materia || '').trim().toLowerCase();
+      const isSameRoom = !curr.aula || !next?.aula || (curr.aula || '').trim().toLowerCase() === (next.aula || '').trim().toLowerCase();
+      const isDouble = next && isSameSubject && isSameRoom && (next.ora === curr.ora + 1) && !hasBreakBetween;
 
       const rStart = hourRowMap.get(curr.ora);
 

@@ -110,4 +110,35 @@ assert.strictEqual(gOra2.materia, 'SCIENZE MOTORIE');
 assert.strictEqual(gOra2.inizio, '08:58');
 assert.strictEqual(gOra2.fine, '09:48');
 
-console.log('✓ Tutti i test di sdoppiamento ore doppie sono passati con successo!');
+// Test 3: Rimozione automatica delle caselle "ricreazione" e riallineamento ora pomeridiana
+const timetableWithRecessSlots = {
+  classe: "4 BINF",
+  giorni: [
+    {
+      giorno: "Martedì",
+      lezioni: [
+        { ora: 1, inizio: "08:00", fine: "08:54", materia: "RELIGIONE" },
+        { ora: 2, inizio: "08:58", fine: "09:48", materia: "INFORMATICA" },
+        { ora: 3, inizio: "09:58", fine: "10:48", materia: "TPSIT LAB." },
+        { ora: 4, inizio: "10:52", fine: "11:42", materia: "TPSIT LAB." },
+        { ora: 5, inizio: "11:52", fine: "12:42", materia: "ITALIANO" },
+        { ora: 6, inizio: "12:46", fine: "13:36", materia: "MATEMATICA" },
+        { ora: 7, inizio: "13:36", fine: "13:48", materia: "Terza ricreazione" },
+        { ora: 8, inizio: "13:48", fine: "14:00", materia: "Terza ricreazione" },
+        { ora: 9, inizio: "14:00", fine: "14:50", materia: "TELECOMUNICAZIONI LAB." }
+      ]
+    }
+  ]
+};
+
+const normalizedRecess = normalizeTimetableMultiHourSlots(JSON.parse(JSON.stringify(timetableWithRecessSlots)));
+const marLessons = normalizedRecess.giorni[0].lezioni;
+assert.strictEqual(marLessons.length, 7, 'Martedì deve avere 7 lezioni, le 2 ricreazioni devono essere rimosse');
+assert(!marLessons.some(l => /ricreazione/i.test(l.materia)), 'Nessuna lezione deve essere una ricreazione');
+const lastLesson = marLessons[6];
+assert.strictEqual(lastLesson.ora, 7, 'Telecomunicazioni Lab deve diventare ora 7');
+assert.strictEqual(lastLesson.materia, 'TELECOMUNICAZIONI LAB.');
+assert.strictEqual(lastLesson.inizio, '14:00');
+assert.strictEqual(lastLesson.fine, '14:50');
+
+console.log('✓ Tutti i test di sdoppiamento ore doppie e rimozione ricreazioni sono passati con successo!');

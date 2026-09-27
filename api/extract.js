@@ -63,7 +63,10 @@ const DEFAULT_SCHOOL_HOURS = [
   { ora: 3, start: '09:58', end: '10:48', startMin: 598, endMin: 648 },
   { ora: 4, start: '10:52', end: '11:42', startMin: 652, endMin: 702 },
   { ora: 5, start: '11:52', end: '12:42', startMin: 712, endMin: 762 },
-  { ora: 6, start: '12:46', end: '13:36', startMin: 766, endMin: 816 }
+  { ora: 6, start: '12:46', end: '13:36', startMin: 766, endMin: 816 },
+  { ora: 7, start: '14:00', end: '14:50', startMin: 840, endMin: 890 },
+  { ora: 8, start: '14:50', end: '15:40', startMin: 890, endMin: 940 },
+  { ora: 9, start: '15:40', end: '16:30', startMin: 940, endMin: 990 }
 ];
 
 function timeToMinutes(tStr) {
@@ -75,6 +78,24 @@ function timeToMinutes(tStr) {
 
 function normalizeTimetableMultiHourSlots(timetable) {
   if (!timetable || !Array.isArray(timetable.giorni)) return timetable;
+
+  // 0. Rimuovi eventuali caselle di ricreazione o intervallo erroneamente registrate come lezioni
+  const recessRegex = /ricreazion|intervallo|pausa\s*pranzo/i;
+  timetable.giorni.forEach(day => {
+    if (Array.isArray(day.lezioni)) {
+      day.lezioni = day.lezioni.filter(l => !recessRegex.test(l.materia || ''));
+      day.lezioni.sort((a, b) => (timeToMinutes(a.inizio) || 0) - (timeToMinutes(b.inizio) || 0));
+      day.lezioni.forEach((l, idx) => {
+        const sMin = timeToMinutes(l.inizio);
+        const matchedStd = DEFAULT_SCHOOL_HOURS.find(std => Math.abs(std.startMin - sMin) <= 10);
+        if (matchedStd) {
+          l.ora = matchedStd.ora;
+        } else if (!l.ora || l.ora > idx + 1) {
+          l.ora = idx + 1;
+        }
+      });
+    }
+  });
 
   const knownHours = new Map();
   timetable.giorni.forEach(day => {
@@ -195,7 +216,8 @@ REGOLE CRUCIALI:
    - "aula": codice aula/laboratorio se presente (es. "B 010", "B 045 - P.T. EST", "C 170").
    - "is_lab": true se ci sono due docenti in compresenza o la dicitura LAB.
 5. Se ci sono più classi nel documento e l'utente ha specificato una classe target, estrai quella. Altrimenti estrai la classe principale visibile.
-6. Rispondi RIGOROSAMENTE con il JSON conforme allo schema richiesto.
+6. NON estrarre le caselle di ricreazione, intervallo o pause (es. 'Ricreazione', '1ª ricreazione', '2ª ricreazione', 'Terza ricreazione', 'Pausa pranzo', ecc.) come ore di lezione, anche se nella casella compaiono nominativi di docenti per la sorveglianza. Le ricreazioni sono pause e non lezioni. Le materie successive svolte dopo la ricreazione (es. Telecomunicazioni alle 14:00) sono normali ore di lezione progressive (es. 7ª ora).
+7. Rispondi RIGOROSAMENTE con il JSON conforme allo schema richiesto.
 `;
 
 export default async function handler(req, res) {

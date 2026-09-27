@@ -167,7 +167,10 @@ export const STANDARD_SCHOOL_HOURS = [
   { ora: 3, start: '09:58', end: '10:48' },
   { ora: 4, start: '10:52', end: '11:42' },
   { ora: 5, start: '11:52', end: '12:42' },
-  { ora: 6, start: '12:46', end: '13:36' }
+  { ora: 6, start: '12:46', end: '13:36' },
+  { ora: 7, start: '14:00', end: '14:50' },
+  { ora: 8, start: '14:50', end: '15:40' },
+  { ora: 9, start: '15:40', end: '16:30' }
 ];
 
 /**

@@ -174,5 +174,43 @@ class TestTimetableEngine(unittest.TestCase):
         self.assertEqual(h4["aula"], "B 045")
         self.assertTrue(h4["is_lab"])
 
+    def test_recess_sanitization_and_third_break(self):
+        """Verifica la rimozione delle ricreazioni dalle lezioni e il funzionamento della 3ª ricreazione nel widget"""
+        raw_timetable = {
+            "classe": "4 BINF",
+            "giorni": [
+                {
+                    "giorno": "Martedì",
+                    "lezioni": [
+                        {"ora": 1, "inizio": "08:00", "fine": "08:54", "materia": "RELIGIONE", "aula": "B 060"},
+                        {"ora": 2, "inizio": "08:58", "fine": "09:48", "materia": "INFORMATICA", "aula": "B 060"},
+                        {"ora": 3, "inizio": "09:58", "fine": "10:48", "materia": "TPSIT LAB.", "aula": "B 045"},
+                        {"ora": 4, "inizio": "10:52", "fine": "11:42", "materia": "TPSIT LAB.", "aula": "B 045"},
+                        {"ora": 5, "inizio": "11:52", "fine": "12:42", "materia": "ITALIANO", "aula": "B 040"},
+                        {"ora": 6, "inizio": "12:46", "fine": "13:36", "materia": "MATEMATICA", "aula": "C 195"},
+                        {"ora": 7, "inizio": "13:36", "fine": "13:48", "materia": "Terza ricreazione", "aula": "C 195"},
+                        {"ora": 8, "inizio": "13:48", "fine": "14:00", "materia": "Terza ricreazione", "aula": "C 195"},
+                        {"ora": 9, "inizio": "14:00", "fine": "14:50", "materia": "TELECOMUNICAZIONI LAB.", "aula": "(L030)"}
+                    ]
+                }
+            ]
+        }
+
+        normalized = normalize_timetable_multihour_slots(raw_timetable)
+        mar_lezioni = normalized["giorni"][0]["lezioni"]
+        self.assertEqual(len(mar_lezioni), 7)
+        self.assertFalse(any("ricreazione" in l["materia"].lower() for l in mar_lezioni))
+        last_l = mar_lezioni[-1]
+        self.assertEqual(last_l["ora"], 7)
+        self.assertEqual(last_l["materia"], "TELECOMUNICAZIONI LAB.")
+
+        # Test widget durante la 3ª ricreazione (13:45)
+        dt_break3 = datetime(2026, 9, 15, 13, 45) # 15 settembre 2026 era Martedì
+        res_b3 = compute_widget_payload(normalized, dt_break3)
+        self.assertEqual(res_b3["status"], "BREAK")
+        self.assertEqual(res_b3["badge"], "RICREAZIONE")
+        self.assertIn("TELECOMUNICAZIONI", res_b3["subtitle"])
+        self.assertIn("15 min", res_b3["subtitle"])
+
 if __name__ == "__main__":
     unittest.main()
