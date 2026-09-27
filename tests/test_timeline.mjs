@@ -94,7 +94,7 @@ assert.strictEqual(breaksVolta[0].end, '09:58');
 assert.strictEqual(breaksVolta[1].label, '2ª RICREAZIONE');
 assert.strictEqual(breaksVolta[1].start, '11:42');
 assert.strictEqual(breaksVolta[1].end, '11:52');
-assert.strictEqual(breaksVolta[2].label, '3ª RICREAZIONE');
+assert.strictEqual(breaksVolta[2].label, 'PRANZO');
 assert.strictEqual(breaksVolta[2].start, '13:36');
 assert.strictEqual(breaksVolta[2].end, '14:00');
 assert.strictEqual(breaksVolta[2].duration, 24);

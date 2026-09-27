@@ -263,7 +263,7 @@ export function extractTimetableStructure(timetable, minHours = null) {
           startMin: h.endMin,
           endMin: nextH.startMin,
           duration: gap,
-          label: breakCount === 1 ? '1ª RICREAZIONE' : (breakCount === 2 ? '2ª RICREAZIONE' : `${breakCount}ª RICREAZIONE`)
+          label: breakCount === 1 ? '1ª RICREAZIONE' : (breakCount === 2 ? '2ª RICREAZIONE' : (breakCount === 3 || h.endMin >= 800 ? 'PRANZO' : `${breakCount}ª RICREAZIONE`))
         });
       }
     }

@@ -1336,7 +1336,8 @@ function renderDailyTimeline() {
       }
     } else if (item.type === 'break') {
       templateRows.push('var(--timeline-break-height)');
-      const breakRow = createDailyBreakRow(item.start, item.end, `🔔 ${item.label} (${item.duration} MIN)`);
+      const breakIcon = item.label === 'PRANZO' ? '🍽️' : '🔔';
+      const breakRow = createDailyBreakRow(item.start, item.end, `${breakIcon} ${item.label} (${item.duration} MIN)`);
       breakRow.style.gridRow = String(currentRow);
       grid.appendChild(breakRow);
       currentRow++;
@@ -1519,7 +1520,8 @@ function renderWeeklyView() {
       breakCell.setAttribute('data-end-min', item.endMin);
       breakCell.style.gridColumn = `2 / ${numCols + 1}`;
       breakCell.style.gridRow = String(item.gridRow);
-      breakCell.innerHTML = `<span>🔔 ${item.label} (${item.duration} MIN)</span>`;
+      const breakIcon = item.label === 'PRANZO' ? '🍽️' : '🔔';
+      breakCell.innerHTML = `<span>${breakIcon} ${item.label} (${item.duration} MIN)</span>`;
       elements.weeklyGridContainer.appendChild(breakCell);
     }
   });
