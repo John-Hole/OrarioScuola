@@ -961,8 +961,8 @@ body {
   background-color: var(--bg-surface);
   border-top: 1px solid var(--border-guide-line);
   border-left: 1px solid var(--border-guide-line);
-  border-radius: var(--radius-md);
-  overflow: hidden;
+  border-radius: 0 !important;
+  overflow: visible;
 }
 
 /* Celle di sfondo per la griglia permanente con linee grigie sottili */
@@ -1024,15 +1024,16 @@ body {
   transition: top 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* Angolo in alto a sinistra */
+/* Angolo in alto a sinistra squadrato */
 .grid-header-corner {
   border-bottom: 1px solid var(--border-guide-line);
   border-right: 1px solid var(--border-guide-line);
   background: var(--bg-app);
+  border-radius: 0 !important;
   z-index: 2;
 }
 
-/* Intestazioni Colonne Giorni */
+/* Intestazioni Colonne Giorni squadrate */
 .grid-header-day {
   display: flex;
   flex-direction: column;
@@ -1044,6 +1045,7 @@ body {
   border-bottom: 1px solid var(--border-guide-line);
   border-right: 1px solid var(--border-guide-line);
   background: var(--bg-app);
+  border-radius: 0 !important;
   transition: background 0.2s ease;
   z-index: 2;
 }
