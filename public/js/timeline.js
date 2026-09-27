@@ -380,13 +380,8 @@ export function updateTimelineCursor(containerElement, now = new Date()) {
       if (indicatorLine) {
         indicatorLine.style.display = 'block';
         indicatorLine.style.top = `${targetTop}px`;
-        if (hasActiveBlock) {
-          indicatorLine.style.right = 'auto';
-          indicatorLine.style.width = '32px';
-        } else {
-          indicatorLine.style.right = '0';
-          indicatorLine.style.width = 'auto';
-        }
+        indicatorLine.style.right = '0';
+        indicatorLine.style.width = 'auto';
       }
 
       const badgeTimeText = cursorBadge.querySelector('.cursor-time');
