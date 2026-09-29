@@ -1210,6 +1210,24 @@ def main():
     api_key = args.api_key or os.environ.get("GEMINI_API_KEY")
     remote_url = args.url or os.environ.get("TIMETABLE_URL") or os.environ.get("TIMETABLE_IMAGE_URL")
 
+    # Risoluzione automatica URL della classe da volta_classes.json se non fornito
+    if not remote_url:
+        volta_file = Path("public/data/volta_classes.json")
+        if volta_file.exists():
+            try:
+                with open(volta_file, "r", encoding="utf-8") as vf:
+                    classes_list = json.load(vf)
+                for c in classes_list:
+                    if c.get("name", "").strip().upper() == args.class_name.strip().upper():
+                        remote_url = c.get("url")
+                        print(f"[RESOLVE] Trovato URL ufficiale per classe {args.class_name}: {remote_url}")
+                        break
+            except Exception as e:
+                print(f"[WARN] Impossibile leggere volta_classes.json: {e}")
+
+    if not remote_url and args.class_name.strip().upper() == "4 BINF":
+        remote_url = "https://cspace.spaggiari.eu/pub/PGIT0005/orario/classi/edc0000119p00001s3fffffffffffffff_4_binf_ac.png"
+
     os.makedirs(os.path.dirname(args.output), exist_ok=True)
     os.makedirs(os.path.dirname(args.widget_output), exist_ok=True)
 
@@ -1241,15 +1259,20 @@ def main():
                 sys.exit(0)
 
         if not target_image or not os.path.exists(target_image):
-            print("[INFO] Nessuna immagine valida fornita o trovata. Ricorro ai dati dimostrativi mock.")
-            timetable_data = get_sample_mock_data(args.class_name)
-            timetable_data["verification"] = {
-                "verified": True,
-                "scan_mode": scan_mode,
-                "consensus": 1.0,
-                "status": "DEMO_FALLBACK",
-                "verified_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            }
+            if os.path.exists(args.output):
+                print(f"[SAFETY] Nessuna immagine valida scaricata. Mantengo l'orario reale esistente in {args.output}.")
+                with open(args.output, "r", encoding="utf-8") as f:
+                    timetable_data = json.load(f)
+            else:
+                print("[INFO] Nessuna immagine valida fornita o trovata. Ricorro ai dati dimostrativi mock.")
+                timetable_data = get_sample_mock_data(args.class_name)
+                timetable_data["verification"] = {
+                    "verified": True,
+                    "scan_mode": scan_mode,
+                    "consensus": 1.0,
+                    "status": "DEMO_FALLBACK",
+                    "verified_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                }
         else:
             # Controllo hash per evitare chiamate ripetute a Gemini se l'immagine è identica
             curr_hash = compute_file_hash(target_image)
@@ -1261,27 +1284,50 @@ def main():
                         timetable_data = json.load(f)
 
             if timetable_data is None:
-                print(f"[GEMINI] Analisi visiva immagine: {target_image} (Modalità: {scan_mode.upper()})...")
-                try:
-                    timetable_data = extract_timetable_with_gemini(
-                        image_path=target_image,
-                        class_name=args.class_name,
-                        api_key=api_key,
-                        main_model=main_model,
-                        fallback_model=fallback_model,
-                        scan_mode=scan_mode
-                    )
-                    cache_hash_file.write_text(curr_hash)
-                    print("[GEMINI] Estrazione completata con successo!")
-                except Exception as e:
-                    print(f"[ERROR] Errore durante l'estrazione con Gemini API: {e}")
+                if not api_key:
+                    print("[WARN] Chiave GEMINI_API_KEY non trovata.")
                     if os.path.exists(args.output):
-                        print("[FALLBACK] Utilizzo l'orario precedentemente salvato.")
+                        print(f"[SAFETY] Mantengo l'orario reale già presente in {args.output}.")
                         with open(args.output, "r", encoding="utf-8") as f:
                             timetable_data = json.load(f)
                     else:
-                        print("[FALLBACK] Utilizzo dati mock.")
                         timetable_data = get_sample_mock_data(args.class_name)
+                else:
+                    print(f"[GEMINI] Analisi visiva immagine: {target_image} (Modalità: {scan_mode.upper()})...")
+                    try:
+                        timetable_data = extract_timetable_with_gemini(
+                            image_path=target_image,
+                            class_name=args.class_name,
+                            api_key=api_key,
+                            main_model=main_model,
+                            fallback_model=fallback_model,
+                            scan_mode=scan_mode
+                        )
+                        cache_hash_file.write_text(curr_hash)
+                        print("[GEMINI] Estrazione completata con successo!")
+                    except Exception as e:
+                        print(f"[ERROR] Errore durante l'estrazione con Gemini API: {e}")
+                        if os.path.exists(args.output):
+                            print(f"[SAFETY] Mantengo l'orario reale precedentemente salvato in {args.output}.")
+                            with open(args.output, "r", encoding="utf-8") as f:
+                                timetable_data = json.load(f)
+                        else:
+                            print("[FALLBACK] Utilizzo dati mock.")
+                            timetable_data = get_sample_mock_data(args.class_name)
+
+    # Controllo di sicurezza finale: non sovrascrivere MAI dati reali con mock senza flag esplicito --mock
+    if not args.mock and os.path.exists(args.output):
+        status = timetable_data.get("verification", {}).get("status", "")
+        if "MOCK" in status or "FALLBACK" in status:
+            try:
+                with open(args.output, "r", encoding="utf-8") as f:
+                    prev = json.load(f)
+                prev_status = prev.get("verification", {}).get("status", "")
+                if "MOCK" not in prev_status and "FALLBACK" not in prev_status:
+                    print(f"[SAFETY GUARD] Bloccata sovrascrittura di {args.output} con dati mock/fallback! Mantengo orario reale.")
+                    timetable_data = prev
+            except Exception:
+                pass
 
     # Scrittura orario completo
     with open(args.output, "w", encoding="utf-8") as f:

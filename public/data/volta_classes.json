@@ -446,5 +446,117 @@
     "file": "classi/edc0000242p00001s3fffffffffffffff_4_quad_ac.png",
     "url": "https://cspace.spaggiari.eu/pub/PGIT0005/orario/classi/edc0000242p00001s3fffffffffffffff_4_quad_ac.png",
     "year": 4
+  },
+  {
+    "name": "5 AC",
+    "code": "c0000221",
+    "file": "classi/edc0000221p00001s3fffffffffffffff_5_ac_ac.png",
+    "url": "https://cspace.spaggiari.eu/pub/PGIT0005/orario/classi/edc0000221p00001s3fffffffffffffff_5_ac_ac.png",
+    "year": 5
+  },
+  {
+    "name": "5 AE* (art. con 5 CM)",
+    "code": "c0000029",
+    "file": "classi/edc0000029p00001s3fffffffffffffff_5_ae_art_con_5_cm_ac.png",
+    "url": "https://cspace.spaggiari.eu/pub/PGIT0005/orario/classi/edc0000029p00001s3fffffffffffffff_5_ae_art_con_5_cm_ac.png",
+    "year": 5
+  },
+  {
+    "name": "5 AEN",
+    "code": "c0000220",
+    "file": "classi/edc0000220p00001s3fffffffffffffff_5_aen_ac.png",
+    "url": "https://cspace.spaggiari.eu/pub/PGIT0005/orario/classi/edc0000220p00001s3fffffffffffffff_5_aen_ac.png",
+    "year": 5
+  },
+  {
+    "name": "5 AGR",
+    "code": "c0000142",
+    "file": "classi/edc0000142p00001s3fffffffffffffff_5_agr_ac.png",
+    "url": "https://cspace.spaggiari.eu/pub/PGIT0005/orario/classi/edc0000142p00001s3fffffffffffffff_5_agr_ac.png",
+    "year": 5
+  },
+  {
+    "name": "5 AINF",
+    "code": "c0000033",
+    "file": "classi/edc0000033p00001s3fffffffffffffff_5_ainf_ac.png",
+    "url": "https://cspace.spaggiari.eu/pub/PGIT0005/orario/classi/edc0000033p00001s3fffffffffffffff_5_ainf_ac.png",
+    "year": 5
+  },
+  {
+    "name": "5 AM",
+    "code": "c0000030",
+    "file": "classi/edc0000030p00001s3fffffffffffffff_5_am_ac.png",
+    "url": "https://cspace.spaggiari.eu/pub/PGIT0005/orario/classi/edc0000030p00001s3fffffffffffffff_5_am_ac.png",
+    "year": 5
+  },
+  {
+    "name": "5 AT",
+    "code": "c0000031",
+    "file": "classi/edc0000031p00001s3fffffffffffffff_5_at_ac.png",
+    "url": "https://cspace.spaggiari.eu/pub/PGIT0005/orario/classi/edc0000031p00001s3fffffffffffffff_5_at_ac.png",
+    "year": 5
+  },
+  {
+    "name": "5 BGR",
+    "code": "c0000147",
+    "file": "classi/edc0000147p00001s3fffffffffffffff_5_bgr_ac.png",
+    "url": "https://cspace.spaggiari.eu/pub/PGIT0005/orario/classi/edc0000147p00001s3fffffffffffffff_5_bgr_ac.png",
+    "year": 5
+  },
+  {
+    "name": "5 BINF",
+    "code": "c0000130",
+    "file": "classi/edc0000130p00001s3fffffffffffffff_5_binf_ac.png",
+    "url": "https://cspace.spaggiari.eu/pub/PGIT0005/orario/classi/edc0000130p00001s3fffffffffffffff_5_binf_ac.png",
+    "year": 5
+  },
+  {
+    "name": "5 BM",
+    "code": "c0000128",
+    "file": "classi/edc0000128p00001s3fffffffffffffff_5_bm_ac.png",
+    "url": "https://cspace.spaggiari.eu/pub/PGIT0005/orario/classi/edc0000128p00001s3fffffffffffffff_5_bm_ac.png",
+    "year": 5
+  },
+  {
+    "name": "5 BT",
+    "code": "c0000243",
+    "file": "classi/edc0000243p00001s3fffffffffffffff_5_bt_ac.png",
+    "url": "https://cspace.spaggiari.eu/pub/PGIT0005/orario/classi/edc0000243p00001s3fffffffffffffff_5_bt_ac.png",
+    "year": 5
+  },
+  {
+    "name": "5 CGR",
+    "code": "c0000237",
+    "file": "classi/edc0000237p00001s3fffffffffffffff_5_cgr_ac.png",
+    "url": "https://cspace.spaggiari.eu/pub/PGIT0005/orario/classi/edc0000237p00001s3fffffffffffffff_5_cgr_ac.png",
+    "year": 5
+  },
+  {
+    "name": "5 CINF",
+    "code": "c0000149",
+    "file": "classi/edc0000149p00001s3fffffffffffffff_5_cinf_ac.png",
+    "url": "https://cspace.spaggiari.eu/pub/PGIT0005/orario/classi/edc0000149p00001s3fffffffffffffff_5_cinf_ac.png",
+    "year": 5
+  },
+  {
+    "name": "5 CM* (art. con 5 AE)",
+    "code": "c0000150",
+    "file": "classi/edc0000150p00001s3fffffffffffffff_5_cm_art_con_5_ae_ac.png",
+    "url": "https://cspace.spaggiari.eu/pub/PGIT0005/orario/classi/edc0000150p00001s3fffffffffffffff_5_cm_art_con_5_ae_ac.png",
+    "year": 5
+  },
+  {
+    "name": "5 DINF",
+    "code": "c0000187",
+    "file": "classi/edc0000187p00001s3fffffffffffffff_5_dinf_ac.png",
+    "url": "https://cspace.spaggiari.eu/pub/PGIT0005/orario/classi/edc0000187p00001s3fffffffffffffff_5_dinf_ac.png",
+    "year": 5
+  },
+  {
+    "name": "5 SP",
+    "code": "c0000167",
+    "file": "classi/edc0000167p00001s3fffffffffffffff_5_sp_ac.png",
+    "url": "https://cspace.spaggiari.eu/pub/PGIT0005/orario/classi/edc0000167p00001s3fffffffffffffff_5_sp_ac.png",
+    "year": 5
   }
 ]

@@ -562,6 +562,15 @@ async function loadTimetableById(id) {
 
   if (!state.timetable) {
     try {
+      const cached = localStorage.getItem('cached_timetable');
+      if (cached) {
+        state.timetable = JSON.parse(cached);
+      }
+    } catch (_) {}
+  }
+
+  if (!state.timetable) {
+    try {
       const resp = await fetch('data/timetable.json?t=' + Date.now());
       if (resp.ok) {
         state.timetable = await resp.json();
@@ -2813,7 +2822,8 @@ async function triggerSync() {
           let item = getTimetableById(activeId);
           if (item) {
             item.data = state.timetable;
-            saveOrUpdateTimetable(item, false);
+            item.lastUpdated = state.timetable.data_aggiornamento || new Date().toLocaleDateString('it-IT');
+            saveOrUpdateTimetable(item, true);
           }
 
           render();
@@ -2834,7 +2844,8 @@ async function triggerSync() {
         let item = getTimetableById(activeId);
         if (item) {
           item.data = state.timetable;
-          saveOrUpdateTimetable(item, false);
+          item.lastUpdated = freshData.data_aggiornamento || new Date().toLocaleDateString('it-IT');
+          saveOrUpdateTimetable(item, true);
         }
 
         render();

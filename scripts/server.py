@@ -63,6 +63,22 @@ class TimetableRequestHandler(SimpleHTTPRequestHandler):
         force = post_data.get("force", False)
         remote_url = post_data.get("url") or query_params.get("url", [None])[0]
 
+        if not remote_url:
+            volta_file = PUBLIC_DIR / "data" / "volta_classes.json"
+            if volta_file.exists():
+                try:
+                    with open(volta_file, "r", encoding="utf-8") as vf:
+                        classes_list = json.load(vf)
+                    for c in classes_list:
+                        if c.get("name", "").strip().upper() == class_name.strip().upper():
+                            remote_url = c.get("url")
+                            break
+                except Exception:
+                    pass
+
+        if not remote_url and class_name.strip().upper() == "4 BINF":
+            remote_url = "https://cspace.spaggiari.eu/pub/PGIT0005/orario/classi/edc0000119p00001s3fffffffffffffff_4_binf_ac.png"
+
         print(f"\n[SERVER] Richiesta di sincronizzazione ricevuta per classe '{class_name}' (Modalità: {scan_mode.upper()})...")
 
         # Invocazione di sync_timetable.py

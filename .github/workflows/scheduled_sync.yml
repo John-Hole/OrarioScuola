@@ -65,7 +65,7 @@ jobs:
         if: steps.check-date.outputs.should_run == 'true'
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-          TIMETABLE_URL: ${{ secrets.TIMETABLE_IMAGE_URL }}
+          TIMETABLE_URL: ${{ secrets.TIMETABLE_IMAGE_URL || 'https://cspace.spaggiari.eu/pub/PGIT0005/orario/classi/edc0000119p00001s3fffffffffffffff_4_binf_ac.png' }}
         run: |
           EXTRA_FLAGS=""
           if [ "${{ inputs.force_refresh }}" = "true" ]; then
@@ -83,17 +83,17 @@ jobs:
           fi
           
           echo "Modalità scansione selezionata: $SCAN_MODE"
-          
-          if [ -z "$TIMETABLE_URL" ]; then
-            echo "[WARN] TIMETABLE_IMAGE_URL secret non configurato. Esecuzione in fallback."
-            python scripts/sync_timetable.py --class-name "$CLASS_NAME" --scan-mode "$SCAN_MODE" $EXTRA_FLAGS
-          else
-            python scripts/sync_timetable.py --url "$TIMETABLE_URL" --class-name "$CLASS_NAME" --scan-mode "$SCAN_MODE" $EXTRA_FLAGS
-          fi
+          python scripts/sync_timetable.py --url "$TIMETABLE_URL" --class-name "$CLASS_NAME" --scan-mode "$SCAN_MODE" $EXTRA_FLAGS
 
       - name: Commit e Push degli Aggiornamenti (se presenti)
         if: steps.check-date.outputs.should_run == 'true'
         run: |
+          # Blocco di sicurezza anti-regressione
+          if grep -q "DEMO_FALLBACK" public/data/timetable.json || grep -q "14 Settembre 2026" public/data/timetable.json; then
+            echo "::error ::Rilevato orario mock/fallback in timetable.json. Commit annullato per preservare l'orario reale."
+            git checkout public/data/
+            exit 1
+          fi
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git add public/data/
