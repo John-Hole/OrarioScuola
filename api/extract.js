@@ -201,11 +201,14 @@ REGOLE CRUCIALI:
 1. Rileva gli ORARI ESATTI di inizio e fine per ciascuna ora (1ª, 2ª, 3ª...) esattamente come scritti nell'intestazione o a lato della tabella (es. 08:00-08:54, 08:58-09:48, 09:58-10:48, 10:52-11:42, ecc.). NON inventare gli orari, leggi quelli reali!
 2. Rileva tutti i giorni della settimana presenti (Lunedì, Martedì, Mercoledì, Giovedì, Venerdì, Sabato).
 3. CELLE UNITE VERTICALMENTE / ORE DOPPIE (CRUCIALE):
-   Se una materia occupa un riquadro verticale unico che copre DUE O PIÙ ORE CONSECUTIVE (es. laboratorio o palestra, come 09:58-11:42 che attraversa la 3ª e la 4ª ora, o 08:00-09:48 che copre la 1ª e la 2ª ora):
+   Se una materia occupa un riquadro verticale unico che copre DUE O PIÙ ORE CONSECUTIVE (es. laboratorio o palestra, come 09:58-11:42 che attraversa la 3ª e la 4ª ora, o 08:00-09:48 che copre la 1ª e la 2ª ora, oppure 14:00-15:40 nel pomeriggio che copre la 7ª e l'8ª ora):
    DEVI GENERARE UNA VOCE SEPARATA PER CIASCUNA ORA DI LEZIONE (con stessa materia, aula e docenti).
    Esempio per blocco 09:58 - 11:42:
    - una lezione per la 3ª ora ("ora": 3, "inizio": "09:58", "fine": "10:48")
    - una lezione per la 4ª ora ("ora": 4, "inizio": "10:52", "fine": "11:42")
+   Esempio per laboratorio pomeridiano 14:00 - 15:40 (7ª e 8ª ora):
+   - una lezione per la 7ª ora ("ora": 7, "inizio": "14:00", "fine": "14:50")
+   - una lezione per l'8ª ora ("ora": 8, "inizio": "14:50", "fine": "15:40")
    NON saltare mai ore e non unire più ore in un solo slot. Ogni giorno deve avere tutte le ore in sequenza (1, 2, 3, 4...).
 4. Per ogni ora di lezione:
    - "ora": numero intero 1, 2, 3, 4, 5, 6, 7...

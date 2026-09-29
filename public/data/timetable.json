@@ -177,6 +177,19 @@
           "aula": "(L030) Lab. el. Tele",
           "is_lab": true,
           "note": "20 alunni"
+        },
+        {
+          "ora": 8,
+          "inizio": "14:50",
+          "fine": "15:40",
+          "materia": "TELECOMUNICAZIONI LAB.",
+          "docenti": [
+            "GAGLIARDI M.",
+            "PERICOLINI A."
+          ],
+          "aula": "(L030) Lab. el. Tele",
+          "is_lab": true,
+          "note": "20 alunni"
         }
       ]
     },

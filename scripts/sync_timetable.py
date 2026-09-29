@@ -1054,11 +1054,14 @@ def extract_timetable_with_gemini(
     Regole fondamentali:
     1. Griglia oraria: Osserva attentamente gli orari a sinistra della tabella (es. 1ª ora 08:00 - 08:54, 2ª ora 08:58 - 09:48, 3ª ora 09:58 - 10:48, 4ª ora 10:52 - 11:42, ecc.).
     2. CELLE UNITE VERTICALMENTE / ORE DOPPIE (CRUCIALE):
-       Se una materia è disegnata come un unico riquadro verticale che occupa due o più ore consecutive (ad esempio un blocco di laboratorio o palestra, come 09:58 - 11:42 che attraversa la 3ª e la 4ª ora, o 08:00 - 09:48 che copre la 1ª e la 2ª ora):
+       Se una materia è disegnata come un unico riquadro verticale che occupa due o più ore consecutive (ad esempio un blocco di laboratorio o palestra, come 09:58 - 11:42 che attraversa la 3ª e la 4ª ora, o 08:00 - 09:48 che copre la 1ª e la 2ª ora, oppure un laboratorio pomeridiano 14:00 - 15:40 che attraversa la 7ª e l'8ª ora):
        DEVI GENERARE UNA VOCE SEPARATA PER CIASCUNA ORA DI LEZIONE (con la stessa materia, aula e docenti).
        Ad esempio per un blocco 09:58 - 11:42:
        - 3ª ora ("ora": 3, "inizio": "09:58", "fine": "10:48")
        - 4ª ora ("ora": 4, "inizio": "10:52", "fine": "11:42")
+       Ad esempio per un blocco pomeridiano 14:00 - 15:40:
+       - 7ª ora ("ora": 7, "inizio": "14:00", "fine": "14:50")
+       - 8ª ora ("ora": 8, "inizio": "14:50", "fine": "15:40")
        NON saltare alcuna ora: ogni giorno deve avere la sequenza completa delle ore (1, 2, 3, 4...).
     3. Per le materie svolte in laboratorio con compresenza docenti (es. Sistemi e Reti, Informatica, TPSIT, Telecomunicazioni con insegnante teorico + ITP), estrai entrambi i docenti e imposta is_lab = true.
     4. Estrai con la massima precisione il nome o codice dell'aula/laboratorio (es. 'B 010', 'B 045', 'C 170', 'Aula B 115', 'Palestra ITTS').

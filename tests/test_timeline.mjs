@@ -79,14 +79,14 @@ assert.strictEqual(breaks5[0].duration, 15, 'La ricreazione rilevata deve essere
 assert.strictEqual(lessons5[0].start, '08:15', 'La prima ora deve iniziare alle 08:15 e non alle 08:00');
 assert.strictEqual(lessons5[4].end, '13:05', 'La quinta ora deve terminare alle 13:05');
 
-// Test 2: Orario Volta 4 BINF con 7ª ora (Telecomunicazioni 14:00 - 14:50) e 3ª ricreazione (13:36 - 14:00)
+// Test 2: Orario Volta 4 BINF con 7ª e 8ª ora (Telecomunicazioni 14:00 - 15:40) e 3ª ricreazione (13:36 - 14:00)
 import fs from 'fs';
 const timetableData = JSON.parse(fs.readFileSync('./public/data/timetable.json', 'utf-8'));
 const structVolta = extractTimetableStructure(timetableData);
 const lessonsVolta = structVolta.filter(s => s.type === 'lesson');
 const breaksVolta = structVolta.filter(s => s.type === 'break');
 
-assert.strictEqual(lessonsVolta.length, 7, 'Deve rilevare 7 ore di lezione (ora 1..7)');
+assert.strictEqual(lessonsVolta.length, 8, 'Deve rilevare 8 ore di lezione (ora 1..8)');
 assert.strictEqual(breaksVolta.length, 3, 'Deve rilevare esattamente 3 ricreazioni');
 assert.strictEqual(breaksVolta[0].label, '1ª RICREAZIONE');
 assert.strictEqual(breaksVolta[0].start, '09:48');
