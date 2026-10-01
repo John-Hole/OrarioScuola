@@ -147,3 +147,189 @@ assert.strictEqual(getFormattedDateForDay('Venerdì', endOfMonth), 'VENERDÌ 2 O
 
 console.log('Tutti i test di getFormattedDateForDay sono passati con successo!');
 
+import { getDayOfWeekIndex, areDaysEqual, updateTimelineCursor, updateWeeklyLiveCursor } from '../public/js/timeline.js';
+
+console.log('--- Test getDayOfWeekIndex e areDaysEqual ---');
+assert.strictEqual(getDayOfWeekIndex('Lunedì'), 1);
+assert.strictEqual(getDayOfWeekIndex('Lunedi'), 1);
+assert.strictEqual(getDayOfWeekIndex('LUNEDÌ'), 1);
+assert.strictEqual(getDayOfWeekIndex('lun'), 1);
+assert.strictEqual(getDayOfWeekIndex('Martedì'), 2);
+assert.strictEqual(getDayOfWeekIndex('martedi'), 2);
+assert.strictEqual(getDayOfWeekIndex('Mercoledì'), 3);
+assert.strictEqual(getDayOfWeekIndex('Giovedì'), 4);
+assert.strictEqual(getDayOfWeekIndex('Giovedi'), 4);
+assert.strictEqual(getDayOfWeekIndex('Venerdì'), 5);
+assert.strictEqual(getDayOfWeekIndex('Sabato'), 6);
+assert.strictEqual(getDayOfWeekIndex('Domenica'), 0);
+
+assert.strictEqual(areDaysEqual('Giovedì', 'Giovedi'), true);
+assert.strictEqual(areDaysEqual('LUNEDÌ', 'lunedì'), true);
+assert.strictEqual(areDaysEqual('Martedì', 'mercoledì'), false);
+
+// Test fallback getSmartDefaultDay senza dati precaricati (array vuoto o null)
+const thuTest = new Date('2026-10-01T10:15:00'); // Giovedì
+assert.strictEqual(getSmartDefaultDay(null, thuTest), 'Giovedì', 'Nei giorni feriali senza timetable deve selezionare Giovedì');
+assert.strictEqual(getSmartDefaultDay([], thuTest), 'Giovedì', 'Con array vuoto nei giorni feriali deve selezionare Giovedì');
+
+console.log('--- Test updateTimelineCursor con righe ricreazione e lezioni in ordine sparso ---');
+
+// Mock DOM container
+function createMockElement(tagName, attributes = {}, textContent = '') {
+  const children = [];
+  const classList = new Set((attributes.class || '').split(' ').filter(Boolean));
+  const style = {};
+  const attrs = { ...attributes };
+
+  return {
+    tagName,
+    attributes: attrs,
+    style,
+    textContent,
+    children,
+    classList: {
+      add: (c) => classList.add(c),
+      remove: (c) => classList.delete(c),
+      contains: (c) => classList.has(c)
+    },
+    getAttribute: (name) => attrs[name] || null,
+    setAttribute: (name, val) => { attrs[name] = String(val); },
+    appendChild: (child) => { children.push(child); child.parentElement = this; },
+    querySelector: (selector) => {
+      const match = (el) => {
+        if (selector.startsWith('.')) {
+          return el.classList.contains(selector.slice(1));
+        }
+        if (selector.startsWith('#')) {
+          return el.attributes.id === selector.slice(1);
+        }
+        if (selector.includes('[')) {
+          const m = selector.match(/\[([^=\]]+)(?:="([^"]+)")?\]/);
+          if (m) {
+            const attrVal = el.getAttribute(m[1]);
+            return m[2] !== undefined ? attrVal === m[2] : attrVal !== null;
+          }
+        }
+        return false;
+      };
+      const search = (nodes) => {
+        for (const node of nodes) {
+          if (match(node)) return node;
+          const found = search(node.children);
+          if (found) return found;
+        }
+        return null;
+      };
+      return search(children);
+    },
+    querySelectorAll: (selector) => {
+      const selectors = selector.split(',').map(s => s.trim());
+      const results = [];
+      const matchOne = (el, sel) => {
+        if (sel.startsWith('.')) return el.classList.contains(sel.slice(1));
+        if (sel.includes('[')) {
+          const m = sel.match(/([.\w-]*)(?:\[([^=\]]+)(?:="([^"]+)")?\])/);
+          if (m) {
+            if (m[1] && m[1].startsWith('.') && !el.classList.contains(m[1].slice(1))) return false;
+            const attrVal = el.getAttribute(m[2]);
+            return m[3] !== undefined ? attrVal === m[3] : attrVal !== null;
+          }
+        }
+        return false;
+      };
+      const search = (nodes) => {
+        for (const node of nodes) {
+          if (selectors.some(s => matchOne(node, s))) results.push(node);
+          search(node.children);
+        }
+      };
+      search(children);
+      return results;
+    },
+    offsetTop: 0,
+    offsetHeight: 80
+  };
+}
+
+// Costruisci il container per Giovedì (con Break aggiunti prima dei Lesson slot come in app.js)
+const mockContainer = createMockElement('div');
+const liveCursor = createMockElement('div', { class: 'live-cursor' });
+const cursorTime = createMockElement('span', { class: 'cursor-time' });
+liveCursor.appendChild(cursorTime);
+mockContainer.appendChild(liveCursor);
+
+const liveLine = createMockElement('div', { class: 'live-timeline-line' });
+mockContainer.appendChild(liveLine);
+
+const grid = createMockElement('div', { class: 'daily-timeline-grid', 'data-day': 'Giovedì' });
+mockContainer.appendChild(grid);
+
+// 1. Appendi Break 1 e Break 2
+const break1 = createMockElement('div', { class: 'timeline-break-row', 'data-start': '09:48', 'data-end': '09:58' });
+const break1Bar = createMockElement('div', { class: 'timeline-break-bar' });
+break1.appendChild(break1Bar);
+grid.appendChild(break1);
+
+const break2 = createMockElement('div', { class: 'timeline-break-row', 'data-start': '11:42', 'data-end': '11:52' });
+const break2Bar = createMockElement('div', { class: 'timeline-break-bar' });
+break2.appendChild(break2Bar);
+grid.appendChild(break2);
+
+// 2. Appendi Lezioni: Ora 1-2 (Informatica Lab double), Ora 3 (Storia), Ora 4 (Matematica), Ora 5 (Inglese), Ora 6 (Sistemi)
+const lessonSlots = [
+  { start: '08:00', end: '09:48', name: 'INFORMATICA LAB.' },
+  { start: '09:58', end: '10:48', name: 'STORIA' },
+  { start: '10:52', end: '11:42', name: 'MATEMATICA' },
+  { start: '11:52', end: '12:42', name: 'INGLESE' },
+  { start: '12:46', end: '13:36', name: 'SISTEMI e RETI' }
+];
+
+const lessonCardElements = [];
+for (const s of lessonSlots) {
+  const row = createMockElement('div', { class: 'timeline-lesson-row', 'data-start': s.start, 'data-end': s.end });
+  const card = createMockElement('article', { class: 'lesson-card', 'data-start': s.start, 'data-end': s.end });
+  const timeLeft = createMockElement('span', { class: 'time-left-text' });
+  card.appendChild(timeLeft);
+  row.appendChild(card);
+  grid.appendChild(row);
+  lessonCardElements.push({ row, card, name: s.name });
+}
+
+// Test 1: Giovedì ore 10:15 (Ora 3 - Storia)
+// PRECEDENTEMENTE QUESTO FALLIVA perché break1 e break2 creavano un finto gap che abortiva il ciclo!
+const now1015 = new Date('2026-10-01T10:15:00');
+updateTimelineCursor(mockContainer, now1015);
+
+const storiaCard = lessonCardElements.find(l => l.name === 'STORIA').card;
+assert.strictEqual(storiaCard.classList.contains('is-active'), true, 'STORIA alle 10:15 DEVE essere attiva con .is-active!');
+assert.strictEqual(liveCursor.style.display, 'flex', 'Il cursore live deve essere visibile');
+
+// Test 2: Giovedì ore 11:00 (Ora 4 - Matematica)
+const now1100 = new Date('2026-10-01T11:00:00');
+updateTimelineCursor(mockContainer, now1100);
+
+const mateCard = lessonCardElements.find(l => l.name === 'MATEMATICA').card;
+assert.strictEqual(mateCard.classList.contains('is-active'), true, 'MATEMATICA alle 11:00 DEVE essere attiva con .is-active!');
+assert.strictEqual(storiaCard.classList.contains('is-active'), false, 'Storia non deve più essere attiva alle 11:00');
+
+// Test 3: Giovedì ore 11:45 (Ricreazione 2)
+const now1145 = new Date('2026-10-01T11:45:00');
+updateTimelineCursor(mockContainer, now1145);
+assert.strictEqual(break2Bar.classList.contains('is-active-break'), true, 'Ricreazione 2 deve essere attiva alle 11:45');
+assert.strictEqual(mateCard.classList.contains('is-active'), false);
+
+// Test 4: Giovedì ore 13:00 (Ora 6 - Sistemi e Reti)
+const now1300 = new Date('2026-10-01T13:00:00');
+updateTimelineCursor(mockContainer, now1300);
+const sistemiCard = lessonCardElements.find(l => l.name === 'SISTEMI e RETI').card;
+assert.strictEqual(sistemiCard.classList.contains('is-active'), true, 'SISTEMI e RETI alle 13:00 DEVE essere attiva!');
+
+// Test 5: Giorno diverso (es. l\'utente sta visualizzando Venerdì oggi che è Giovedì)
+grid.setAttribute('data-day', 'Venerdì');
+updateTimelineCursor(mockContainer, now1015);
+assert.strictEqual(storiaCard.classList.contains('is-active'), false, 'Non deve attivare card se si visualizza un giorno diverso da oggi');
+assert.strictEqual(liveCursor.style.display, 'none', 'Il cursore non deve essere mostrato in un giorno diverso da oggi');
+
+console.log('✓ Tutti i test per updateTimelineCursor e gestione attiva sono passati con successo!');
+
+

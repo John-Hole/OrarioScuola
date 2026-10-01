@@ -78,6 +78,37 @@ export function getSubjectThemeClass(subjectName) {
 }
 
 /**
+ * Restituisce l'indice del giorno della settimana (0 = Dom, 1 = Lun, ..., 6 = Sab)
+ * in modo resiliente ad accenti (NFC/NFD), maiuscole/minuscole e abbreviazioni.
+ */
+export function getDayOfWeekIndex(dayName) {
+  if (!dayName) return -1;
+  const clean = dayName.normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLowerCase();
+  const map = {
+    'domenica': 0, 'dom': 0,
+    'lunedi': 1, 'lun': 1,
+    'martedi': 2, 'mar': 2,
+    'mercoledi': 3, 'mer': 3,
+    'giovedi': 4, 'gio': 4,
+    'venerdi': 5, 'ven': 5,
+    'sabato': 6, 'sab': 6
+  };
+  return map[clean] !== undefined ? map[clean] : -1;
+}
+
+/**
+ * Confronta due nomi di giorno in modo canonico e resiliente
+ */
+export function areDaysEqual(dayA, dayB) {
+  if (!dayA || !dayB) return false;
+  const idxA = getDayOfWeekIndex(dayA);
+  const idxB = getDayOfWeekIndex(dayB);
+  if (idxA !== -1 && idxB !== -1) return idxA === idxB;
+  return dayA.normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLowerCase() ===
+         dayB.normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLowerCase();
+}
+
+/**
  * Determina il giorno da visualizzare:
  * Mostra il giorno corrente fino alle 23:59 dello stesso giorno (giorno per giorno,
  * senza passare in anticipo al giorno successivo nel pomeriggio).
@@ -85,21 +116,34 @@ export function getSubjectThemeClass(subjectName) {
  */
 export function getSmartDefaultDay(timetableDays, date = new Date()) {
   const dayIndex = date.getDay(); // 0 = Dom, 1 = Lun, ..., 6 = Sab
-  const availableDayNames = (timetableDays || []).map(d => d.giorno);
   const todayName = IT_DAYS[dayIndex];
+  const availableDays = Array.isArray(timetableDays) && timetableDays.length > 0
+    ? timetableDays.map(d => d.giorno)
+    : null;
 
-  // Se il giorno corrente è presente a orario (Lunedì-Venerdì o Sabato se attivo),
-  // visualizza sempre il giorno odierno fino alle 23:59
-  if (availableDayNames.includes(todayName)) {
+  // Se abbiamo i giorni effettivi dell'orario
+  if (availableDays) {
+    const foundToday = availableDays.find(d => areDaysEqual(d, todayName));
+    if (foundToday) {
+      return foundToday;
+    }
+
+    // Nel fine settimana o giorni senza lezioni a calendario (es. Domenica o Sabato libero)
+    const foundMonday = availableDays.find(d => areDaysEqual(d, "Lunedì"));
+    if (foundMonday) {
+      return foundMonday;
+    }
+
+    return availableDays[0] || "Lunedì";
+  }
+
+  // Se il timetable non è ancora stato passato:
+  // Nei giorni scolastici (Lunedì-Venerdì) seleziona il giorno odierno
+  if (dayIndex >= 1 && dayIndex <= 5) {
     return todayName;
   }
 
-  // Nel fine settimana o giorni senza lezioni a calendario (es. Domenica o Sabato libero)
-  if (availableDayNames.includes("Lunedì")) {
-    return "Lunedì";
-  }
-
-  return availableDayNames[0] || "Lunedì";
+  return "Lunedì";
 }
 
 /**
@@ -282,8 +326,8 @@ export function extractTimetableStructure(timetable, minHours = null) {
 }
 
 /**
- * Aggiorna il cursore temporale e la timeline visuale nella vista Giorno
- * La linea blu si ferma ESATTAMENTE al bordo sinistro del blocco e NON ci va sopra!
+ * Aggiorna il cursore temporale e la timeline visuale nella vista Giorno.
+ * La linea blu si ferma esattamente al bordo del blocco e non va sopra al testo.
  */
 export function updateTimelineCursor(containerElement, now = new Date()) {
   if (!containerElement) return;
@@ -293,79 +337,89 @@ export function updateTimelineCursor(containerElement, now = new Date()) {
 
   const cursorBadge = containerElement.querySelector('.live-cursor');
   const indicatorLine = containerElement.querySelector('.live-timeline-line');
-  const rows = containerElement.querySelectorAll('.timeline-lesson-row, .timeline-break-row');
+  const rawRows = Array.from(containerElement.querySelectorAll('.timeline-lesson-row, .timeline-break-row'));
 
-  if (rows.length === 0) return;
-
-  // Calcolo dinamico di inizio e fine giornata scolastica
-  let schoolStart = Infinity;
-  let schoolEnd = -Infinity;
-  rows.forEach(r => {
-    const s = timeToMinutes(r.getAttribute('data-start'));
-    const e = timeToMinutes(r.getAttribute('data-end'));
-    if (!isNaN(s) && s < schoolStart) schoolStart = s;
-    if (!isNaN(e) && e > schoolEnd) schoolEnd = e;
-  });
-
-  if (schoolStart === Infinity) schoolStart = 480;
-  if (schoolEnd === -Infinity) schoolEnd = 702;
-
-  let targetTop = 0;
-  let isVisible = false;
-  let hasActiveBlock = false;
+  if (rawRows.length === 0) return;
 
   // Reset stati attivi precedenti
-  rows.forEach(row => {
+  rawRows.forEach(row => {
     const card = row.querySelector('.lesson-card');
     if (card) card.classList.remove('is-active');
     const breakBar = row.querySelector('.timeline-break-bar');
     if (breakBar) breakBar.classList.remove('is-active-break');
   });
 
+  // Ordina cronologicamente le righe in base a data-start
+  const rows = rawRows
+    .map(el => ({
+      elem: el,
+      start: timeToMinutes(el.getAttribute('data-start')),
+      end: timeToMinutes(el.getAttribute('data-end')),
+      isBreak: el.classList.contains('timeline-break-row')
+    }))
+    .filter(r => !isNaN(r.start) && !isNaN(r.end) && r.start < r.end)
+    .sort((a, b) => a.start - b.start);
+
+  if (rows.length === 0) return;
+
+  const schoolStart = rows[0].start;
+  const schoolEnd = Math.max(...rows.map(r => r.end));
+
+  let targetTop = 0;
+  let isVisible = false;
+  let hasActiveBlock = false;
+
   // Verifica se il giorno mostrato corrisponde esattamente a oggi
   const dayOfWeek = now.getDay(); // 0 = Dom, 1 = Lun, ..., 6 = Sab
-  const todayName = IT_DAYS[dayOfWeek];
   const gridEl = containerElement.querySelector('.daily-timeline-grid');
   const displayedDay = gridEl ? gridEl.getAttribute('data-day') : null;
-  const isViewingToday = !displayedDay || displayedDay === todayName;
+  const isViewingToday = !displayedDay || (getDayOfWeekIndex(displayedDay) === dayOfWeek);
   const isSchoolDay = dayOfWeek >= 1 && dayOfWeek <= 5;
 
   if (isViewingToday && isSchoolDay && currentMinutes >= schoolStart && currentMinutes <= schoolEnd) {
-    for (let i = 0; i < rows.length; i++) {
-      const row = rows[i];
-      const start = timeToMinutes(row.getAttribute('data-start'));
-      const end = timeToMinutes(row.getAttribute('data-end'));
+    // 1. Cerca prima un blocco attivo (lezione o ricreazione in corso)
+    let activeRow = null;
+    for (const r of rows) {
+      if (currentMinutes >= r.start && currentMinutes < r.end) {
+        activeRow = r;
+        break;
+      }
+    }
 
-      if (currentMinutes >= start && currentMinutes < end) {
-        isVisible = true;
-        const ratio = (currentMinutes - start) / (end - start);
-        targetTop = row.offsetTop + (row.offsetHeight * ratio);
+    if (activeRow) {
+      isVisible = true;
+      const ratio = (currentMinutes - activeRow.start) / (activeRow.end - activeRow.start);
+      targetTop = activeRow.elem.offsetTop + (activeRow.elem.offsetHeight * ratio);
 
-        const card = row.querySelector('.lesson-card');
+      if (!activeRow.isBreak) {
+        const card = activeRow.elem.querySelector('.lesson-card');
         if (card) {
           card.classList.add('is-active');
           hasActiveBlock = true;
           const timeLeftElem = card.querySelector('.time-left-text');
           if (timeLeftElem) {
-            const rem = end - currentMinutes;
+            const rem = activeRow.end - currentMinutes;
             timeLeftElem.textContent = `Fine tra ${rem} min`;
           }
         }
-
-        const breakBar = row.querySelector('.timeline-break-bar');
+      } else {
+        const breakBar = activeRow.elem.querySelector('.timeline-break-bar');
         if (breakBar) {
           breakBar.classList.add('is-active-break');
           hasActiveBlock = true;
         }
-        break;
-      } else if (i + 1 < rows.length) {
-        const nextRow = rows[i + 1];
-        const nextStart = timeToMinutes(nextRow.getAttribute('data-start'));
-        if (currentMinutes >= end && currentMinutes < nextStart) {
+      }
+    } else {
+      // 2. Se non siamo dentro un blocco, siamo in un cambio ora tra due blocchi consecutivi ordinati
+      for (let i = 0; i < rows.length - 1; i++) {
+        const cur = rows[i];
+        const next = rows[i + 1];
+        if (currentMinutes >= cur.end && currentMinutes < next.start) {
           isVisible = true;
-          const ratio = (currentMinutes - end) / (nextStart - end);
-          const currentBottom = row.offsetTop + row.offsetHeight;
-          targetTop = currentBottom + ((nextRow.offsetTop - currentBottom) * ratio);
+          const ratio = (currentMinutes - cur.end) / (next.start - cur.end);
+          const curBottom = cur.elem.offsetTop + cur.elem.offsetHeight;
+          const nextTop = next.elem.offsetTop;
+          targetTop = curBottom + ((nextTop - curBottom) * ratio);
           break;
         }
       }
@@ -421,47 +475,40 @@ export function updateWeeklyLiveCursor(gridContainer, now = new Date()) {
     el.classList.remove('is-active-break');
   });
 
-  // Estrai dinamicamente tutti gli slot presenti nella griglia (lezioni e ricreazioni)
-  const slotElements = gridContainer.querySelectorAll('[data-start-min][data-end-min]');
-  const uniqueSlots = [];
-  const seenRanges = new Set();
+  // Usa gli slot orari dell'asse sinistro (.grid-time-slot-box e .grid-break-time-label)
+  // per determinare l'altezza fisica esatta e la scala verticale della griglia settimanale
+  const axisSlots = Array.from(gridContainer.querySelectorAll('.grid-time-slot-box, .grid-break-time-label'))
+    .map(el => ({
+      elem: el,
+      start: parseInt(el.getAttribute('data-start-min'), 10),
+      end: parseInt(el.getAttribute('data-end-min'), 10)
+    }))
+    .filter(s => !isNaN(s.start) && !isNaN(s.end))
+    .sort((a, b) => a.start - b.start);
 
-  slotElements.forEach(el => {
-    const s = parseInt(el.getAttribute('data-start-min'), 10);
-    const e = parseInt(el.getAttribute('data-end-min'), 10);
-    const key = `${s}-${e}`;
-    if (!seenRanges.has(key)) {
-      seenRanges.add(key);
-      uniqueSlots.push({ start: s, end: e, elem: el });
-    }
-  });
+  if (axisSlots.length === 0) return;
 
-  uniqueSlots.sort((a, b) => a.start - b.start);
-
-  if (uniqueSlots.length === 0) return;
-
-  const schoolStart = uniqueSlots[0].start;
-  const schoolEnd = uniqueSlots[uniqueSlots.length - 1].end;
+  const schoolStart = axisSlots[0].start;
+  const schoolEnd = Math.max(...axisSlots.map(s => s.end));
 
   let isVisible = false;
   let targetTop = 0;
 
   if (isSchoolDay && currentMinutes >= schoolStart && currentMinutes <= schoolEnd) {
-    isVisible = true;
-
-    for (let i = 0; i < uniqueSlots.length; i++) {
-      const slot = uniqueSlots[i];
-      if (!slot.elem) continue;
-
+    // 1. Cerca lo slot dell'asse orario corrispondente
+    for (let i = 0; i < axisSlots.length; i++) {
+      const slot = axisSlots[i];
       if (currentMinutes >= slot.start && currentMinutes < slot.end) {
+        isVisible = true;
         const top = slot.elem.offsetTop;
         const h = slot.elem.offsetHeight;
         const ratio = (currentMinutes - slot.start) / (slot.end - slot.start);
         targetTop = top + (h * ratio);
         break;
-      } else if (i + 1 < uniqueSlots.length) {
-        const nextSlot = uniqueSlots[i + 1];
-        if (nextSlot.elem && currentMinutes >= slot.end && currentMinutes < nextSlot.start) {
+      } else if (i + 1 < axisSlots.length) {
+        const nextSlot = axisSlots[i + 1];
+        if (currentMinutes >= slot.end && currentMinutes < nextSlot.start) {
+          isVisible = true;
           const btm = slot.elem.offsetTop + slot.elem.offsetHeight;
           const nextTop = nextSlot.elem.offsetTop;
           const ratio = (currentMinutes - slot.end) / (nextSlot.start - slot.end);
@@ -471,10 +518,7 @@ export function updateWeeklyLiveCursor(gridContainer, now = new Date()) {
       }
     }
 
-    const dayNames = ['Domenica', 'Lunedì', 'Martedì', 'Mercoledì', 'Giovedì', 'Venerdì', 'Sabato'];
-    const todayName = dayNames[dayOfWeek];
-
-    // Evidenzia le ricreazioni se attive
+    // 2. Evidenzia le ricreazioni se attive
     const activeBreak = Array.from(gridContainer.querySelectorAll('.grid-cell-break')).find(b => {
       const s = parseInt(b.getAttribute('data-start-min'), 10);
       const e = parseInt(b.getAttribute('data-end-min'), 10);
@@ -484,8 +528,12 @@ export function updateWeeklyLiveCursor(gridContainer, now = new Date()) {
       activeBreak.classList.add('is-active-break');
     }
 
-    // Evidenzia la cella lezione odierna in corso
-    const todayCells = gridContainer.querySelectorAll(`.grid-cell-lesson[data-day="${todayName}"]`);
+    // 3. Evidenzia la cella lezione odierna in corso (confronto giorno robusto con getDayOfWeekIndex)
+    const todayCells = Array.from(gridContainer.querySelectorAll('.grid-cell-lesson')).filter(cell => {
+      const cellDay = cell.getAttribute('data-day');
+      return getDayOfWeekIndex(cellDay) === dayOfWeek;
+    });
+
     todayCells.forEach(cell => {
       const s = parseInt(cell.getAttribute('data-start-min'), 10);
       const e = parseInt(cell.getAttribute('data-end-min'), 10);
@@ -526,7 +574,7 @@ export function updateWeeklyLiveCursor(gridContainer, now = new Date()) {
  */
 export function autoScrollToActiveLesson(containerElement) {
   if (!containerElement) return;
-  const activeCard = containerElement.querySelector('.lesson-card.is-active');
+  const activeCard = containerElement.querySelector('.lesson-card.is-active, .grid-cell-lesson.is-active-lesson');
   if (activeCard) {
     activeCard.scrollIntoView({
       behavior: 'smooth',

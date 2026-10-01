@@ -907,9 +907,10 @@ body {
 }
 
 .badge-in-corso {
-  background: #17375E;
-  color: #BFDBFE;
-  font-size: 0.64rem;
+  background: #1e3a8a;
+  color: #93c5fd;
+  border: 1px solid rgba(147, 197, 253, 0.35);
+  font-size: 0.62rem;
   font-weight: 800;
   padding: 2px 7px;
   border-radius: var(--radius-pill);
@@ -932,11 +933,27 @@ body {
 
 .lesson-card.is-active .card-active-footer {
   display: inline-flex;
+  margin-top: 3px;
 }
 
 .lesson-card.is-active {
-  box-shadow: 0 6px 20px rgba(37, 99, 235, 0.45);
-  border: 2px solid var(--live-line-color);
+  box-shadow: 0 0 16px rgba(56, 189, 248, 0.45), 0 4px 14px rgba(0, 0, 0, 0.4) !important;
+  border: 2px solid var(--live-line-color) !important;
+  padding: 4px 8px !important;
+}
+
+.lesson-card.is-active .lesson-card-header {
+  gap: 1px;
+}
+
+.lesson-card.is-active .subject-title {
+  font-size: 0.96rem;
+  line-height: 1.14;
+}
+
+.lesson-card.is-active .room-title {
+  font-size: 0.82rem;
+  line-height: 1.1;
 }
 
 /* ==========================================================================
@@ -1230,8 +1247,9 @@ body {
 }
 
 .grid-active-badge {
-  background: #17375E;
-  color: #BFDBFE;
+  background: #1e3a8a;
+  color: #93c5fd;
+  border: 1px solid rgba(147, 197, 253, 0.35);
   font-size: 0.56rem;
   font-weight: 800;
   padding: 1.5px 5px;

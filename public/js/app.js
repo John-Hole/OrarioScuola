@@ -9,6 +9,8 @@ import {
   minutesToTime,
   getSubjectThemeClass,
   getSmartDefaultDay,
+  getDayOfWeekIndex,
+  areDaysEqual,
   getFormattedDateForDay,
   extractTimetableStructure,
   updateTimelineCursor,
@@ -440,7 +442,7 @@ async function init() {
 
   const initialNow = getCurrentDate();
   state.lastCalendarDay = initialNow.toDateString();
-  state.selectedDay = getSmartDefaultDay([], initialNow);
+  state.selectedDay = getSmartDefaultDay(null, initialNow);
   renderDailyHeader();
 
   const currentOrigin = window.location.origin + window.location.pathname.replace('index.html', '');
@@ -1162,7 +1164,7 @@ function renderDaysNav() {
   const chips = elements.daysNav.querySelectorAll('.day-chip');
   chips.forEach((chip) => {
     const day = chip.getAttribute('data-day');
-    if (day === state.selectedDay) {
+    if (areDaysEqual(day, state.selectedDay)) {
       chip.classList.add('active');
     } else {
       chip.classList.remove('active');
@@ -1281,7 +1283,7 @@ function renderDailyTimeline() {
   elements.viewDaily.classList.remove('hidden-view');
   elements.viewWeekly.classList.add('hidden-view');
 
-  const dayData = (state.timetable.giorni || []).find(d => d.giorno === state.selectedDay);
+  const dayData = (state.timetable.giorni || []).find(d => areDaysEqual(d.giorno, state.selectedDay));
   elements.lessonsList.innerHTML = '';
   if (elements.timelineTimeColumn) {
     elements.timelineTimeColumn.innerHTML = '';
