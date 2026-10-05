@@ -362,11 +362,31 @@ def clean_room(room: str) -> str:
     if not room:
         return ""
     cleaned = room.strip()
+    special = ["casa", "partenza", "scuola", "uscita", "rientro", "terminata"]
+    for s in special:
+        if cleaned.lower() == s:
+            return cleaned.capitalize()
+
     if "palestra" in cleaned.lower():
         return "Palestra"
-    # Rimuove per sempre la dicitura 'Lab' o 'LAB' dall'aula
-    cleaned = re.sub(r'(?i)\blab\b\.?\s*', '', cleaned).strip()
-    return cleaned
+
+    olmo_match = re.search(r'(?i)\bolmo\b\s*(\d+)', cleaned)
+    if olmo_match:
+        return f"Olmo {olmo_match.group(1)}"
+
+    volta_match = re.search(r'([A-Za-z])\s*(\d{2,3})', cleaned)
+    if volta_match:
+        letter = volta_match.group(1).upper()
+        number = volta_match.group(2)
+        return f"{letter} {number}"
+
+    fallback = cleaned
+    fallback = re.sub(r'(?i)\(?[0-9]°?\s*p\.?\s*(est|ovest)\)?', '', fallback)
+    fallback = re.sub(r'(?i)\(?p\.?\s*t\.?\s*(est|ovest)\)?', '', fallback)
+    fallback = re.sub(r'(?i)\blab\b\.?\s*[^,;)]*', '', fallback)
+    fallback = re.sub(r'[()\-*]', '', fallback).strip()
+    return fallback or cleaned
+
 
 
 def compute_flight_payload(timetable: Dict[str, Any], ref_dt: Optional[datetime] = None) -> Dict[str, Any]:
@@ -588,7 +608,7 @@ def compute_widget_payload(timetable: Dict[str, Any], ref_dt: Optional[datetime]
         monday_first = get_first_lesson_of_day("Lunedì")
         preview = "Lunedì riposo"
         if monday_first:
-            preview = f"Lunedì ore {monday_first['inizio']}: {monday_first['materia']} ({monday_first['aula']})"
+            preview = f"Lunedì ore {monday_first['inizio']}: {monday_first['materia']} ({clean_room(monday_first['aula'])})"
         return with_flight({
             "status": "WEEKEND",
             "badge": "WEEKEND",
@@ -597,7 +617,7 @@ def compute_widget_payload(timetable: Dict[str, Any], ref_dt: Optional[datetime]
             "room": "",
             "time_left": "",
             "next_title": monday_first["materia"] if monday_first else "",
-            "next_room": monday_first["aula"] if monday_first else "",
+            "next_room": clean_room(monday_first["aula"]) if monday_first else "",
             "next_time": monday_first["inizio"] if monday_first else "",
             "updated_at": ref_dt.strftime("%H:%M"),
             "class_name": timetable.get("classe", "4 BINF")
@@ -635,7 +655,7 @@ def compute_widget_payload(timetable: Dict[str, Any], ref_dt: Optional[datetime]
     tomorrow_preview = ""
     if next_day_first:
         prefix = "Domani" if next_day_idx < 5 else "Lunedì"
-        tomorrow_preview = f"{prefix} ore {next_day_first['inizio']}: {next_day_first['materia']} ({next_day_first['aula']})"
+        tomorrow_preview = f"{prefix} ore {next_day_first['inizio']}: {next_day_first['materia']} ({clean_room(next_day_first['aula'])})"
 
     # Stato A: Prima dell'inizio delle lezioni (es. mattina presto)
     if current_minutes < first_start:
@@ -645,10 +665,10 @@ def compute_widget_payload(timetable: Dict[str, Any], ref_dt: Optional[datetime]
             "badge": "PRIMA ORA",
             "title": f"Prima ora: {lessons[0]['materia']}",
             "subtitle": f"Inizio alle {lessons[0]['inizio']} (tra {minutes_to_start} min)",
-            "room": lessons[0]["aula"],
+            "room": clean_room(lessons[0]["aula"]),
             "time_left": f"{minutes_to_start}m all'inizio",
             "next_title": lessons[0]["materia"],
-            "next_room": lessons[0]["aula"],
+            "next_room": clean_room(lessons[0]["aula"]),
             "next_time": lessons[0]["inizio"],
             "updated_at": ref_dt.strftime("%H:%M"),
             "class_name": timetable.get("classe", "4 BINF")
@@ -664,7 +684,7 @@ def compute_widget_payload(timetable: Dict[str, Any], ref_dt: Optional[datetime]
             "room": "",
             "time_left": "",
             "next_title": next_day_first["materia"] if next_day_first else "",
-            "next_room": next_day_first["aula"] if next_day_first else "",
+            "next_room": clean_room(next_day_first["aula"]) if next_day_first else "",
             "next_time": next_day_first["inizio"] if next_day_first else "",
             "updated_at": ref_dt.strftime("%H:%M"),
             "class_name": timetable.get("classe", "4 BINF")
@@ -680,16 +700,16 @@ def compute_widget_payload(timetable: Dict[str, Any], ref_dt: Optional[datetime]
         if start_min <= current_minutes < end_min:
             mins_left = end_min - current_minutes
             next_lesson = lessons[i + 1] if (i + 1) < len(lessons) else None
-            next_info = f"Poi: {next_lesson['materia']} in {next_lesson['aula']}" if next_lesson else "Ultima ora!"
+            next_info = f"Poi: {next_lesson['materia']} in {clean_room(next_lesson['aula'])}" if next_lesson else "Ultima ora!"
             return with_flight({
                 "status": "IN_CLASS",
                 "badge": "IN CORSO",
                 "title": lesson["materia"],
                 "subtitle": next_info,
-                "room": lesson["aula"],
+                "room": clean_room(lesson["aula"]),
                 "time_left": f"Fine tra {mins_left} min ({lesson['fine']})",
                 "next_title": next_lesson["materia"] if next_lesson else "Fine lezioni",
-                "next_room": next_lesson["aula"] if next_lesson else "",
+                "next_room": clean_room(next_lesson["aula"]) if next_lesson else "",
                 "next_time": next_lesson["inizio"] if next_lesson else lesson["fine"],
                 "updated_at": ref_dt.strftime("%H:%M"),
                 "class_name": timetable.get("classe", "4 BINF")
@@ -707,11 +727,11 @@ def compute_widget_payload(timetable: Dict[str, Any], ref_dt: Optional[datetime]
                     "status": "BREAK",
                     "badge": "RICREAZIONE" if is_recess else "CAMBIO ORA",
                     "title": "Ricreazione in corso" if is_recess else f"Prossima: {next_l['materia']}",
-                    "subtitle": f"Prossima: {next_l['materia']} in {next_l['aula']} ({mins_to_next} min)" if is_recess else f"Inizio alle {next_l['inizio']} (tra {mins_to_next} min)",
-                    "room": f"Spostati in: {next_l['aula']}",
+                    "subtitle": f"Prossima: {next_l['materia']} in {clean_room(next_l['aula'])} ({mins_to_next} min)" if is_recess else f"Inizio alle {next_l['inizio']} (tra {mins_to_next} min)",
+                    "room": f"Spostati in: {clean_room(next_l['aula'])}",
                     "time_left": f"{mins_to_next} min al suono",
                     "next_title": next_l["materia"],
-                    "next_room": next_l["aula"],
+                    "next_room": clean_room(next_l["aula"]),
                     "next_time": next_l["inizio"],
                     "updated_at": ref_dt.strftime("%H:%M"),
                     "class_name": timetable.get("classe", "4 BINF")

@@ -13,6 +13,8 @@ export const config = {
   }
 };
 
+import { cleanRoom } from '../public/js/subject_normalizer.js';
+
 const TIMETABLE_SCHEMA = {
   type: "object",
   properties: {
@@ -165,6 +167,12 @@ function normalizeTimetableMultiHourSlots(timetable) {
 
     newLessons.sort((a, b) => (a.ora || 0) - (b.ora || 0));
     day.lezioni = newLessons;
+  });
+
+  timetable.giorni.forEach(day => {
+    (day.lezioni || []).forEach(l => {
+      if (l.aula) l.aula = cleanRoom(l.aula);
+    });
   });
 
   return timetable;

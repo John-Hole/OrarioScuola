@@ -50,45 +50,60 @@
   --timeline-time-spacing: 1.5px;
 
   /* ==========================================================================
-     Mappe Colori Pastello per Materie (con testo scuro ad alto contrasto)
+     Mappe Colori Fedeli all'Orario Spaggiari/EDT (Alto Contrasto & Riconoscibilità Immediata)
      ========================================================================== */
-  --subject-sistemi-bg: #82B2E4;
-  --subject-sistemi-text: #081524;
+  /* Italiano (Orario #DC7878): Rosso Corallo vivace */
+  --subject-lettere-bg: #F87171;
+  --subject-lettere-text: #450A0A;
+  --subject-italiano-bg: #F87171;
+  --subject-italiano-text: #450A0A;
 
-  --subject-tpsit-bg: #FDE047;
-  --subject-tpsit-text: #3D2204;
-
-  --subject-matematica-bg: #86EFAC;
-  --subject-matematica-text: #064E3B;
-
-  --subject-inglese-bg: #7DD3FC;
-  --subject-inglese-text: #082F49;
-
-  --subject-lettere-bg: #C4B5FD;
-  --subject-lettere-text: #2E1065;
-
-  --subject-storia-bg: #FDBA74;
+  /* Storia (Orario #CB8989): Arancio Terracotta / Ruggine caldo (distinto da Italiano) */
+  --subject-storia-bg: #FB923C;
   --subject-storia-text: #431407;
 
-  --subject-diritto-bg: #FCD34D;
-  --subject-diritto-text: #451A03;
+  /* Inglese (Orario #78DC85): Verde Lime / Mela brillante ed energico */
+  --subject-inglese-bg: #4ADE80;
+  --subject-inglese-text: #052E16;
 
-  --subject-informatica-bg: #5EEAD4;
-  --subject-informatica-text: #042F2E;
+  /* Matematica (Orario #DDF7DD): Verde Menta / Smeraldo fresco (distinto da Inglese) */
+  --subject-matematica-bg: #6EE7B7;
+  --subject-matematica-text: #064E3B;
 
-  --subject-motoria-bg: #FDA4AF;
-  --subject-motoria-text: #4C0519;
+  /* Informatica & Lab (Orario #7878DC / #8181D3): Blu Indigo Elettrico */
+  --subject-informatica-bg: #818CF8;
+  --subject-informatica-text: #1E1B4B;
 
-  --subject-scienze-bg: #F9A8D4;
-  --subject-scienze-text: #4A044E;
+  /* Sistemi e Reti & Lab (Orario #95AABF): Blu Acciaio / Sky Blue luminoso */
+  --subject-sistemi-bg: #60A5FA;
+  --subject-sistemi-text: #172554;
 
-  --subject-religione-bg: #E2E8F0;
+  /* Telecomunicazioni & Lab (Orario #A68FC5 / #A392C2): Viola Ametista / Porpora vivace */
+  --subject-telecom-bg: #C084FC;
+  --subject-telecom-text: #3B0764;
+
+  /* TPSIT & Lab (Orario #DDDDF7 / #E4E7EF): Turchese Ghiaccio / Ciano elettrico */
+  --subject-tpsit-bg: #22D3EE;
+  --subject-tpsit-text: #083344;
+
+  /* Scienze Motorie (Orario #BF959A): Rosa Sport / Flamingo vivace */
+  --subject-motoria-bg: #F472B6;
+  --subject-motoria-text: #500724;
+
+  /* Religione (Orario #D0DFCA): Grigio Perla / Argento Salvia neutro */
+  --subject-religione-bg: #CBD5E1;
   --subject-religione-text: #0F172A;
 
-  --subject-telecom-bg: #F0ABFC;
-  --subject-telecom-text: #4A044E;
+  /* Diritto ed Economia: Ambra Dorata / Oro caldo */
+  --subject-diritto-bg: #FBBF24;
+  --subject-diritto-text: #451A03;
 
-  --subject-default-bg: #CBD5E1;
+  /* Scienze / Chimica: Cremisi / Rubino */
+  --subject-scienze-bg: #FB7185;
+  --subject-scienze-text: #4C0519;
+
+  /* Default */
+  --subject-default-bg: #94A3B8;
   --subject-default-text: #0F172A;
 
   /* Geometry & Radii */
@@ -396,7 +411,8 @@ body {
   color: var(--subject-inglese-text) !important;
 }
 
-.theme-lettere {
+.theme-lettere,
+.theme-italiano {
   background-color: var(--subject-lettere-bg) !important;
   color: var(--subject-lettere-text) !important;
 }

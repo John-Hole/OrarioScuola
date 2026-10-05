@@ -68,7 +68,7 @@ export function getSubjectThemeClass(subjectName) {
   if (s.includes('INGLESE')) return 'theme-inglese';
   if (s.includes('STORIA')) return 'theme-storia';
   if (s.includes('DIRITTO')) return 'theme-diritto';
-  if (s.includes('ITALIANO')) return 'theme-lettere';
+  if (s.includes('ITALIANO') || s.includes('LETTERE')) return 'theme-lettere';
   if (s.includes('INFORMATICA')) return 'theme-informatica';
   if (s.includes('SCIENZE MOTORIE') || s.includes('ED. FISICA') || s.includes('PALESTRA')) return 'theme-motoria';
   if (s.includes('SCIENZE') || s.includes('CHIMICA')) return 'theme-scienze';

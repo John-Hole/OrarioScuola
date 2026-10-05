@@ -50,6 +50,34 @@ async function loadTimetable() {
   }
 }
 
+function cleanRoom(room) {
+  if (!room) return '';
+  const cleaned = room.trim();
+  const special = ['casa', 'partenza', 'scuola', 'uscita', 'rientro', 'terminata'];
+  for (const s of special) {
+    if (cleaned.toLowerCase() === s) {
+      return cleaned.charAt(0).toUpperCase() + cleaned.slice(1).toLowerCase();
+    }
+  }
+  if (cleaned.toLowerCase().includes('palestra')) {
+    return 'Palestra';
+  }
+  const olmoMatch = cleaned.match(/\bolmo\b\s*(\d+)/i);
+  if (olmoMatch) {
+    return `Olmo ${olmoMatch[1]}`;
+  }
+  const voltaMatch = cleaned.match(/([A-Za-z])\s*(\d{2,3})/);
+  if (voltaMatch) {
+    return `${voltaMatch[1].toUpperCase()} ${voltaMatch[2]}`;
+  }
+  return cleaned
+    .replace(/\(?[0-9]°?\s*p\.?\s*(est|ovest)\)?/gi, '')
+    .replace(/\(?p\.?\s*t\.?\s*(est|ovest)\)?/gi, '')
+    .replace(/\blab\b\.?\s*[^,;)]*/gi, '')
+    .replace(/[()\-*]/g, '')
+    .trim() || cleaned;
+}
+
 // Calcola lo stato esatto in tempo reale al minuto corrente
 function computeState(timetable, date = new Date()) {
   if (!timetable || !timetable.giorni) {
@@ -79,7 +107,7 @@ function computeState(timetable, date = new Date()) {
     return {
       badge: "WEEKEND",
       title: "Buon Fine Settimana!",
-      subtitle: monFirst ? `Lunedì ore ${monFirst.inizio}: ${monFirst.materia} (${monFirst.aula})` : "Riposo",
+      subtitle: monFirst ? `Lunedì ore ${monFirst.inizio}: ${monFirst.materia} (${cleanRoom(monFirst.aula)})` : "Riposo",
       room: "",
       timeLeft: "",
       accentColor: "#5856D6"
@@ -104,7 +132,7 @@ function computeState(timetable, date = new Date()) {
   const nextDayIdx = (dayIdx + 1) % 7;
   const nextDayName = IT_DAYS[nextDayIdx < 6 && nextDayIdx > 0 ? nextDayIdx : 1];
   const nextDayFirst = getFirstOf(nextDayName);
-  const tomorrowPreview = nextDayFirst ? `${nextDayIdx === 1 ? 'Lunedì' : 'Domani'} ${nextDayFirst.inizio}: ${nextDayFirst.materia} (${nextDayFirst.aula})` : "Fine lezioni";
+  const tomorrowPreview = nextDayFirst ? `${nextDayIdx === 1 ? 'Lunedì' : 'Domani'} ${nextDayFirst.inizio}: ${nextDayFirst.materia} (${cleanRoom(nextDayFirst.aula)})` : "Fine lezioni";
 
   // Prima di scuola
   if (currentMinutes < firstStart) {
@@ -113,7 +141,7 @@ function computeState(timetable, date = new Date()) {
       badge: "PRIMA ORA",
       title: lessons[0].materia,
       subtitle: `Inizio ore ${lessons[0].inizio} (tra ${rem} min)`,
-      room: lessons[0].aula,
+      room: cleanRoom(lessons[0].aula),
       timeLeft: `tra ${rem}m`,
       accentColor: "#007AFF"
     };
@@ -142,8 +170,8 @@ function computeState(timetable, date = new Date()) {
       return {
         badge: "IN CORSO",
         title: lessons[i].materia,
-        subtitle: nextL ? `Poi: ${nextL.materia} (${nextL.aula})` : "Ultima ora!",
-        room: lessons[i].aula,
+        subtitle: nextL ? `Poi: ${nextL.materia} (${cleanRoom(nextL.aula)})` : "Ultima ora!",
+        room: cleanRoom(lessons[i].aula),
         timeLeft: `${left} min rimasti`,
         accentColor: "#30D158"
       };
@@ -157,8 +185,8 @@ function computeState(timetable, date = new Date()) {
         return {
           badge: isRecess ? "RICREAZIONE" : "CAMBIO ORA",
           title: isRecess ? "Ricreazione" : lessons[i + 1].materia,
-          subtitle: `Prossima: ${lessons[i + 1].materia} in ${lessons[i + 1].aula}`,
-          room: lessons[i + 1].aula,
+          subtitle: `Prossima: ${lessons[i + 1].materia} in ${cleanRoom(lessons[i + 1].aula)}`,
+          room: cleanRoom(lessons[i + 1].aula),
           timeLeft: `tra ${toNext}m`,
           accentColor: "#FF9F0A"
         };

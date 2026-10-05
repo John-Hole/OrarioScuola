@@ -5,7 +5,7 @@
 
 import fs from 'fs';
 import path from 'path';
-import { shortenSubject, cleanRoom } from '../public/js/subject_normalizer.js';
+import { shortenSubject, cleanRoom, getSubjectColor } from '../public/js/subject_normalizer.js';
 
 function timeToMinutes(str) {
   if (!str) return 0;
@@ -68,7 +68,14 @@ export default async function handler(req, res) {
       flight_col_right_plain: '',
       flight_left_col_plain: '',
       flight_center_col_plain: '',
-      flight_right_col_plain: ''
+      flight_right_col_plain: '',
+      next_title: '',
+      next_room: '',
+      next_time: '',
+      subject_color: '',
+      subject_text_color: '',
+      next_subject_color: '',
+      next_subject_text_color: ''
     };
 
     if (!timetable || dayIdx === 0 || dayIdx === 6) {
@@ -221,6 +228,80 @@ export default async function handler(req, res) {
     const board2lines = `${s1}       ───>       ${s2}\n🚩 ${r1}     ${flightTime}     🚩 ${r2}`;
     const flightCompact = `[b]${s1}[/b]       [c=#38bdf8]───>[/c]       [b]${s2}[/b]\n[c=#38bdf8]🚩 ${r1}[/c]     [b][c=#f59e0b]${flightTime}[/c][/b]     [c=#4ade80]🚩 ${r2}[/c]`;
 
+    let badge = 'IN CORSO';
+    let title = originSub;
+    let room = r1;
+    let timeLeft = '';
+    let subtitle = '';
+    let nextTitle = destSub;
+    let nextRoom = r2;
+    let nextTime = flightTime;
+    let status = currentMinutes < firstStart ? 'BEFORE_SCHOOL' : (currentMinutes >= lastEnd ? 'FINISHED' : 'IN_CLASS');
+
+    if (currentMinutes < firstStart) {
+      status = 'BEFORE_SCHOOL';
+      badge = 'PRIMA ORA';
+      title = lessons[0].materia;
+      room = cleanRoom(lessons[0].aula);
+      const rem = firstStart - currentMinutes;
+      timeLeft = `tra ${rem}m`;
+      subtitle = `Inizio ore ${lessons[0].inizio} (tra ${rem} min)`;
+      nextTitle = lessons[0].materia;
+      nextRoom = cleanRoom(lessons[0].aula);
+      nextTime = lessons[0].inizio;
+    } else if (currentMinutes >= lastEnd) {
+      status = 'FINISHED';
+      badge = 'FINITO';
+      title = 'Giornata terminata!';
+      subtitle = 'A domani!';
+      room = '';
+      timeLeft = 'A casa';
+    } else {
+      for (let i = 0; i < lessons.length; i++) {
+        const s = timeToMinutes(lessons[i].inizio);
+        const e = timeToMinutes(lessons[i].fine);
+
+        if (currentMinutes >= s && currentMinutes < e) {
+          status = 'IN_CLASS';
+          badge = 'IN CORSO';
+          title = lessons[i].materia;
+          room = cleanRoom(lessons[i].aula);
+          const left = e - currentMinutes;
+          timeLeft = `${left} min rimasti`;
+          const nextL = lessons[i + 1];
+          subtitle = nextL ? `Poi: ${nextL.materia} (${cleanRoom(nextL.aula)})` : 'Ultima ora!';
+          nextTitle = nextL ? nextL.materia : 'Casa';
+          nextRoom = nextL ? cleanRoom(nextL.aula) : 'Uscita';
+          nextTime = nextL ? nextL.inizio : lessons[i].fine;
+          break;
+        }
+
+        if (i + 1 < lessons.length) {
+          const nextS = timeToMinutes(lessons[i + 1].inizio);
+          if (currentMinutes >= e && currentMinutes < nextS) {
+            const toNext = nextS - currentMinutes;
+            const gap = nextS - e;
+            const isRecess = gap >= 8;
+            status = 'BREAK';
+            badge = isRecess ? 'RICREAZIONE' : 'CAMBIO ORA';
+            title = isRecess ? 'Ricreazione in corso' : `Prossima: ${lessons[i + 1].materia}`;
+            subtitle = isRecess
+              ? `Prossima: ${lessons[i + 1].materia} in ${cleanRoom(lessons[i + 1].aula)} (${toNext} min)`
+              : `Inizio ore ${lessons[i + 1].inizio} (tra ${toNext} min)`;
+            room = `Spostati in: ${cleanRoom(lessons[i + 1].aula)}`;
+            timeLeft = `tra ${toNext}m`;
+            nextTitle = lessons[i + 1].materia;
+            nextRoom = cleanRoom(lessons[i + 1].aula);
+            nextTime = lessons[i + 1].inizio;
+            break;
+          }
+        }
+      }
+    }
+
+    const subjColor = getSubjectColor(title);
+    const nextSubjColor = getSubjectColor(nextTitle);
+
     return res.status(200).json({
       flight_visible: isVisible,
       flight_origin_sub: s1,
@@ -250,7 +331,19 @@ export default async function handler(req, res) {
       flight_left_col_plain: leftColPlain,
       flight_center_col_plain: centerColPlain,
       flight_right_col_plain: rightColPlain,
-      status: currentMinutes < firstStart ? 'BEFORE_SCHOOL' : (currentMinutes >= lastEnd ? 'FINISHED' : 'IN_CLASS'),
+      status: status,
+      badge: badge,
+      title: title,
+      subtitle: subtitle,
+      room: room,
+      time_left: timeLeft,
+      next_title: nextTitle,
+      next_room: nextRoom,
+      next_time: nextTime,
+      subject_color: subjColor.bg,
+      subject_text_color: subjColor.text,
+      next_subject_color: nextSubjColor.bg,
+      next_subject_text_color: nextSubjColor.text,
       updated_at: timeStr,
       class_name: timetable?.classe || '4 BINF'
     });

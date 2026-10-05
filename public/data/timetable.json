@@ -18,7 +18,7 @@
             "MANCINO R.",
             "RIGHI A."
           ],
-          "aula": "B 010 - P. T. EST) Lab. Reti",
+          "aula": "B 010",
           "is_lab": true,
           "note": "20 alunni"
         },
@@ -32,7 +32,7 @@
             "MANCINO R.",
             "RIGHI A."
           ],
-          "aula": "B 010 - P. T. EST) Lab. Reti",
+          "aula": "B 010",
           "is_lab": true,
           "note": "20 alunni"
         },
@@ -44,7 +44,7 @@
           "docenti": [
             "TOMASSONI V."
           ],
-          "aula": "B 055 (P. T. EST)",
+          "aula": "B 055",
           "is_lab": false,
           "note": "20 alunni"
         },
@@ -56,7 +56,7 @@
           "docenti": [
             "TOMASSONI V."
           ],
-          "aula": "B 055 (P. T. EST)",
+          "aula": "B 055",
           "is_lab": false,
           "note": "20 alunni"
         },
@@ -69,7 +69,7 @@
             "BATOCCHI M.",
             "GIAPPICHINI A."
           ],
-          "aula": "C 170 WIN - 1° P. OVEST",
+          "aula": "C 170",
           "is_lab": true,
           "note": "20 alunni"
         },
@@ -81,7 +81,7 @@
           "docenti": [
             "GUERCINI C."
           ],
-          "aula": "B 030 (P. T. EST)",
+          "aula": "B 030",
           "is_lab": false,
           "note": "20 alunni"
         }
@@ -98,7 +98,7 @@
           "docenti": [
             "VIOLA A."
           ],
-          "aula": "B 060 (P. T. EST)",
+          "aula": "B 060",
           "is_lab": false,
           "note": "20 alunni"
         },
@@ -110,7 +110,7 @@
           "docenti": [
             "BATOCCHI M."
           ],
-          "aula": "B 060 (P. T. EST)",
+          "aula": "B 060",
           "is_lab": false,
           "note": "20 alunni"
         },
@@ -123,7 +123,7 @@
             "CIUCHETTI M.",
             "CRISPOLTI M."
           ],
-          "aula": "B 045 - P. T. EST",
+          "aula": "B 045",
           "is_lab": true,
           "note": "20 alunni"
         },
@@ -136,7 +136,7 @@
             "CIUCHETTI M.",
             "CRISPOLTI M."
           ],
-          "aula": "B 045 - P. T. EST",
+          "aula": "B 045",
           "is_lab": true,
           "note": "20 alunni"
         },
@@ -149,7 +149,7 @@
             "LONZINI S.",
             "TOMASSONI V."
           ],
-          "aula": "B 040 (P. T. EST)",
+          "aula": "B 040",
           "is_lab": false,
           "note": "20 alunni"
         },
@@ -161,7 +161,7 @@
           "docenti": [
             "POGGIONI M."
           ],
-          "aula": "C 195 (1° P. OVEST)",
+          "aula": "C 195",
           "is_lab": false,
           "note": "20 alunni"
         },
@@ -174,7 +174,7 @@
             "GAGLIARDI M.",
             "PERICOLINI A."
           ],
-          "aula": "(L030) Lab. el. Tele",
+          "aula": "L 030",
           "is_lab": true,
           "note": "20 alunni"
         },
@@ -187,7 +187,7 @@
             "GAGLIARDI M.",
             "PERICOLINI A."
           ],
-          "aula": "(L030) Lab. el. Tele",
+          "aula": "L 030",
           "is_lab": true,
           "note": "20 alunni"
         }
@@ -205,7 +205,7 @@
             "GUERCINI C.",
             "LONZINI S."
           ],
-          "aula": "B 061 (P. T. EST)",
+          "aula": "B 061",
           "is_lab": false,
           "note": "20 alunni"
         },
@@ -218,7 +218,7 @@
             "LONZINI S.",
             "TOMASSONI V."
           ],
-          "aula": "B 061 (P. T. EST)",
+          "aula": "B 061",
           "is_lab": false,
           "note": "20 alunni"
         },
@@ -231,7 +231,7 @@
             "CAVALLUCCI V.",
             "LONZINI S."
           ],
-          "aula": "B 061 (P. T. EST)",
+          "aula": "B 061",
           "is_lab": false,
           "note": "20 alunni"
         },
@@ -243,7 +243,7 @@
           "docenti": [
             "CIUCHETTI M."
           ],
-          "aula": "B 140 (1° P. EST)",
+          "aula": "B 140",
           "is_lab": false,
           "note": "20 alunni"
         },
@@ -255,7 +255,7 @@
           "docenti": [
             "MANCINO R."
           ],
-          "aula": "B 140 (1° P. EST)",
+          "aula": "B 140",
           "is_lab": false,
           "note": "20 alunni"
         },
@@ -267,7 +267,7 @@
           "docenti": [
             "PERICOLINI A."
           ],
-          "aula": "B 140 (1° P. EST)",
+          "aula": "B 140",
           "is_lab": false,
           "note": "20 alunni"
         }
@@ -285,7 +285,7 @@
             "BATOCCHI M.",
             "DI GRAZIA N."
           ],
-          "aula": "C 170 WIN - 1° P. OVEST",
+          "aula": "C 170",
           "is_lab": true,
           "note": "20 alunni"
         },
@@ -298,7 +298,7 @@
             "BATOCCHI M.",
             "DI GRAZIA N."
           ],
-          "aula": "C 170 WIN - 1° P. OVEST",
+          "aula": "C 170",
           "is_lab": true,
           "note": "20 alunni"
         },
@@ -311,7 +311,7 @@
             "CAVALLUCCI V.",
             "LONZINI S."
           ],
-          "aula": "B 115 (1° P. EST)",
+          "aula": "B 115",
           "is_lab": false,
           "note": "20 alunni"
         },
@@ -323,7 +323,7 @@
           "docenti": [
             "POGGIONI M."
           ],
-          "aula": "C 230 (2° P. OVEST)",
+          "aula": "C 230",
           "is_lab": false,
           "note": "20 alunni"
         },
@@ -336,7 +336,7 @@
             "GUERCINI C.",
             "LONZINI S."
           ],
-          "aula": "B 020 (P. T. EST)",
+          "aula": "B 020",
           "is_lab": false,
           "note": "20 alunni"
         },
@@ -349,7 +349,7 @@
             "DI GRAZIA N.",
             "MANCINO R."
           ],
-          "aula": "B 015 - P. T. EST) Lab. Inf.",
+          "aula": "B 015",
           "is_lab": true,
           "note": "20 alunni"
         }
@@ -366,7 +366,7 @@
           "docenti": [
             "PAPINI S."
           ],
-          "aula": "Palestra OLMO",
+          "aula": "Palestra",
           "is_lab": false,
           "note": "20 alunni"
         },
@@ -378,7 +378,7 @@
           "docenti": [
             "PAPINI S."
           ],
-          "aula": "Palestra OLMO",
+          "aula": "Palestra",
           "is_lab": false,
           "note": "20 alunni"
         },
@@ -391,7 +391,7 @@
             "BATOCCHI M.",
             "DI GRAZIA N."
           ],
-          "aula": "OLMO 303",
+          "aula": "Olmo 303",
           "is_lab": true,
           "note": "20 alunni"
         },
@@ -404,7 +404,7 @@
             "BATOCCHI M.",
             "DI GRAZIA N."
           ],
-          "aula": "OLMO 303",
+          "aula": "Olmo 303",
           "is_lab": true,
           "note": "20 alunni"
         },
@@ -417,7 +417,7 @@
             "DI GRAZIA N.",
             "POGGIONI M."
           ],
-          "aula": "OLMO 303",
+          "aula": "Olmo 303",
           "is_lab": true,
           "note": "20 alunni"
         },
@@ -430,7 +430,7 @@
             "DI GRAZIA N.",
             "POGGIONI M."
           ],
-          "aula": "OLMO 303",
+          "aula": "Olmo 303",
           "is_lab": true,
           "note": "20 alunni"
         }
@@ -440,7 +440,7 @@
   "verification": {
     "verified": true,
     "scan_mode": "single",
-    "consensus": 1.0,
+    "consensus": 1,
     "status": "SINGLE_PASS",
     "model": "gemini-3.5-flash-lite",
     "verified_at": "2026-09-26 19:59:17"

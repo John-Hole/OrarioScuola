@@ -4,9 +4,9 @@
  */
 
 import { timeToMinutes } from './timeline.js';
-import { cleanRoom, shortenSubject } from './subject_normalizer.js';
+import { cleanRoom, shortenSubject, getSubjectColor } from './subject_normalizer.js';
 
-export { cleanRoom, shortenSubject };
+export { cleanRoom, shortenSubject, getSubjectColor };
 
 export function generateKWGTCodeSnippet(jsonUrl) {
   return {
@@ -234,27 +234,39 @@ export function computeClientWidgetState(timetable, simulatedDate = new Date()) 
     return d && d.lezioni && d.lezioni.length > 0 ? d.lezioni[0] : null;
   }
 
+  function finalizeState(s) {
+    const sc = getSubjectColor(s.title);
+    const nsc = getSubjectColor(s.next_title);
+    return {
+      ...s,
+      subject_color: sc.bg,
+      subject_text_color: sc.text,
+      next_subject_color: nsc.bg,
+      next_subject_text_color: nsc.text
+    };
+  }
+
   // Weekend
   if (dayIdx === 0 || dayIdx === 6) {
     const monFirst = getFirstOf("Lunedì");
-    return {
+    return finalizeState({
       ...flight,
       status: "WEEKEND",
       badge: "WEEKEND",
       title: "Buon Fine Settimana",
-      subtitle: monFirst ? `Lunedì ore ${monFirst.inizio}: ${monFirst.materia} (${monFirst.aula})` : "Riposo",
+      subtitle: monFirst ? `Lunedì ore ${monFirst.inizio}: ${monFirst.materia} (${cleanRoom(monFirst.aula)})` : "Riposo",
       room: "",
       time_left: "",
       next_title: monFirst ? monFirst.materia : "",
-      next_room: monFirst ? monFirst.aula : "",
+      next_room: monFirst ? cleanRoom(monFirst.aula) : "",
       next_time: monFirst ? monFirst.inizio : "",
       updated_at: timeStr,
       class_name: timetable.classe || "4 BINF"
-    };
+    });
   }
 
   if (!dayData || !dayData.lezioni || dayData.lezioni.length === 0) {
-    return {
+    return finalizeState({
       ...flight,
       status: "NO_LESSONS",
       badge: "LIBERO",
@@ -267,7 +279,7 @@ export function computeClientWidgetState(timetable, simulatedDate = new Date()) 
       next_time: "",
       updated_at: timeStr,
       class_name: timetable.classe || "4 BINF"
-    };
+    });
   }
 
   const lessons = dayData.lezioni;
@@ -277,28 +289,28 @@ export function computeClientWidgetState(timetable, simulatedDate = new Date()) 
   const nextDayIdx = (dayIdx + 1) % 7;
   const nextDayName = itDays[nextDayIdx < 6 && nextDayIdx > 0 ? nextDayIdx : 1];
   const nextDayFirst = getFirstOf(nextDayName);
-  const tomorrowPreview = nextDayFirst ? `${nextDayIdx === 1 ? 'Lunedì' : 'Domani'} ore ${nextDayFirst.inizio}: ${nextDayFirst.materia} (${nextDayFirst.aula})` : "Fine lezioni";
+  const tomorrowPreview = nextDayFirst ? `${nextDayIdx === 1 ? 'Lunedì' : 'Domani'} ore ${nextDayFirst.inizio}: ${nextDayFirst.materia} (${cleanRoom(nextDayFirst.aula)})` : "Fine lezioni";
 
   if (currentMinutes < firstStart) {
     const rem = firstStart - currentMinutes;
-    return {
+    return finalizeState({
       ...flight,
       status: "BEFORE_SCHOOL",
       badge: "PRIMA ORA",
       title: lessons[0].materia,
       subtitle: `Inizio ore ${lessons[0].inizio} (tra ${rem} min)`,
-      room: lessons[0].aula,
+      room: cleanRoom(lessons[0].aula),
       time_left: `${rem}m all'inizio`,
       next_title: lessons[0].materia,
-      next_room: lessons[0].aula,
+      next_room: cleanRoom(lessons[0].aula),
       next_time: lessons[0].inizio,
       updated_at: timeStr,
       class_name: timetable.classe || "4 BINF"
-    };
+    });
   }
 
   if (currentMinutes >= lastEnd) {
-    return {
+    return finalizeState({
       ...flight,
       status: "FINISHED",
       badge: "FINITO",
@@ -307,11 +319,11 @@ export function computeClientWidgetState(timetable, simulatedDate = new Date()) 
       room: "",
       time_left: "",
       next_title: nextDayFirst ? nextDayFirst.materia : "",
-      next_room: nextDayFirst ? nextDayFirst.aula : "",
+      next_room: nextDayFirst ? cleanRoom(nextDayFirst.aula) : "",
       next_time: nextDayFirst ? nextDayFirst.inizio : "",
       updated_at: timeStr,
       class_name: timetable.classe || "4 BINF"
-    };
+    });
   }
 
   for (let i = 0; i < lessons.length; i++) {
@@ -321,20 +333,20 @@ export function computeClientWidgetState(timetable, simulatedDate = new Date()) 
     if (currentMinutes >= s && currentMinutes < e) {
       const left = e - currentMinutes;
       const nextL = lessons[i + 1];
-      return {
+      return finalizeState({
         ...flight,
         status: "IN_CLASS",
         badge: "IN CORSO",
         title: lessons[i].materia,
-        subtitle: nextL ? `Poi: ${nextL.materia} (${nextL.aula})` : "Ultima ora!",
-        room: lessons[i].aula,
+        subtitle: nextL ? `Poi: ${nextL.materia} (${cleanRoom(nextL.aula)})` : "Ultima ora!",
+        room: cleanRoom(lessons[i].aula),
         time_left: `Fine tra ${left} min`,
         next_title: nextL ? nextL.materia : "Uscita",
-        next_room: nextL ? nextL.aula : "",
+        next_room: nextL ? cleanRoom(nextL.aula) : "",
         next_time: nextL ? nextL.inizio : lessons[i].fine,
         updated_at: timeStr,
         class_name: timetable.classe || "4 BINF"
-      };
+      });
     }
 
     if (i + 1 < lessons.length) {
@@ -343,27 +355,27 @@ export function computeClientWidgetState(timetable, simulatedDate = new Date()) 
         const toNext = nextS - currentMinutes;
         const gap = nextS - e;
         const isRecess = gap >= 8;
-        return {
+        return finalizeState({
           ...flight,
           status: "BREAK",
           badge: isRecess ? "RICREAZIONE" : "CAMBIO ORA",
           title: isRecess ? "Ricreazione in corso" : `Prossima: ${lessons[i + 1].materia}`,
           subtitle: isRecess
-            ? `Prossima: ${lessons[i + 1].materia} in ${lessons[i + 1].aula} (${toNext} min)`
+            ? `Prossima: ${lessons[i + 1].materia} in ${cleanRoom(lessons[i + 1].aula)} (${toNext} min)`
             : `Inizio ore ${lessons[i + 1].inizio} (tra ${toNext} min)`,
-          room: `Spostati in: ${lessons[i + 1].aula}`,
+          room: `Spostati in: ${cleanRoom(lessons[i + 1].aula)}`,
           time_left: `${toNext}m al suono`,
           next_title: lessons[i + 1].materia,
-          next_room: lessons[i + 1].aula,
+          next_room: cleanRoom(lessons[i + 1].aula),
           next_time: lessons[i + 1].inizio,
           updated_at: timeStr,
           class_name: timetable.classe || "4 BINF"
-        };
+        });
       }
     }
   }
 
-  return {
+  return finalizeState({
     ...flight,
     status: "UNKNOWN",
     badge: "SCUOLA",
@@ -376,7 +388,7 @@ export function computeClientWidgetState(timetable, simulatedDate = new Date()) 
     next_time: "",
     updated_at: timeStr,
     class_name: timetable.classe || "4 BINF"
-  };
+  });
 }
 
 /**
@@ -431,6 +443,34 @@ async function loadTimetable() {
   }
 }
 
+function cleanRoom(room) {
+  if (!room) return '';
+  const cleaned = room.trim();
+  const special = ['casa', 'partenza', 'scuola', 'uscita', 'rientro', 'terminata'];
+  for (const s of special) {
+    if (cleaned.toLowerCase() === s) {
+      return cleaned.charAt(0).toUpperCase() + cleaned.slice(1).toLowerCase();
+    }
+  }
+  if (cleaned.toLowerCase().includes('palestra')) {
+    return 'Palestra';
+  }
+  const olmoMatch = cleaned.match(/\\bolmo\\b\\s*(\\d+)/i);
+  if (olmoMatch) {
+    return \`Olmo \${olmoMatch[1]}\`;
+  }
+  const voltaMatch = cleaned.match(/([A-Za-z])\\s*(\\d{2,3})/);
+  if (voltaMatch) {
+    return \`\${voltaMatch[1].toUpperCase()} \${voltaMatch[2]}\`;
+  }
+  return cleaned
+    .replace(/\\(?[0-9]°?\\s*p\\.?\\s*(est|ovest)\\)?/gi, '')
+    .replace(/\\(?p\\.?\\s*t\\.?\\s*(est|ovest)\\)?/gi, '')
+    .replace(/\\blab\\b\\.?\\s*[^,;)]*/gi, '')
+    .replace(/[()\\-*]/g, '')
+    .trim() || cleaned;
+}
+
 function computeState(timetable, date = new Date()) {
   if (!timetable || !timetable.giorni) {
     return {
@@ -458,7 +498,7 @@ function computeState(timetable, date = new Date()) {
     return {
       badge: "WEEKEND",
       title: "Buon Fine Settimana!",
-      subtitle: monFirst ? \`Lunedì ore \${monFirst.inizio}: \${monFirst.materia} (\${monFirst.aula})\` : "Riposo",
+      subtitle: monFirst ? \`Lunedì ore \${monFirst.inizio}: \${monFirst.materia} (\${cleanRoom(monFirst.aula)})\` : "Riposo",
       room: "",
       timeLeft: "",
       accentColor: "#5856D6"
@@ -483,7 +523,7 @@ function computeState(timetable, date = new Date()) {
   const nextDayIdx = (dayIdx + 1) % 7;
   const nextDayName = IT_DAYS[nextDayIdx < 6 && nextDayIdx > 0 ? nextDayIdx : 1];
   const nextDayFirst = getFirstOf(nextDayName);
-  const tomorrowPreview = nextDayFirst ? \`\${nextDayIdx === 1 ? 'Lunedì' : 'Domani'} \${nextDayFirst.inizio}: \${nextDayFirst.materia} (\${nextDayFirst.aula})\` : "Fine lezioni";
+  const tomorrowPreview = nextDayFirst ? \`\${nextDayIdx === 1 ? 'Lunedì' : 'Domani'} \${nextDayFirst.inizio}: \${nextDayFirst.materia} (\${cleanRoom(nextDayFirst.aula)})\` : "Fine lezioni";
 
   if (currentMinutes < firstStart) {
     const rem = firstStart - currentMinutes;
@@ -491,7 +531,7 @@ function computeState(timetable, date = new Date()) {
       badge: "PRIMA ORA",
       title: lessons[0].materia,
       subtitle: \`Inizio ore \${lessons[0].inizio} (tra \${rem} min)\`,
-      room: lessons[0].aula,
+      room: cleanRoom(lessons[0].aula),
       timeLeft: \`tra \${rem}m\`,
       accentColor: "#007AFF"
     };
@@ -518,8 +558,8 @@ function computeState(timetable, date = new Date()) {
       return {
         badge: "IN CORSO",
         title: lessons[i].materia,
-        subtitle: nextL ? \`Poi: \${nextL.materia} (\${nextL.aula})\` : "Ultima ora!",
-        room: lessons[i].aula,
+        subtitle: nextL ? \`Poi: \${nextL.materia} (\${cleanRoom(nextL.aula)})\` : "Ultima ora!",
+        room: cleanRoom(lessons[i].aula),
         timeLeft: \`\${left} min rimasti\`,
         accentColor: "#30D158"
       };
@@ -533,8 +573,8 @@ function computeState(timetable, date = new Date()) {
         return {
           badge: isRecess ? "RICREAZIONE" : "CAMBIO ORA",
           title: isRecess ? "Ricreazione" : lessons[i + 1].materia,
-          subtitle: \`Prossima: \${lessons[i + 1].materia} in \${lessons[i + 1].aula}\`,
-          room: lessons[i + 1].aula,
+          subtitle: \`Prossima: \${lessons[i + 1].materia} in \${cleanRoom(lessons[i + 1].aula)}\`,
+          room: cleanRoom(lessons[i + 1].aula),
           timeLeft: \`tra \${toNext}m\`,
           accentColor: "#FF9F0A"
         };
