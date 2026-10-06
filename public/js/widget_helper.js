@@ -184,8 +184,8 @@ export function computeFlightWidgetState(timetable, simulatedDate = new Date()) 
   const colCenterBbcode = `[c=#38bdf8]───>[/c]\n[b][c=#f59e0b]${flightTime}[/c][/b]`;
   const colRightBbcode = r2 ? `[b]${s2}[/b]\n[c=#4ade80]🚩 ${r2}[/c]` : `[b]${s2}[/b]`;
 
-  const board2lines = `${s1}       ───>       ${s2}\n🚩 ${r1}     ${flightTime}     🚩 ${r2}`;
-  const flightCompact = `[b]${s1}[/b]       [c=#38bdf8]───>[/c]       [b]${s2}[/b]\n[c=#38bdf8]🚩 ${r1}[/c]     [b][c=#f59e0b]${flightTime}[/c][/b]     [c=#4ade80]🚩 ${r2}[/c]`;
+  const board2lines = `${s1}   ───>   ${s2}\n🚩 ${r1}   ${flightTime}   🚩 ${r2}`;
+  const flightCompact = `[b]${s1}[/b]   [c=#38bdf8]───>[/c]   [b]${s2}[/b]\n[c=#38bdf8]🚩 ${r1}[/c]   [b][c=#f59e0b]${flightTime}[/c][/b]   [c=#4ade80]🚩 ${r2}[/c]`;
 
   return {
     flight_visible: 1,

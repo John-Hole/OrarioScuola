@@ -338,24 +338,61 @@ def shorten_subject(name: str, is_lab: bool = False) -> str:
     if not name:
         return ""
     mapping = {
-        "INFORMATICA LAB": "INF L.",
-        "INFORMATICA": "INF L." if is_lab else "INF",
+        "INFORMATICA LAB": "INF LAB",
+        "INFORMATICA": "INF LAB" if is_lab else "INF",
         "INGLESE": "ING",
         "ITALIANO": "ITA",
+        "LETTERE": "ITA",
         "MATEMATICA": "MATE",
-        "RELIGIONE": "REL",
+        "RELIGIONE": "RELIGIONE",
         "SCIENZE MOTORIE": "MOTORIA",
-        "SISTEMI E RETI LAB": "SISTEMI L.",
-        "SISTEMI E RETI": "SISTEMI L." if is_lab else "SISTEMI",
-        "TELECOMUNICAZIONI LAB": "TELECOM L.",
-        "TELECOMUNICAZIONI": "TELECOM L." if is_lab else "TELECOM",
-        "TPSIT LAB": "TPSIT L.",
-        "TPSIT": "TPSIT L." if is_lab else "TPSIT",
+        "ED FISICA": "MOTORIA",
+        "PALESTRA": "MOTORIA",
+        "SISTEMI E RETI LAB": "SISTEMI LAB",
+        "SISTEMI E RETI": "SISTEMI LAB" if is_lab else "SISTEMI",
+        "SISTEMI LAB": "SISTEMI LAB",
+        "SISTEMI": "SISTEMI LAB" if is_lab else "SISTEMI",
+        "TELECOMUNICAZIONI LAB": "TELECOM LAB",
+        "TELECOMUNICAZIONI": "TELECOM LAB" if is_lab else "TELECOM",
+        "TPSIT LAB": "TPSIT LAB",
+        "TPSIT": "TPSIT LAB" if is_lab else "TPSIT",
         "DIRITTO ED ECONOMIA": "DIRITTO",
-        "STORIA": "STORIA"
+        "DIRITTO": "DIRITTO",
+        "STORIA": "STORIA",
+        "CASA": "Casa",
+        "SCUOLA": "Scuola"
     }
-    cleaned = name.strip().upper()
-    return mapping.get(cleaned, name.strip())
+    cleaned = re.sub(r'[.,;:]', '', name.strip().upper())
+    cleaned = re.sub(r'\s+', ' ', cleaned)
+
+    if cleaned in mapping:
+        return mapping[cleaned]
+
+    has_lab = is_lab or "LAB" in cleaned
+    if "TELECOM" in cleaned:
+        return "TELECOM LAB" if has_lab else "TELECOM"
+    if "SISTEMI" in cleaned:
+        return "SISTEMI LAB" if has_lab else "SISTEMI"
+    if "INFORMATICA" in cleaned:
+        return "INF LAB" if has_lab else "INF"
+    if "TPSIT" in cleaned:
+        return "TPSIT LAB" if has_lab else "TPSIT"
+    if "MATEMATICA" in cleaned:
+        return "MATE"
+    if "INGLESE" in cleaned:
+        return "ING"
+    if "ITALIANO" in cleaned or "LETTERE" in cleaned:
+        return "ITA"
+    if "STORIA" in cleaned:
+        return "STORIA"
+    if "RELIGIONE" in cleaned:
+        return "RELIGIONE"
+    if "MOTORIA" in cleaned or "FISICA" in cleaned or "PALESTRA" in cleaned:
+        return "MOTORIA"
+    if "DIRITTO" in cleaned:
+        return "DIRITTO"
+
+    return name.strip()
 
 
 def clean_room(room: str) -> str:
@@ -1351,6 +1388,12 @@ def main():
                     timetable_data = prev
             except Exception:
                 pass
+
+    # Pulizia garantita di tutti i nomi aula prima del salvataggio
+    for day in timetable_data.get("giorni", []):
+        for lesson in day.get("lezioni", []):
+            if "aula" in lesson and lesson["aula"]:
+                lesson["aula"] = clean_room(lesson["aula"])
 
     # Scrittura orario completo
     with open(args.output, "w", encoding="utf-8") as f:

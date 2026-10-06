@@ -4,27 +4,33 @@
  */
 
 export const SUBJECT_MAPPING = {
-  'INFORMATICA LAB': 'INF L.',
+  'INFORMATICA LAB': 'INF LAB',
   'INFORMATICA': 'INF',
   'INGLESE': 'ING',
   'ITALIANO': 'ITA',
+  'LETTERE': 'ITA',
   'MATEMATICA': 'MATE',
-  'RELIGIONE': 'REL',
+  'RELIGIONE': 'RELIGIONE',
   'SCIENZE MOTORIE': 'MOTORIA',
-  'ED. FISICA': 'MOTORIA',
+  'ED FISICA': 'MOTORIA',
   'PALESTRA': 'MOTORIA',
-  'SISTEMI E RETI LAB': 'SISTEMI L.',
+  'SISTEMI E RETI LAB': 'SISTEMI LAB',
   'SISTEMI E RETI': 'SISTEMI',
-  'SISTEMI LAB': 'SISTEMI L.',
+  'SISTEMI LAB': 'SISTEMI LAB',
   'SISTEMI': 'SISTEMI',
-  'TELECOMUNICAZIONI LAB': 'TELECOM L.',
+  'TELECOMUNICAZIONI LAB': 'TELECOM LAB',
   'TELECOMUNICAZIONI': 'TELECOM',
-  'TPSIT LAB': 'TPSIT L.',
+  'TPSIT LAB': 'TPSIT LAB',
   'TPSIT': 'TPSIT',
   'DIRITTO ED ECONOMIA': 'DIRITTO',
   'DIRITTO': 'DIRITTO',
   'STORIA': 'STORIA',
-  'TECNOLOGIE E PROGETTAZIONE': 'TPSIT'
+  'TECNOLOGIE E PROGETTAZIONE': 'TPSIT',
+  'CASA': 'Casa',
+  'SCUOLA': 'Scuola',
+  'PARTENZA': 'Partenza',
+  'USCITA': 'Uscita',
+  'RIENTRO': 'Rientro'
 };
 
 /**
@@ -84,14 +90,28 @@ export function getSubjectColor(name) {
  */
 export function shortenSubject(name, isLab = false) {
   if (!name) return '';
-  const clean = name.trim().toUpperCase();
-  if (isLab && !clean.includes('LAB')) {
-    if (clean === 'INFORMATICA') return 'INF L.';
-    if (clean === 'SISTEMI' || clean === 'SISTEMI E RETI') return 'SISTEMI L.';
-    if (clean === 'TELECOMUNICAZIONI') return 'TELECOM L.';
-    if (clean === 'TPSIT') return 'TPSIT L.';
+  const clean = name.trim().toUpperCase()
+    .replace(/[.,;:]/g, '')
+    .replace(/\s+/g, ' ');
+
+  if (SUBJECT_MAPPING[clean]) {
+    return SUBJECT_MAPPING[clean];
   }
-  return SUBJECT_MAPPING[clean] || name.trim();
+
+  const hasLab = isLab || clean.includes('LAB');
+  if (clean.includes('TELECOM')) return hasLab ? 'TELECOM LAB' : 'TELECOM';
+  if (clean.includes('SISTEMI')) return hasLab ? 'SISTEMI LAB' : 'SISTEMI';
+  if (clean.includes('INFORMATICA')) return hasLab ? 'INF LAB' : 'INF';
+  if (clean.includes('TPSIT')) return hasLab ? 'TPSIT LAB' : 'TPSIT';
+  if (clean.includes('MATEMATICA')) return 'MATE';
+  if (clean.includes('INGLESE')) return 'ING';
+  if (clean.includes('ITALIANO') || clean.includes('LETTERE')) return 'ITA';
+  if (clean.includes('STORIA')) return 'STORIA';
+  if (clean.includes('RELIGIONE')) return 'RELIGIONE';
+  if (clean.includes('MOTORIA') || clean.includes('FISICA') || clean.includes('PALESTRA')) return 'MOTORIA';
+  if (clean.includes('DIRITTO')) return 'DIRITTO';
+
+  return name.trim();
 }
 
 /**

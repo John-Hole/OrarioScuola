@@ -2834,24 +2834,26 @@ async function triggerSync() {
       }
     } catch (_) {}
 
-    // 2. Fetch diretto anti-cache su data/timetable.json con timestamp
-    const directResp = await fetch(`data/timetable.json?_t=${Date.now()}`, { cache: 'no-store' });
-    if (directResp.ok) {
-      const freshData = await directResp.json();
-      if (freshData && freshData.giorni) {
-        state.timetable = normalizeTimetableMultiHourSlots(freshData);
-        localStorage.setItem('cached_timetable', JSON.stringify(state.timetable));
-        
-        const activeId = getActiveTimetableId() || VOLTA_PRESET_ID;
-        let item = getTimetableById(activeId);
-        if (item) {
-          item.data = state.timetable;
-          item.lastUpdated = freshData.data_aggiornamento || new Date().toLocaleDateString('it-IT');
-          saveOrUpdateTimetable(item, true);
-        }
+    // 2. Fetch diretto anti-cache su data/timetable.json come fallback se /api/sync non ha risposto
+    if (!success) {
+      const directResp = await fetch(`data/timetable.json?_t=${Date.now()}`, { cache: 'no-store' });
+      if (directResp.ok) {
+        const freshData = await directResp.json();
+        if (freshData && freshData.giorni) {
+          state.timetable = normalizeTimetableMultiHourSlots(freshData);
+          localStorage.setItem('cached_timetable', JSON.stringify(state.timetable));
+          
+          const activeId = getActiveTimetableId() || VOLTA_PRESET_ID;
+          let item = getTimetableById(activeId);
+          if (item) {
+            item.data = state.timetable;
+            item.lastUpdated = freshData.data_aggiornamento || new Date().toLocaleDateString('it-IT');
+            saveOrUpdateTimetable(item, true);
+          }
 
-        render();
-        success = true;
+          render();
+          success = true;
+        }
       }
     }
 

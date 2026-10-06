@@ -43,7 +43,7 @@
 
   /* Parametri di Calibrazione Griglia Regolabili al Millimetro */
   --timeline-axis-width: 52px;
-  --timeline-slot-height: 84px;
+  --timeline-slot-height: 90px;
   --timeline-break-height: 30px;
   --timeline-divider1-offset: 0px;
   --timeline-divider2-offset: 0px;
@@ -948,14 +948,19 @@ body {
 }
 
 .lesson-card.is-active .card-active-footer {
-  display: inline-flex;
+  display: inline-flex !important;
+  visibility: visible !important;
+  opacity: 1 !important;
   margin-top: 3px;
+  z-index: 12;
 }
 
 .lesson-card.is-active {
   box-shadow: 0 0 16px rgba(56, 189, 248, 0.45), 0 4px 14px rgba(0, 0, 0, 0.4) !important;
   border: 2px solid var(--live-line-color) !important;
-  padding: 4px 8px !important;
+  padding: 3px 6px !important;
+  overflow: visible !important;
+  z-index: 10 !important;
 }
 
 .lesson-card.is-active .lesson-card-header {
@@ -963,13 +968,13 @@ body {
 }
 
 .lesson-card.is-active .subject-title {
-  font-size: 0.96rem;
-  line-height: 1.14;
+  font-size: 0.90rem !important;
+  line-height: 1.12 !important;
 }
 
 .lesson-card.is-active .room-title {
-  font-size: 0.82rem;
-  line-height: 1.1;
+  font-size: 0.80rem !important;
+  line-height: 1.08 !important;
 }
 
 /* ==========================================================================
@@ -3315,6 +3320,10 @@ body {
    - La vista giornaliera e le altre sezioni restano centrate con la UI originale
    ========================================================================== */
 @media (min-width: 700px) {
+  :root {
+    --timeline-slot-height: 92px;
+  }
+
   .app-layout {
     max-width: 100%;
     padding-left: 20px;
@@ -3327,9 +3336,9 @@ body {
     margin: 0 auto;
   }
 
-  /* La vista giornaliera resta centrata e identica alla visualizzazione originale */
+  /* La vista giornaliera resta centrata e identica alla visualizzazione originale con spazio ottimizzato */
   #view-daily {
-    max-width: 500px;
+    max-width: 520px;
     margin: 0 auto;
     width: 100%;
   }
