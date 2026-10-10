@@ -23,6 +23,8 @@ import {
   generateScriptableCode
 } from './widget_helper.js';
 
+import { getSubjectColor } from './subject_normalizer.js';
+
 import {
   getActiveTimetableId,
   setActiveTimetableId,
@@ -119,18 +121,40 @@ const state = {
   hasAutoScrolled: false,
   voltaClasses: [],
   voltaSearchQuery: '',
-  voltaFilterYear: 'all'
+  voltaFilterYear: 'all',
+  selectedSubjectFilter: null
 };
 
 const DAY_ORDER = ['Lunedì', 'Martedì', 'Mercoledì', 'Giovedì', 'Venerdì'];
 
 // Elementi DOM
 const elements = {
+  appHeader: document.querySelector('.app-header'),
   btnOpenDrawer: document.getElementById('btn-open-drawer'),
   btnViewDaily: document.getElementById('btn-view-daily'),
   btnViewWeekly: document.getElementById('btn-view-weekly'),
   viewDaily: document.getElementById('view-daily'),
   viewWeekly: document.getElementById('view-weekly'),
+
+  // Filtro Materia
+  subjectFilterWrapper: document.getElementById('subject-filter-wrapper'),
+  btnSubjectFilterToggle: document.getElementById('btn-subject-filter-toggle'),
+  filterBtnLabel: document.getElementById('filter-btn-label'),
+  headerFilterDot: document.getElementById('header-filter-dot'),
+  subjectFilterDropdown: document.getElementById('subject-filter-dropdown'),
+  filterSubjectsList: document.getElementById('filter-subjects-list'),
+  btnClearSubjectFilter: document.getElementById('btn-clear-subject-filter'),
+  activeFilterIndicator: document.getElementById('active-filter-indicator'),
+  activeFilterDot: document.getElementById('active-filter-dot'),
+  activeFilterText: document.getElementById('active-filter-text'),
+  btnDismissActiveFilter: document.getElementById('btn-dismiss-active-filter'),
+  navItemFilterSubject: document.getElementById('nav-item-filter-subject'),
+  drawerFilterSubTag: document.getElementById('drawer-filter-sub-tag'),
+
+  // Switcher Flottante Scroll
+  floatingViewSwitch: document.getElementById('floating-view-switch'),
+  btnFloatDaily: document.getElementById('btn-float-daily'),
+  btnFloatWeekly: document.getElementById('btn-float-weekly'),
 
   // Vista Giorno
   dailyDateTitle: document.getElementById('daily-date-title'),
@@ -505,8 +529,11 @@ const TIMETABLE_URL = \`\${BASE_URL}/data/timetable.json\`;
       } catch (e3) {
         console.error('[FATAL FALLBACK]', e3);
       }
-    }
-  }
+  // Popola il menu materie per il filtro rapido
+  renderSubjectFilterDropdown();
+
+  // Controllo automatico orario in background all'avvio
+  checkForTimetableUpdates(true).catch(() => {});
 
   // Avvio ciclo di aggiornamento real-time (con sospensione automatica in background)
   startLiveTimer();
@@ -531,6 +558,44 @@ function registerServiceWorker() {
 }
 
 /**
+ * Helper anti-regressione per confronto versioni orario tra server e locale
+ */
+function parseTimetableDecorrenzaTime(data) {
+  if (!data) return 0;
+  const str = `${data.data_decorrenza || ''} ${data.data_aggiornamento || ''}`;
+  const months = {
+    gennaio: 1, febbraio: 2, marzo: 3, aprile: 4, maggio: 5, giugno: 6,
+    luglio: 7, agosto: 8, settembre: 9, ottobre: 10, novembre: 11, dicembre: 12
+  };
+  const m = str.toLowerCase().match(/(\d{1,2})\s+([a-z]+)\s+(\d{4})/);
+  if (m) {
+    const d = parseInt(m[1], 10);
+    const mo = months[m[2]] || 1;
+    const y = parseInt(m[3], 10);
+    return new Date(y, mo - 1, d).getTime();
+  }
+  const iso = data.verification?.verified_at;
+  if (iso) {
+    const t = new Date(iso).getTime();
+    if (!isNaN(t)) return t;
+  }
+  return 0;
+}
+
+function isServerTimetableNewer(serverData, localData) {
+  if (!localData || !localData.giorni || localData.giorni.length === 0) return true;
+  if (!serverData || !serverData.giorni || serverData.giorni.length === 0) return false;
+
+  const serverTime = parseTimetableDecorrenzaTime(serverData);
+  const localTime = parseTimetableDecorrenzaTime(localData);
+
+  if (serverTime > 0 && localTime > 0) {
+    return serverTime > localTime;
+  }
+  return true;
+}
+
+/**
  * Caricamento orario attivo per ID (preset Volta o orario custom)
  */
 async function loadTimetableById(id) {
@@ -549,17 +614,23 @@ async function loadTimetableById(id) {
     try {
       const response = await fetch('data/timetable.json?t=' + Date.now());
       if (response.ok) {
-        state.timetable = await response.json();
-        item.data = state.timetable;
-        saveOrUpdateTimetable(item, false);
+        const fetchedData = await response.json();
+        // Anti-regressione: aggiorna solo se il file del server è più recente dei dati locali già sincronizzati
+        if (!item.data || isServerTimetableNewer(fetchedData, item.data)) {
+          state.timetable = normalizeTimetableMultiHourSlots(fetchedData);
+          item.data = state.timetable;
+          saveOrUpdateTimetable(item, false);
+        } else {
+          state.timetable = normalizeTimetableMultiHourSlots(item.data);
+        }
       } else if (item.data) {
-        state.timetable = item.data;
+        state.timetable = normalizeTimetableMultiHourSlots(item.data);
       }
     } catch (e) {
-      if (item.data) state.timetable = item.data;
+      if (item.data) state.timetable = normalizeTimetableMultiHourSlots(item.data);
     }
   } else if (item && item.data) {
-    state.timetable = item.data;
+    state.timetable = normalizeTimetableMultiHourSlots(item.data);
   }
 
   if (!state.timetable) {
@@ -1125,6 +1196,14 @@ function applyView(viewMode) {
     elements.btnViewWeekly.classList.toggle('active', isWeekly);
     elements.btnViewWeekly.setAttribute('aria-selected', isWeekly ? 'true' : 'false');
   }
+  if (elements.btnFloatDaily) {
+    elements.btnFloatDaily.classList.toggle('active', !isWeekly);
+    elements.btnFloatDaily.setAttribute('aria-selected', !isWeekly ? 'true' : 'false');
+  }
+  if (elements.btnFloatWeekly) {
+    elements.btnFloatWeekly.classList.toggle('active', isWeekly);
+    elements.btnFloatWeekly.setAttribute('aria-selected', isWeekly ? 'true' : 'false');
+  }
 }
 
 /**
@@ -1143,6 +1222,9 @@ function render() {
   } else {
     renderWeeklyView();
   }
+
+  // Applica le classi visive per evidenziare/oscurare le materie se un filtro è attivo
+  applySubjectHighlightClasses();
 }
 
 /**
@@ -1186,7 +1268,7 @@ function createDailyLessonSlot(lesson, start, end, slotClass) {
   const compactClass = isLongName ? 'compact-text' : '';
 
   slot.innerHTML = `
-    <article class="lesson-card ${themeClass} ${compactClass}" data-start="${start}" data-end="${end}">
+    <article class="lesson-card ${themeClass} ${compactClass}" data-start="${start}" data-end="${end}" data-subject="${escapeHtml(lesson.materia)}">
       <div class="lesson-card-header">
         <h2 class="subject-title">${escapeHtml(lesson.materia)}</h2>
         <div class="room-title">${escapeHtml(lesson.aula)}</div>
@@ -1197,6 +1279,19 @@ function createDailyLessonSlot(lesson, start, end, slotClass) {
       </div>
     </article>
   `;
+
+  const card = slot.querySelector('.lesson-card');
+  if (card) {
+    card.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (state.selectedSubjectFilter && isSameSubject(state.selectedSubjectFilter, lesson.materia)) {
+        selectSubjectFilter(null);
+      } else {
+        selectSubjectFilter(lesson.materia);
+      }
+    });
+  }
+
   return slot;
 }
 
@@ -1604,6 +1699,17 @@ function createGridCell(lesson, giorno, startMin, endMin, isDouble = false) {
   cell.setAttribute('data-day', giorno);
   cell.setAttribute('data-start-min', startMin);
   cell.setAttribute('data-end-min', endMin);
+  cell.setAttribute('data-subject', lesson.materia || '');
+
+  // Gestione clic interattivo per evidenziare la materia in tutta la settimana
+  cell.addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (state.selectedSubjectFilter && isSameSubject(state.selectedSubjectFilter, lesson.materia)) {
+      selectSubjectFilter(null); // Se già evidenziata, ripristina la visuale normale
+    } else {
+      selectSubjectFilter(lesson.materia); // Evidenzia la materia cliccata
+    }
+  });
 
   cell.innerHTML = `
     <div class="grid-lesson-name">${escapeHtml(lesson.materia)}</div>
@@ -1611,6 +1717,277 @@ function createGridCell(lesson, giorno, startMin, endMin, isDouble = false) {
   `;
 
   return cell;
+}
+
+/**
+ * ==========================================================================
+ * GESTIONE FILTRO ED EVIDENZIAZIONE MATERIA
+ * ==========================================================================
+ */
+
+function normalizeSubjectKey(name) {
+  if (!name) return '';
+  return name.trim().toUpperCase()
+    .replace(/[.,]/g, '')
+    .replace(/\s+/g, ' ');
+}
+
+function isSameSubject(subA, subB) {
+  if (!subA || !subB) return false;
+  const kA = normalizeSubjectKey(subA);
+  const kB = normalizeSubjectKey(subB);
+  if (kA === kB) return true;
+  // Confronto intelligente radice: es. "INFORMATICA LAB" corrisponde a "INFORMATICA"
+  const cleanA = kA.replace(/\s+LAB$/i, '').trim();
+  const cleanB = kB.replace(/\s+LAB$/i, '').trim();
+  return cleanA === cleanB;
+}
+
+function getDistinctTimetableSubjects() {
+  if (!state.timetable || !Array.isArray(state.timetable.giorni)) return [];
+  const map = new Map();
+  state.timetable.giorni.forEach(d => {
+    (d.lezioni || []).forEach(l => {
+      const name = (l.materia || '').trim();
+      if (!name) return;
+      const key = normalizeSubjectKey(name);
+      if (!map.has(key)) {
+        map.set(key, {
+          name: name,
+          key: key,
+          themeClass: getSubjectThemeClass(name),
+          color: getSubjectColor(name)
+        });
+      }
+    });
+  });
+  return Array.from(map.values()).sort((a, b) => a.name.localeCompare(b.name));
+}
+
+function toggleSubjectFilterDropdown(open) {
+  if (!elements.subjectFilterDropdown) return;
+  const shouldOpen = typeof open === 'boolean' ? open : elements.subjectFilterDropdown.classList.contains('hidden');
+  if (shouldOpen) {
+    renderSubjectFilterDropdown();
+    elements.subjectFilterDropdown.classList.remove('hidden');
+  } else {
+    elements.subjectFilterDropdown.classList.add('hidden');
+  }
+}
+
+function renderSubjectFilterDropdown() {
+  if (!elements.filterSubjectsList) return;
+  elements.filterSubjectsList.innerHTML = '';
+
+  const subjects = getDistinctTimetableSubjects();
+  if (subjects.length === 0) {
+    elements.filterSubjectsList.innerHTML = '<div style="padding: 10px; color: var(--text-dim); font-size: 0.8rem; text-align: center;">Nessuna materia trovata</div>';
+    return;
+  }
+
+  // Opzione predefinita: Tutte le materie
+  const allBtn = document.createElement('button');
+  allBtn.className = `subject-filter-item ${!state.selectedSubjectFilter ? 'active' : ''}`;
+  allBtn.innerHTML = `
+    <span class="filter-subject-color-dot" style="background-color: var(--live-blue);"></span>
+    <span>Tutte le materie (Mostra tutte)</span>
+  `;
+  allBtn.addEventListener('click', () => {
+    selectSubjectFilter(null);
+    toggleSubjectFilterDropdown(false);
+  });
+  elements.filterSubjectsList.appendChild(allBtn);
+
+  // Elenco materie con pallino colorato coordinato
+  subjects.forEach(sub => {
+    const btn = document.createElement('button');
+    const isSelected = state.selectedSubjectFilter && isSameSubject(state.selectedSubjectFilter, sub.name);
+    btn.className = `subject-filter-item ${isSelected ? 'active' : ''}`;
+    const dotBg = sub.color?.bg || '#94A3B8';
+    btn.innerHTML = `
+      <span class="filter-subject-color-dot" style="background-color: ${dotBg};"></span>
+      <span>${escapeHtml(sub.name)}</span>
+    `;
+    btn.addEventListener('click', () => {
+      selectSubjectFilter(sub.name);
+      toggleSubjectFilterDropdown(false);
+    });
+    elements.filterSubjectsList.appendChild(btn);
+  });
+}
+
+function selectSubjectFilter(subjectName) {
+  state.selectedSubjectFilter = subjectName ? subjectName.trim() : null;
+
+  // 1. Aggiorna stato pulsante nell'header
+  if (elements.filterBtnLabel) {
+    elements.filterBtnLabel.textContent = state.selectedSubjectFilter ? (state.selectedSubjectFilter.length > 11 ? state.selectedSubjectFilter.slice(0, 9) + '..' : state.selectedSubjectFilter) : 'Materia';
+  }
+  if (elements.btnSubjectFilterToggle) {
+    elements.btnSubjectFilterToggle.classList.toggle('filter-active', !!state.selectedSubjectFilter);
+  }
+  if (elements.headerFilterDot) {
+    if (state.selectedSubjectFilter) {
+      elements.headerFilterDot.classList.remove('hidden');
+      const col = getSubjectColor(state.selectedSubjectFilter);
+      elements.headerFilterDot.style.backgroundColor = col?.bg || 'var(--live-line-color)';
+    } else {
+      elements.headerFilterDot.classList.add('hidden');
+    }
+  }
+
+  // 2. Aggiorna etichetta nel Drawer Menu
+  if (elements.drawerFilterSubTag) {
+    elements.drawerFilterSubTag.textContent = state.selectedSubjectFilter || 'Tutte';
+  }
+
+  // 3. Mostra/nascondi indicatore pill flottante
+  if (elements.activeFilterIndicator) {
+    if (state.selectedSubjectFilter) {
+      elements.activeFilterIndicator.classList.remove('hidden');
+      if (elements.activeFilterText) {
+        elements.activeFilterText.textContent = `Evidenziata: ${state.selectedSubjectFilter}`;
+      }
+      if (elements.activeFilterDot) {
+        const col = getSubjectColor(state.selectedSubjectFilter);
+        elements.activeFilterDot.style.backgroundColor = col?.bg || 'var(--live-line-color)';
+      }
+    } else {
+      elements.activeFilterIndicator.classList.add('hidden');
+    }
+  }
+
+  // 4. Applica stili visivi a tutte le card
+  applySubjectHighlightClasses();
+
+  // 5. Aggiorna stato selezionato nella dropdown list se visibile
+  renderSubjectFilterDropdown();
+}
+
+function applySubjectHighlightClasses() {
+  const filter = state.selectedSubjectFilter;
+
+  // Vista Settimanale
+  const gridCells = document.querySelectorAll('.grid-cell-lesson');
+  gridCells.forEach(cell => {
+    const cardSubject = cell.getAttribute('data-subject') || '';
+    if (!filter) {
+      cell.classList.remove('subject-highlighted', 'subject-dimmed');
+    } else if (isSameSubject(cardSubject, filter)) {
+      cell.classList.add('subject-highlighted');
+      cell.classList.remove('subject-dimmed');
+    } else {
+      cell.classList.add('subject-dimmed');
+      cell.classList.remove('subject-highlighted');
+    }
+  });
+
+  // Vista Giornaliera
+  const dailyCards = document.querySelectorAll('.daily-timeline-grid .lesson-card');
+  dailyCards.forEach(card => {
+    const cardSubject = card.getAttribute('data-subject') || '';
+    if (!filter) {
+      card.classList.remove('subject-highlighted', 'subject-dimmed');
+    } else if (isSameSubject(cardSubject, filter)) {
+      card.classList.add('subject-highlighted');
+      card.classList.remove('subject-dimmed');
+    } else {
+      card.classList.add('subject-dimmed');
+      card.classList.remove('subject-highlighted');
+    }
+  });
+}
+
+/**
+ * Gestione scorrimento pagina per nascondere l'header e mostrare lo switcher flottante compatto
+ */
+function initHeaderScrollCollapse() {
+  let lastScrollY = 0;
+  const threshold = 35;
+
+  const handleScroll = () => {
+    const currentScrollY = window.scrollY || document.documentElement.scrollTop || 0;
+    const isMobile = window.innerWidth <= 650;
+
+    if (!isMobile) {
+      if (elements.appHeader) elements.appHeader.classList.remove('header-hidden');
+      if (elements.floatingViewSwitch) elements.floatingViewSwitch.classList.add('hidden');
+      return;
+    }
+
+    if (currentScrollY > threshold && currentScrollY > lastScrollY) {
+      // Scorrimento verso il basso: nascondi l'header e mostra lo switcher flottante a destra
+      if (elements.appHeader) elements.appHeader.classList.add('header-hidden');
+      if (elements.floatingViewSwitch) elements.floatingViewSwitch.classList.remove('hidden');
+      toggleSubjectFilterDropdown(false);
+    } else if (currentScrollY < lastScrollY || currentScrollY <= 15) {
+      // Scorrimento verso l'alto o arrivo in cima: ripristina l'header
+      if (elements.appHeader) elements.appHeader.classList.remove('header-hidden');
+      if (elements.floatingViewSwitch && currentScrollY <= 15) {
+        elements.floatingViewSwitch.classList.add('hidden');
+      }
+    }
+
+    lastScrollY = Math.max(0, currentScrollY);
+  };
+
+  window.addEventListener('scroll', handleScroll, { passive: true });
+}
+
+/**
+ * Controllo automatico in background di nuovi aggiornamenti orario da timetable.json
+ */
+let isCheckingUpdate = false;
+let lastAutoCheckTime = Date.now();
+
+async function checkForTimetableUpdates(silent = true) {
+  if (isCheckingUpdate || isSyncing) return;
+  isCheckingUpdate = true;
+
+  try {
+    const res = await fetch(`data/timetable.json?_t=${Date.now()}`, { cache: 'no-store' });
+    if (res.ok) {
+      const freshData = await res.json();
+      if (freshData && Array.isArray(freshData.giorni) && freshData.giorni.length > 0) {
+        const currentDecorrenza = state.timetable?.data_decorrenza || '';
+        const freshDecorrenza = freshData.data_decorrenza || '';
+        const currentUpdated = state.timetable?.data_aggiornamento || '';
+        const freshUpdated = freshData.data_aggiornamento || '';
+        const currentHash = state.timetable?.verification?.hash || '';
+        const freshHash = freshData.verification?.hash || '';
+
+        const isNewer = (freshDecorrenza && freshDecorrenza !== currentDecorrenza) ||
+                        (freshHash && currentHash && freshHash !== currentHash) ||
+                        (freshUpdated && freshUpdated !== currentUpdated);
+
+        if (isNewer) {
+          console.log(`[AUTO-SYNC] Rilevato nuovo orario (${freshDecorrenza || freshUpdated})! Aggiornamento automatico in corso...`);
+          state.timetable = normalizeTimetableMultiHourSlots(freshData);
+          localStorage.setItem('cached_timetable', JSON.stringify(state.timetable));
+
+          const activeId = getActiveTimetableId() || VOLTA_PRESET_ID;
+          let item = getTimetableById(activeId);
+          if (item) {
+            item.data = state.timetable;
+            item.lastUpdated = freshDecorrenza || freshUpdated || new Date().toLocaleDateString('it-IT');
+            saveOrUpdateTimetable(item, true);
+          }
+
+          render();
+          renderSubjectFilterDropdown();
+          updateDrawerSyncStatus();
+
+          // Feedback visivo immediato elegante
+          showSyncBanner('success', 'Orario aggiornato automaticamente!', freshDecorrenza ? `In vigore ${freshDecorrenza}` : 'Versione recente');
+          setTimeout(() => hideSyncBanner(), 3200);
+        }
+      }
+    }
+  } catch (err) {
+    console.warn('[AUTO-SYNC] Controllo orario:', err.message);
+  } finally {
+    isCheckingUpdate = false;
+  }
 }
 
 /**
@@ -1636,9 +2013,14 @@ function stopLiveTimer() {
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'visible') {
     startLiveTimer();
+    checkForTimetableUpdates(true);
   } else {
     stopLiveTimer();
   }
+});
+
+window.addEventListener('focus', () => {
+  checkForTimetableUpdates(true);
 });
 
 function tick() {
@@ -1652,6 +2034,12 @@ function tick() {
     state.lastCalendarDay = todayStr;
     state.selectedDay = getSmartDefaultDay(state.timetable.giorni, now);
     render();
+  }
+
+  // Controllo orario automatico periodico in background (ogni 15 min)
+  if (Date.now() - lastAutoCheckTime > 15 * 60 * 1000) {
+    lastAutoCheckTime = Date.now();
+    checkForTimetableUpdates(true);
   }
 
   if (state.currentView === 'daily') {
@@ -2603,6 +2991,70 @@ function setupEventListeners() {
       }
     });
   });
+
+  // Switcher Flottante a Destra durante lo Scroll (Giorno vs Settimana)
+  if (elements.btnFloatDaily) {
+    elements.btnFloatDaily.addEventListener('click', () => {
+      state.lastScheduleView = 'daily';
+      try { localStorage.setItem('orario_preferred_view', 'daily'); } catch (_) {}
+      applyView('daily');
+      render();
+    });
+  }
+
+  if (elements.btnFloatWeekly) {
+    elements.btnFloatWeekly.addEventListener('click', () => {
+      state.lastScheduleView = 'weekly';
+      try { localStorage.setItem('orario_preferred_view', 'weekly'); } catch (_) {}
+      applyView('weekly');
+      render();
+    });
+  }
+
+  // Selettore e Filtro Materia nell'Header
+  if (elements.btnSubjectFilterToggle) {
+    elements.btnSubjectFilterToggle.addEventListener('click', (e) => {
+      e.stopPropagation();
+      toggleSubjectFilterDropdown();
+    });
+  }
+
+  if (elements.btnClearSubjectFilter) {
+    elements.btnClearSubjectFilter.addEventListener('click', (e) => {
+      e.stopPropagation();
+      selectSubjectFilter(null);
+      toggleSubjectFilterDropdown(false);
+    });
+  }
+
+  if (elements.btnDismissActiveFilter) {
+    elements.btnDismissActiveFilter.addEventListener('click', (e) => {
+      e.stopPropagation();
+      selectSubjectFilter(null);
+    });
+  }
+
+  // Voce "Filtra materia" nel Drawer Laterale
+  if (elements.navItemFilterSubject) {
+    elements.navItemFilterSubject.addEventListener('click', () => {
+      toggleDrawer(false);
+      setTimeout(() => {
+        toggleSubjectFilterDropdown(true);
+      }, 250);
+    });
+  }
+
+  // Chiusura dropdown filtro cliccando all'esterno
+  document.addEventListener('click', (e) => {
+    if (elements.subjectFilterDropdown && !elements.subjectFilterDropdown.classList.contains('hidden')) {
+      if (elements.subjectFilterWrapper && !elements.subjectFilterWrapper.contains(e.target)) {
+        toggleSubjectFilterDropdown(false);
+      }
+    }
+  });
+
+  // Inizializza auto-collapse dell'header al scroll su mobile
+  initHeaderScrollCollapse();
 }
 
 
@@ -2799,16 +3251,17 @@ async function triggerSync() {
   const minSpinTimer = new Promise(resolve => setTimeout(resolve, 650));
 
   let success = false;
+  let successMessage = '';
   let errorMsg = 'Impossibile aggiornare l\'orario';
 
   try {
-    // 1. Chiamata API serverless di sync
+    // 1. Chiamata API serverless di sync diretta su Spaggiari live
     try {
       const response = await fetch('/api/sync', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          class_name: state.currentClass,
+          class_name: state.currentClass || '4 BINF',
           mode: 'single',
           force: true
         })
@@ -2816,44 +3269,100 @@ async function triggerSync() {
 
       if (response.ok) {
         const data = await response.json();
-        if (data && data.timetable && data.timetable.giorni) {
+        if (data && data.timetable && data.timetable.giorni && data.timetable.giorni.length > 0) {
           state.timetable = normalizeTimetableMultiHourSlots(data.timetable);
           localStorage.setItem('cached_timetable', JSON.stringify(state.timetable));
           
           const activeId = getActiveTimetableId() || VOLTA_PRESET_ID;
           let item = getTimetableById(activeId);
-          if (item) {
+          if (!item) {
+            item = {
+              id: activeId,
+              name: state.currentClass || '4 BINF',
+              school: 'Istituto Tecnico A. Volta',
+              type: 'preset',
+              isFavorite: true,
+              data: state.timetable
+            };
+          } else {
             item.data = state.timetable;
             item.lastUpdated = state.timetable.data_aggiornamento || new Date().toLocaleDateString('it-IT');
-            saveOrUpdateTimetable(item, true);
+          }
+          saveOrUpdateTimetable(item, true);
+
+          // Aggiorna anche Cache Storage PWA per rendere il nuovo orario offline-ready
+          if ('caches' in window) {
+            caches.open('smart-timetable-v57').then(cache => {
+              const resp = new Response(JSON.stringify(state.timetable), {
+                headers: { 'Content-Type': 'application/json' }
+              });
+              cache.put('/data/timetable.json', resp).catch(() => {});
+            }).catch(() => {});
           }
 
           render();
+          renderSubjectFilterDropdown();
           success = true;
+          successMessage = data.message || (data.updated ? 'Nuovo orario scaricato ed estratto da Spaggiari!' : 'Orario all\'ultima versione pubblicata');
         }
+      } else {
+        const errJson = await response.json().catch(() => null);
+        errorMsg = errJson?.message || `Errore server (${response.status})`;
       }
-    } catch (_) {}
+    } catch (apiErr) {
+      console.warn('[SYNC] API /api/sync non raggiungibile, provo fallback:', apiErr.message);
+    }
 
     // 2. Fetch diretto anti-cache su data/timetable.json come fallback se /api/sync non ha risposto
     if (!success) {
-      const directResp = await fetch(`data/timetable.json?_t=${Date.now()}`, { cache: 'no-store' });
-      if (directResp.ok) {
-        const freshData = await directResp.json();
-        if (freshData && freshData.giorni) {
-          state.timetable = normalizeTimetableMultiHourSlots(freshData);
-          localStorage.setItem('cached_timetable', JSON.stringify(state.timetable));
-          
-          const activeId = getActiveTimetableId() || VOLTA_PRESET_ID;
-          let item = getTimetableById(activeId);
-          if (item) {
-            item.data = state.timetable;
-            item.lastUpdated = freshData.data_aggiornamento || new Date().toLocaleDateString('it-IT');
-            saveOrUpdateTimetable(item, true);
-          }
+      try {
+        const directResp = await fetch(`data/timetable.json?_t=${Date.now()}`, { cache: 'no-store' });
+        if (directResp.ok) {
+          const freshData = await directResp.json();
+          if (freshData && freshData.giorni && freshData.giorni.length > 0) {
+            if (!state.timetable || isServerTimetableNewer(freshData, state.timetable)) {
+              state.timetable = normalizeTimetableMultiHourSlots(freshData);
+              localStorage.setItem('cached_timetable', JSON.stringify(state.timetable));
+              
+              const activeId = getActiveTimetableId() || VOLTA_PRESET_ID;
+              let item = getTimetableById(activeId);
+              if (!item) {
+                item = {
+                  id: activeId,
+                  name: state.currentClass || '4 BINF',
+                  school: 'Istituto Tecnico A. Volta',
+                  type: 'preset',
+                  isFavorite: true,
+                  data: state.timetable
+                };
+              } else {
+                item.data = state.timetable;
+                item.lastUpdated = freshData.data_aggiornamento || new Date().toLocaleDateString('it-IT');
+              }
+              saveOrUpdateTimetable(item, true);
 
-          render();
-          success = true;
+              if ('caches' in window) {
+                caches.open('smart-timetable-v57').then(cache => {
+                  const resp = new Response(JSON.stringify(state.timetable), {
+                    headers: { 'Content-Type': 'application/json' }
+                  });
+                  cache.put('/data/timetable.json', resp).catch(() => {});
+                }).catch(() => {});
+              }
+
+              render();
+              renderSubjectFilterDropdown();
+              success = true;
+              successMessage = 'Orario sincronizzato con successo!';
+            } else {
+              // I dati locali sono già aggiornati
+              success = true;
+              successMessage = 'Orario locale già all\'ultima versione pubblicata!';
+            }
+          }
         }
+      } catch (directErr) {
+        console.warn('[SYNC] Fallback timetable.json non riuscito:', directErr.message);
       }
     }
 
@@ -2863,20 +3372,10 @@ async function triggerSync() {
         if (reg) reg.update().catch(() => {});
       }).catch(() => {});
     }
-
-    if (!success) {
-      await loadTimetableData();
-      success = true;
-    }
   } catch (err) {
     console.log('[SYNC] Errore di sincronizzazione:', err.message);
-    try {
-      await loadTimetableData();
-      success = true;
-    } catch (e) {
-      success = false;
-      errorMsg = e.message || 'Errore di connessione';
-    }
+    success = false;
+    errorMsg = err.message || 'Errore di connessione';
   }
 
   await minSpinTimer;
@@ -2887,13 +3386,13 @@ async function triggerSync() {
     const formattedDate = formatItalianSyncDate(now);
 
     updateDrawerSyncStatus();
-    showSyncBanner('success', 'Sincronizzazione completata!', `Aggiornato: ${formattedDate}`);
+    showSyncBanner('success', 'Sincronizzazione completata!', successMessage || `Aggiornato: ${formattedDate}`);
 
     if (elements.syncBtnLabel) {
       elements.syncBtnLabel.textContent = 'AGGIORNATO! ✓';
     }
   } else {
-    showSyncBanner('error', 'Sincronizzazione fallita', errorMsg);
+    showSyncBanner('error', 'Sincronizzazione non riuscita', errorMsg);
     if (elements.syncBtnLabel) {
       elements.syncBtnLabel.textContent = 'ERRORE';
     }

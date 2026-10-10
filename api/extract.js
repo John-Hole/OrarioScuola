@@ -322,9 +322,9 @@ Estrai l'orario completo di tutti i giorni della settimana SOLO per la classe "$
       }
     };
 
-    const mainModel = process.env.GEMINI_MAIN_MODEL || 'gemini-3.8-flash';
-    const fallbackModel = process.env.GEMINI_FALLBACK_MODEL || 'gemini-3.5-flash-lite';
-    const modelsToTry = [mainModel, fallbackModel, 'gemini-3.6-flash', 'gemini-2.5-flash'];
+    const mainModel = process.env.GEMINI_MAIN_MODEL || 'gemini-3.5-flash-lite';
+    const fallbackModel = process.env.GEMINI_FALLBACK_MODEL || 'gemini-3.8-flash';
+    const modelsToTry = [mainModel, fallbackModel];
 
     let candidateText = null;
     let lastError = null;
@@ -335,7 +335,8 @@ Estrai l'orario completo di tutti i giorni della settimana SOLO per la classe "$
         const geminiRes = await fetch(geminiUrl, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(requestBody)
+          body: JSON.stringify(requestBody),
+          signal: AbortSignal.timeout(35000)
         });
 
         if (geminiRes.ok) {
@@ -362,8 +363,13 @@ Estrai l'orario completo di tutti i giorni della settimana SOLO per la classe "$
       });
     }
 
+    let cleanCandidate = candidateText.trim();
+    if (cleanCandidate.startsWith('```')) {
+      cleanCandidate = cleanCandidate.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '').trim();
+    }
+
     if (isListClassesMode) {
-      const parsed = JSON.parse(candidateText);
+      const parsed = JSON.parse(cleanCandidate);
       const classes = Array.isArray(parsed.classes) 
         ? parsed.classes.map(c => String(c).trim()).filter(c => c.length > 0)
         : [];
@@ -375,7 +381,7 @@ Estrai l'orario completo di tutti i giorni della settimana SOLO per la classe "$
       });
     }
 
-    const parsedTimetable = JSON.parse(candidateText);
+    const parsedTimetable = JSON.parse(cleanCandidate);
 
     // Inserisci data estrazione
     parsedTimetable.data_aggiornamento = parsedTimetable.data_aggiornamento || new Date().toLocaleDateString('it-IT');

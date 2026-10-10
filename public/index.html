@@ -13,15 +13,15 @@
   <meta name="apple-mobile-web-app-title" content="OrarioScuola">
   <link rel="icon" type="image/svg+xml" href="icons/icon.svg">
 
-  <link rel="stylesheet" href="css/style.css?v=43">
+  <link rel="stylesheet" href="css/style.css?v=44">
 </head>
 <body>
   <div id="app" class="app-layout">
     
     <!-- Top Bar Navigation (Sleek Dark Theme) -->
-    <header class="app-header">
+    <header class="app-header" id="app-header">
       <div class="header-left">
-        <button id="btn-open-drawer" class="icon-button" aria-label="Apri menu laterale">
+        <button id="btn-open-drawer" class="icon-button" aria-label="Apri menu laterale" title="Menu">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
             <line x1="3" y1="6" x2="21" y2="6"></line>
             <line x1="3" y1="12" x2="21" y2="12"></line>
@@ -39,9 +39,42 @@
       </div>
 
       <div class="header-right">
-        <!-- Spazio bilanciato pulito senza selettori -->
+        <!-- Selettore / Filtro Materia con Dropdown -->
+        <div class="subject-filter-wrapper" id="subject-filter-wrapper">
+          <button id="btn-subject-filter-toggle" class="header-filter-btn" aria-label="Filtra materia" title="Evidenzia materia">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+            </svg>
+            <span class="filter-btn-label" id="filter-btn-label">Materia</span>
+            <span class="filter-active-dot hidden" id="header-filter-dot"></span>
+          </button>
+          
+          <!-- Dropdown Flottante Selezione Materia -->
+          <div class="subject-filter-dropdown hidden" id="subject-filter-dropdown" role="menu">
+            <div class="filter-dropdown-header">
+              <span class="filter-dropdown-title">EVIDENZIA MATERIA</span>
+              <button id="btn-clear-subject-filter" class="btn-clear-filter-text">Mostra tutte</button>
+            </div>
+            <div class="filter-subjects-list" id="filter-subjects-list">
+              <!-- Popolato dinamicamente da JS -->
+            </div>
+          </div>
+        </div>
       </div>
     </header>
+
+    <!-- Switcher Flottante Compatto a Destra (appare durante lo scroll per liberare spazio) -->
+    <div id="floating-view-switch" class="floating-view-switch hidden" role="tablist" aria-label="Cambio rapido vista">
+      <button id="btn-float-daily" class="float-pill-btn active" role="tab" aria-selected="true" title="Vista Giorno">Giorno</button>
+      <button id="btn-float-weekly" class="float-pill-btn" role="tab" aria-selected="false" title="Vista Settimana">Settimana</button>
+    </div>
+
+    <!-- Indicatore Filtro Materia Attivo con rimozione rapida -->
+    <div id="active-filter-indicator" class="active-filter-indicator hidden">
+      <span class="active-filter-dot" id="active-filter-dot"></span>
+      <span id="active-filter-text" class="active-filter-text">Filtro: -</span>
+      <button id="btn-dismiss-active-filter" class="btn-dismiss-filter" aria-label="Azzera filtro" title="Mostra tutte le materie">✕</button>
+    </div>
 
     <!-- ==========================================================================
          VISTA 1: GIORNO (TIMELINE CON CARD PASTELLO E CURSORE DINAMICO)
@@ -476,6 +509,16 @@
             <span class="item-label">Orario</span>
           </div>
           <span class="item-arrow">›</span>
+        </button>
+
+        <button class="drawer-item" id="nav-item-filter-subject">
+          <div class="item-left">
+            <svg class="item-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+            </svg>
+            <span class="item-label">Filtra materia</span>
+          </div>
+          <span class="drawer-item-sub-tag" id="drawer-filter-sub-tag">Tutte</span>
         </button>
 
         <button class="drawer-item" id="nav-item-change-class">

@@ -3,7 +3,7 @@ Script di sincronizzazione ed estrazione orario scolastico Spaggiari EDT con Gem
 Supporta:
 1. Download automatico immagine orario o lettura da file locale
 2. Caching intelligente tramite hash MD5 / Last-Modified per evitare chiamate API ridondanti
-3. Estrazione visiva multimodale con Gemini 2.5 Flash e Structured Outputs (Pydantic Schema)
+3. Estrazione visiva multimodale con Gemini 3.5 Flash Lite (con fallback Gemini 3.8 Flash) e Structured Outputs
 4. Generazione automatica di timetable.json e widget_data.json per Samsung Galaxy S24
 5. Modalità --mock per test offline immediati
 """
@@ -957,12 +957,8 @@ def extract_with_fallback(
 
     client = genai.Client(api_key=api_key)
     models_to_try = [main_model]
-    if fallback_model not in models_to_try:
+    if fallback_model and fallback_model not in models_to_try:
         models_to_try.append(fallback_model)
-    # Rete di sicurezza aggiuntiva
-    for safety in ["gemini-3.6-flash", "gemini-2.5-flash"]:
-        if safety not in models_to_try:
-            models_to_try.append(safety)
 
     last_err = None
     for model in models_to_try:
@@ -1078,15 +1074,16 @@ def extract_timetable_with_gemini(
     image_path: str,
     class_name: str = "4 BINF",
     api_key: Optional[str] = None,
-    main_model: str = "gemini-3.8-flash",
-    fallback_model: str = "gemini-3.5-flash-lite",
+    main_model: str = "gemini-3.5-flash-lite",
+    fallback_model: str = "gemini-3.8-flash",
     scan_mode: str = "single"
 ) -> Dict[str, Any]:
     """
     Estrae l'orario scolastico tramite Gemini Vision.
     - Se scan_mode == 'double': esegue due scansioni indipendenti per controllo incrociato e validazione.
     - Se scan_mode == 'single': esegue una scansione singola diretta.
-    - Gestisce il fallback automatico su gemini-3.5-flash-lite.
+    - Modello primario ad altissima efficienza e basso costo: gemini-3.5-flash-lite.
+    - Fallback automatico su gemini-3.8-flash.
     """
     key = api_key or os.environ.get("GEMINI_API_KEY")
     if not key:
@@ -1168,7 +1165,7 @@ def discover_classes_from_document(file_path: str, api_key: str) -> Dict[str, An
     """
 
     client = genai.Client(api_key=api_key)
-    for model in ["gemini-3.8-flash", "gemini-3.5-flash-lite", "gemini-3.6-flash"]:
+    for model in ["gemini-3.5-flash-lite", "gemini-3.8-flash"]:
         try:
             resp = client.models.generate_content(
                 model=model,
@@ -1207,7 +1204,11 @@ def check_and_download_image(url: str, dest_path: str) -> bool:
 
     os.makedirs(os.path.dirname(dest_path), exist_ok=True)
     
-    headers = {}
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "Cache-Control": "no-cache, no-store, must-revalidate",
+        "Pragma": "no-cache"
+    }
     cache_meta_file = dest_path + ".meta"
     if os.path.exists(cache_meta_file):
         try:
@@ -1257,15 +1258,15 @@ def main():
     parser.add_argument("--mock", action="store_true", help="Usa dati realistici di simulazione senza chiamare Gemini API")
     parser.add_argument("--force", action="store_true", help="Forza la rielaborazione anche se l'hash dell'immagine non è cambiato")
     parser.add_argument("--scan-mode", choices=["single", "double"], default=None, help="Modalità scansione: 'single' (manuale) o 'double' (automatica mattutina)")
-    parser.add_argument("--main-model", type=str, default=None, help="Modello Gemini principale (default: gemini-3.8-flash o da .env)")
-    parser.add_argument("--fallback-model", type=str, default=None, help="Modello Gemini di fallback (default: gemini-3.5-flash-lite o da .env)")
+    parser.add_argument("--main-model", type=str, default=None, help="Modello Gemini principale (default: gemini-3.5-flash-lite o da .env)")
+    parser.add_argument("--fallback-model", type=str, default=None, help="Modello Gemini di fallback (default: gemini-3.8-flash o da .env)")
     parser.add_argument("--api-key", type=str, default=None, help="Chiave API Gemini (default da .env o GEMINI_API_KEY)")
     
     args = parser.parse_args()
 
     # Risoluzione parametri da env/default
-    main_model = args.main_model or os.environ.get("GEMINI_MAIN_MODEL", "gemini-3.8-flash")
-    fallback_model = args.fallback_model or os.environ.get("GEMINI_FALLBACK_MODEL", "gemini-3.5-flash-lite")
+    main_model = args.main_model or os.environ.get("GEMINI_MAIN_MODEL", "gemini-3.5-flash-lite")
+    fallback_model = args.fallback_model or os.environ.get("GEMINI_FALLBACK_MODEL", "gemini-3.8-flash")
     scan_mode = args.scan_mode or os.environ.get("SCAN_MODE", "single")
     api_key = args.api_key or os.environ.get("GEMINI_API_KEY")
     remote_url = args.url or os.environ.get("TIMETABLE_URL") or os.environ.get("TIMETABLE_IMAGE_URL")

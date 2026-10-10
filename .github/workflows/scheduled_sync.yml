@@ -2,8 +2,8 @@ name: Synchronize School Timetable (Gemini Vision)
 
 on:
   schedule:
-    # Esecuzione programmata ogni Lunedì mattina alle 06:30 Italian Time (04:30 o 05:30 UTC)
-    - cron: '30 4 * * 1'
+    # Esecuzione mirata nel fine settimana (Sabato e Domenica mattina: ore 07:00 e 11:00 orario italiano - 06:00 e 10:00 UTC)
+    - cron: '0 6,10 * * 0,6'
   workflow_dispatch:
     inputs:
       force_refresh:
@@ -61,7 +61,7 @@ jobs:
         run: |
           pip install -r scripts/requirements.txt
 
-      - name: Esegui Sincronizzazione Orario (Gemini 3.8 Flash / 3.5 Flash Lite)
+      - name: Esegui Sincronizzazione Orario (Gemini 3.5 Flash Lite / 3.8 Flash Fallback)
         if: steps.check-date.outputs.should_run == 'true'
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
@@ -74,7 +74,7 @@ jobs:
           
           CLASS_NAME="${{ inputs.target_class || '4 BINF' }}"
           
-          # Se automatico (cron mattutino): doppia scansione di verifica
+          # Se automatico (cron mattutino weekend): doppia scansione di verifica
           # Se manuale (workflow_dispatch): singola scansione (o scelta dell'utente)
           if [ "${{ github.event_name }}" = "schedule" ]; then
             SCAN_MODE="double"
@@ -83,7 +83,7 @@ jobs:
           fi
           
           echo "Modalità scansione selezionata: $SCAN_MODE"
-          python scripts/sync_timetable.py --url "$TIMETABLE_URL" --class-name "$CLASS_NAME" --scan-mode "$SCAN_MODE" $EXTRA_FLAGS
+          python scripts/sync_timetable.py --url "$TIMETABLE_URL" --class-name "$CLASS_NAME" --scan-mode "$SCAN_MODE" --main-model "gemini-3.5-flash-lite" --fallback-model "gemini-3.8-flash" $EXTRA_FLAGS
 
       - name: Commit e Push degli Aggiornamenti (se presenti)
         if: steps.check-date.outputs.should_run == 'true'
@@ -97,6 +97,7 @@ jobs:
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git add public/data/
+          git add -f scripts/.cache/hash_*.txt 2>/dev/null || true
           if git diff --staged --quiet; then
             echo "Nessuna variazione nell'orario scolastico. Commit non necessario."
           else
