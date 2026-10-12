@@ -3617,8 +3617,8 @@ body {
 @media (max-width: 650px) {
   :root {
     /* Altezza slot e pause calibrata specificamente affinché tutte le 6 ore rientrino perfettamente nello schermo senza scroll */
-    --timeline-slot-height: clamp(54px, 8.8dvh, 68px);
-    --timeline-break-height: clamp(16px, 2.5dvh, 20px);
+    --timeline-slot-height: clamp(66px, 10.4dvh, 92px);
+    --timeline-break-height: clamp(18px, 2.6dvh, 24px);
     --timeline-axis-width: 48px;
   }
 
@@ -3654,7 +3654,7 @@ body {
   }
 
   .days-nav {
-    padding: 0 10px 4px 10px;
+    padding: 0 12px 8px 12px;
     gap: 4px;
   }
 
@@ -3667,7 +3667,7 @@ body {
 
   /* Viewport timeline a filo senza margini o buchi neri in basso */
   .timeline-viewport {
-    padding: 4px 10px 6px 10px;
+    padding: 22px 12px 14px 12px;
   }
 
   .daily-timeline-grid .lesson-card {
