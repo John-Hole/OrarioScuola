@@ -101,8 +101,8 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // 4. Script applicativi (/js/): Network-First con fallback su Cache per aggiornamenti immediati
-  if (url.pathname.startsWith('/js/')) {
+  // 4. Script applicativi e Stili (/js/, /css/): Network-First con fallback su Cache per aggiornamenti immediati
+  if (url.pathname.startsWith('/js/') || url.pathname.startsWith('/css/')) {
     event.respondWith(
       fetch(event.request)
         .then((response) => {

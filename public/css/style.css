@@ -3617,7 +3617,9 @@ body {
 @media (max-width: 650px) {
   :root {
     /* Altezza slot e pause calibrata specificamente affinché tutte le 6 ore rientrino perfettamente nello schermo senza scroll */
+    --timeline-slot-height: clamp(66px, 10.4vh, 92px);
     --timeline-slot-height: clamp(66px, 10.4dvh, 92px);
+    --timeline-break-height: clamp(18px, 2.6vh, 24px);
     --timeline-break-height: clamp(18px, 2.6dvh, 24px);
     --timeline-axis-width: 48px;
   }
@@ -3698,6 +3700,12 @@ body {
   .timeline-break-bar {
     font-size: 0.68rem;
     padding: 0 6px;
+  }
+
+  .break-time-col .time-above,
+  .break-time-col .time-below {
+    font-size: 0.68rem;
+    line-height: 1;
   }
 }
 
