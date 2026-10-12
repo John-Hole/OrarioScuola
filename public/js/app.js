@@ -529,6 +529,8 @@ const TIMETABLE_URL = \`\${BASE_URL}/data/timetable.json\`;
       } catch (e3) {
         console.error('[FATAL FALLBACK]', e3);
       }
+    }
+  }
   // Popola il menu materie per il filtro rapido
   renderSubjectFilterDropdown();
 
