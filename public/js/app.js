@@ -136,20 +136,17 @@ const elements = {
   viewDaily: document.getElementById('view-daily'),
   viewWeekly: document.getElementById('view-weekly'),
 
-  // Filtro Materia
-  subjectFilterWrapper: document.getElementById('subject-filter-wrapper'),
-  btnSubjectFilterToggle: document.getElementById('btn-subject-filter-toggle'),
-  filterBtnLabel: document.getElementById('filter-btn-label'),
-  headerFilterDot: document.getElementById('header-filter-dot'),
-  subjectFilterDropdown: document.getElementById('subject-filter-dropdown'),
+  // Filtro Materia nel Drawer Laterale
+  navItemFilterSubject: document.getElementById('nav-item-filter-subject'),
+  drawerFilterAccordion: document.getElementById('drawer-filter-accordion'),
+  drawerFilterChevron: document.getElementById('drawer-filter-chevron'),
+  drawerFilterSubTag: document.getElementById('drawer-filter-sub-tag'),
   filterSubjectsList: document.getElementById('filter-subjects-list'),
   btnClearSubjectFilter: document.getElementById('btn-clear-subject-filter'),
   activeFilterIndicator: document.getElementById('active-filter-indicator'),
   activeFilterDot: document.getElementById('active-filter-dot'),
   activeFilterText: document.getElementById('active-filter-text'),
   btnDismissActiveFilter: document.getElementById('btn-dismiss-active-filter'),
-  navItemFilterSubject: document.getElementById('nav-item-filter-subject'),
-  drawerFilterSubTag: document.getElementById('drawer-filter-sub-tag'),
 
   // Switcher Flottante Scroll
   floatingViewSwitch: document.getElementById('floating-view-switch'),
@@ -1280,20 +1277,6 @@ function createDailyLessonSlot(lesson, start, end, slotClass) {
         <span class="time-left-text">Calcolo...</span>
       </div>
     </article>
-  `;
-
-  const card = slot.querySelector('.lesson-card');
-  if (card) {
-    card.addEventListener('click', (e) => {
-      e.stopPropagation();
-      if (state.selectedSubjectFilter && isSameSubject(state.selectedSubjectFilter, lesson.materia)) {
-        selectSubjectFilter(null);
-      } else {
-        selectSubjectFilter(lesson.materia);
-      }
-    });
-  }
-
   return slot;
 }
 
@@ -1766,14 +1749,20 @@ function getDistinctTimetableSubjects() {
   return Array.from(map.values()).sort((a, b) => a.name.localeCompare(b.name));
 }
 
-function toggleSubjectFilterDropdown(open) {
-  if (!elements.subjectFilterDropdown) return;
-  const shouldOpen = typeof open === 'boolean' ? open : elements.subjectFilterDropdown.classList.contains('hidden');
+function toggleSubjectFilterAccordion(open) {
+  if (!elements.drawerFilterAccordion) return;
+  const shouldOpen = typeof open === 'boolean' ? open : elements.drawerFilterAccordion.classList.contains('hidden');
   if (shouldOpen) {
     renderSubjectFilterDropdown();
-    elements.subjectFilterDropdown.classList.remove('hidden');
+    elements.drawerFilterAccordion.classList.remove('hidden');
+    if (elements.navItemFilterSubject) {
+      elements.navItemFilterSubject.classList.add('accordion-expanded');
+    }
   } else {
-    elements.subjectFilterDropdown.classList.add('hidden');
+    elements.drawerFilterAccordion.classList.add('hidden');
+    if (elements.navItemFilterSubject) {
+      elements.navItemFilterSubject.classList.remove('accordion-expanded');
+    }
   }
 }
 
@@ -1792,11 +1781,14 @@ function renderSubjectFilterDropdown() {
   allBtn.className = `subject-filter-item ${!state.selectedSubjectFilter ? 'active' : ''}`;
   allBtn.innerHTML = `
     <span class="filter-subject-color-dot" style="background-color: var(--live-blue);"></span>
-    <span>Tutte le materie (Mostra tutte)</span>
+    <span style="flex:1;">Tutte le materie (Mostra tutte)</span>
+    ${!state.selectedSubjectFilter ? '<span style="color:var(--live-line-color);font-size:0.85rem;">✓</span>' : ''}
   `;
-  allBtn.addEventListener('click', () => {
+  allBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
     selectSubjectFilter(null);
-    toggleSubjectFilterDropdown(false);
+    toggleSubjectFilterAccordion(false);
+    toggleDrawer(false);
   });
   elements.filterSubjectsList.appendChild(allBtn);
 
@@ -1808,11 +1800,17 @@ function renderSubjectFilterDropdown() {
     const dotBg = sub.color?.bg || '#94A3B8';
     btn.innerHTML = `
       <span class="filter-subject-color-dot" style="background-color: ${dotBg};"></span>
-      <span>${escapeHtml(sub.name)}</span>
+      <span style="flex:1;">${escapeHtml(sub.name)}</span>
+      ${isSelected ? '<span style="color:var(--live-line-color);font-size:0.85rem;">✓</span>' : ''}
     `;
-    btn.addEventListener('click', () => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
       selectSubjectFilter(sub.name);
-      toggleSubjectFilterDropdown(false);
+      // Passa automaticamente alla vista settimanale per visualizzare la materia evidenziata
+      applyView('weekly');
+      render();
+      toggleSubjectFilterAccordion(false);
+      toggleDrawer(false);
     });
     elements.filterSubjectsList.appendChild(btn);
   });
@@ -1821,29 +1819,12 @@ function renderSubjectFilterDropdown() {
 function selectSubjectFilter(subjectName) {
   state.selectedSubjectFilter = subjectName ? subjectName.trim() : null;
 
-  // 1. Aggiorna stato pulsante nell'header
-  if (elements.filterBtnLabel) {
-    elements.filterBtnLabel.textContent = state.selectedSubjectFilter ? (state.selectedSubjectFilter.length > 11 ? state.selectedSubjectFilter.slice(0, 9) + '..' : state.selectedSubjectFilter) : 'Materia';
-  }
-  if (elements.btnSubjectFilterToggle) {
-    elements.btnSubjectFilterToggle.classList.toggle('filter-active', !!state.selectedSubjectFilter);
-  }
-  if (elements.headerFilterDot) {
-    if (state.selectedSubjectFilter) {
-      elements.headerFilterDot.classList.remove('hidden');
-      const col = getSubjectColor(state.selectedSubjectFilter);
-      elements.headerFilterDot.style.backgroundColor = col?.bg || 'var(--live-line-color)';
-    } else {
-      elements.headerFilterDot.classList.add('hidden');
-    }
-  }
-
-  // 2. Aggiorna etichetta nel Drawer Menu
+  // 1. Aggiorna etichetta nel Drawer Menu
   if (elements.drawerFilterSubTag) {
     elements.drawerFilterSubTag.textContent = state.selectedSubjectFilter || 'Tutte';
   }
 
-  // 3. Mostra/nascondi indicatore pill flottante
+  // 2. Mostra/nascondi indicatore pill flottante
   if (elements.activeFilterIndicator) {
     if (state.selectedSubjectFilter) {
       elements.activeFilterIndicator.classList.remove('hidden');
@@ -1859,17 +1840,17 @@ function selectSubjectFilter(subjectName) {
     }
   }
 
-  // 4. Applica stili visivi a tutte le card
+  // 3. Applica stili visivi alle card (evidenziazione e attenuazione attive SOLO in vista settimanale)
   applySubjectHighlightClasses();
 
-  // 5. Aggiorna stato selezionato nella dropdown list se visibile
+  // 4. Aggiorna stato selezionato nella lista dell'accordion nel drawer
   renderSubjectFilterDropdown();
 }
 
 function applySubjectHighlightClasses() {
   const filter = state.selectedSubjectFilter;
 
-  // Vista Settimanale
+  // Vista Settimanale: evidenzia la materia selezionata e oscura le altre
   const gridCells = document.querySelectorAll('.grid-cell-lesson');
   gridCells.forEach(cell => {
     const cardSubject = cell.getAttribute('data-subject') || '';
@@ -1884,19 +1865,10 @@ function applySubjectHighlightClasses() {
     }
   });
 
-  // Vista Giornaliera
+  // Vista Giornaliera: sempre pulita, nessuna classe di attenuazione (il filtro si applica solo alla vista settimanale)
   const dailyCards = document.querySelectorAll('.daily-timeline-grid .lesson-card');
   dailyCards.forEach(card => {
-    const cardSubject = card.getAttribute('data-subject') || '';
-    if (!filter) {
-      card.classList.remove('subject-highlighted', 'subject-dimmed');
-    } else if (isSameSubject(cardSubject, filter)) {
-      card.classList.add('subject-highlighted');
-      card.classList.remove('subject-dimmed');
-    } else {
-      card.classList.add('subject-dimmed');
-      card.classList.remove('subject-highlighted');
-    }
+    card.classList.remove('subject-highlighted', 'subject-dimmed');
   });
 }
 
@@ -1921,7 +1893,7 @@ function initHeaderScrollCollapse() {
       // Scorrimento verso il basso: nascondi l'header e mostra lo switcher flottante a destra
       if (elements.appHeader) elements.appHeader.classList.add('header-hidden');
       if (elements.floatingViewSwitch) elements.floatingViewSwitch.classList.remove('hidden');
-      toggleSubjectFilterDropdown(false);
+      toggleSubjectFilterAccordion(false);
     } else if (currentScrollY < lastScrollY || currentScrollY <= 15) {
       // Scorrimento verso l'alto o arrivo in cima: ripristina l'header
       if (elements.appHeader) elements.appHeader.classList.remove('header-hidden');
@@ -3013,11 +2985,11 @@ function setupEventListeners() {
     });
   }
 
-  // Selettore e Filtro Materia nell'Header
-  if (elements.btnSubjectFilterToggle) {
-    elements.btnSubjectFilterToggle.addEventListener('click', (e) => {
+  // Filtro Materia nel Drawer Laterale (solo menu ad hamburger)
+  if (elements.navItemFilterSubject) {
+    elements.navItemFilterSubject.addEventListener('click', (e) => {
       e.stopPropagation();
-      toggleSubjectFilterDropdown();
+      toggleSubjectFilterAccordion();
     });
   }
 
@@ -3025,7 +2997,8 @@ function setupEventListeners() {
     elements.btnClearSubjectFilter.addEventListener('click', (e) => {
       e.stopPropagation();
       selectSubjectFilter(null);
-      toggleSubjectFilterDropdown(false);
+      toggleSubjectFilterAccordion(false);
+      toggleDrawer(false);
     });
   }
 
@@ -3035,25 +3008,6 @@ function setupEventListeners() {
       selectSubjectFilter(null);
     });
   }
-
-  // Voce "Filtra materia" nel Drawer Laterale
-  if (elements.navItemFilterSubject) {
-    elements.navItemFilterSubject.addEventListener('click', () => {
-      toggleDrawer(false);
-      setTimeout(() => {
-        toggleSubjectFilterDropdown(true);
-      }, 250);
-    });
-  }
-
-  // Chiusura dropdown filtro cliccando all'esterno
-  document.addEventListener('click', (e) => {
-    if (elements.subjectFilterDropdown && !elements.subjectFilterDropdown.classList.contains('hidden')) {
-      if (elements.subjectFilterWrapper && !elements.subjectFilterWrapper.contains(e.target)) {
-        toggleSubjectFilterDropdown(false);
-      }
-    }
-  });
 
   // Inizializza auto-collapse dell'header al scroll su mobile
   initHeaderScrollCollapse();
@@ -3294,7 +3248,7 @@ async function triggerSync() {
 
           // Aggiorna anche Cache Storage PWA per rendere il nuovo orario offline-ready
           if ('caches' in window) {
-            caches.open('smart-timetable-v59').then(cache => {
+            caches.open('smart-timetable-v60').then(cache => {
               const resp = new Response(JSON.stringify(state.timetable), {
                 headers: { 'Content-Type': 'application/json' }
               });
@@ -3344,7 +3298,7 @@ async function triggerSync() {
               saveOrUpdateTimetable(item, true);
 
               if ('caches' in window) {
-                caches.open('smart-timetable-v59').then(cache => {
+                caches.open('smart-timetable-v60').then(cache => {
                   const resp = new Response(JSON.stringify(state.timetable), {
                     headers: { 'Content-Type': 'application/json' }
                   });
@@ -3421,6 +3375,7 @@ function toggleDrawer(open) {
     if (document.activeElement && elements.sidebarDrawer.contains(document.activeElement)) {
       document.activeElement.blur();
     }
+    toggleSubjectFilterAccordion(false);
     elements.sidebarDrawer.classList.remove('open');
     elements.drawerOverlay.classList.remove('open');
     elements.sidebarDrawer.setAttribute('aria-hidden', 'true');

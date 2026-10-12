@@ -182,8 +182,8 @@ body {
 }
 
 .header-right {
+  width: 44px;
   min-width: 44px;
-  width: auto;
   display: flex;
   align-items: center;
   justify-content: flex-end;
@@ -3323,9 +3323,8 @@ body {
 /* ==========================================================================
    EVIDENZIAZIONE E FILTRO MATERIA (CLIC SU MATERIA O SELETTORE DEDICATO)
    ========================================================================== */
-.grid-cell-lesson,
-.daily-timeline-grid .lesson-card {
-  cursor: pointer;
+.grid-cell-lesson {
+  cursor: pointer; /* Interattivo per evidenziare materia SOLO nella vista settimanale */
   transition: transform 0.22s cubic-bezier(0.2, 0.9, 0.3, 1),
               opacity 0.22s ease,
               filter 0.22s ease,
@@ -3333,17 +3332,24 @@ body {
               border-color 0.22s ease;
 }
 
-/* Materie non corrispondenti al filtro: grigie e traslucide */
-.grid-cell-lesson.subject-dimmed,
-.daily-timeline-grid .lesson-card.subject-dimmed {
+.daily-timeline-grid .lesson-card {
+  cursor: default; /* Nessun filtro da clic nella vista giornaliera */
+  transition: transform 0.22s cubic-bezier(0.2, 0.9, 0.3, 1),
+              opacity 0.22s ease,
+              filter 0.22s ease,
+              box-shadow 0.22s ease,
+              border-color 0.22s ease;
+}
+
+/* Materie non corrispondenti al filtro: grigie e traslucide (solo vista settimanale) */
+.grid-cell-lesson.subject-dimmed {
   opacity: 0.20 !important;
   filter: grayscale(95%) !important;
   transform: scale(0.96) !important;
 }
 
-/* Materia selezionata: risalta viva col suo colore e bagliore nitido */
-.grid-cell-lesson.subject-highlighted,
-.daily-timeline-grid .lesson-card.subject-highlighted {
+/* Materia selezionata: risalta viva col suo colore e bagliore nitido (solo vista settimanale) */
+.grid-cell-lesson.subject-highlighted {
   opacity: 1 !important;
   filter: none !important;
   transform: scale(1.03) !important;
@@ -3351,6 +3357,45 @@ body {
   border: 2px solid #FFFFFF !important;
   z-index: 10 !important;
   position: relative;
+}
+
+/* Drawer Laterale - Accordion Filtro Materia */
+.drawer-item-right-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.drawer-chevron-arrow {
+  color: var(--text-dim);
+  font-size: 0.82rem;
+  transition: transform 0.2s cubic-bezier(0.2, 0.9, 0.3, 1);
+  display: inline-block;
+  user-select: none;
+}
+
+.drawer-item.accordion-expanded .drawer-chevron-arrow {
+  transform: rotate(180deg);
+  color: var(--live-line-color);
+}
+
+.drawer-filter-accordion {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--radius-sm);
+  margin: -2px 0 6px 0;
+  padding: 8px 10px;
+  animation: filterDropdownPop 0.18s cubic-bezier(0.2, 0.9, 0.3, 1);
+}
+
+.drawer-filter-accordion.hidden {
+  display: none !important;
+}
+
+.drawer-filter-list {
+  max-height: 240px;
+  overflow-y: auto;
+  padding: 4px 0 2px 0;
 }
 
 /* Selettore Dropdown Materia nell'Header */

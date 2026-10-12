@@ -52,4 +52,36 @@ assert.strictEqual(isSameSubject('TPSIT', 'TPSIT LAB.'), true);
 assert.strictEqual(isSameSubject('TELECOMUNICAZIONI', 'TELECOMUNICAZIONI LAB.'), true);
 
 console.log('✓ Corrispondenza e raggruppamento teoria/lab superato');
+
+// Test verifica posizionamento UI e regole richieste dall'utente:
+// 1. Tasto "Filtra materia" NON deve stare in alto a destra nell'header, ma SOLO nel drawer laterale
+import fs from 'node:fs';
+import path from 'node:path';
+
+const indexHtml = fs.readFileSync(path.resolve('public/index.html'), 'utf-8');
+const headerMatch = indexHtml.match(/<header\s+class="app-header"[^>]*>([\s\S]*?)<\/header>/);
+assert(headerMatch, 'index.html must contain <header class="app-header">');
+assert(!headerMatch[1].includes('id="btn-subject-filter-toggle"'), 'Header must NOT contain #btn-subject-filter-toggle (relocated to lateral drawer only)');
+assert(!headerMatch[1].includes('id="subject-filter-wrapper"'), 'Header must NOT contain #subject-filter-wrapper');
+
+const drawerMatch = indexHtml.match(/<aside\s+id="sidebar-drawer"[^>]*>([\s\S]*?)<\/aside>/);
+assert(drawerMatch, 'index.html must contain #sidebar-drawer');
+assert(drawerMatch[1].includes('id="nav-item-filter-subject"'), 'Drawer must contain #nav-item-filter-subject');
+assert(drawerMatch[1].includes('id="drawer-filter-accordion"'), 'Drawer must contain #drawer-filter-accordion');
+assert(drawerMatch[1].includes('id="filter-subjects-list"'), 'Drawer must contain #filter-subjects-list');
+
+console.log('✓ Posizionamento UI filtro materia verificato: assente da header, presente nel drawer laterale');
+
+// 2. Clic su box materia: attivo SOLO nella vista settimanale, DISATTIVATO nella vista giornaliera
+const appJs = fs.readFileSync(path.resolve('public/js/app.js'), 'utf-8');
+
+// Verifica che createDailyLessonSlot NON aggiunga listener di click per selectSubjectFilter
+const dailySlotFn = appJs.slice(appJs.indexOf('function createDailyLessonSlot'), appJs.indexOf('function createDailyDivider'));
+assert(!dailySlotFn.includes('selectSubjectFilter'), 'createDailyLessonSlot must NOT attach click handler to filter subjects (weekly view exclusive)');
+
+// Verifica che createGridCell abbia il listener di click
+const weeklyCellFn = appJs.slice(appJs.indexOf('function createGridCell'), appJs.indexOf('function normalizeSubjectKey'));
+assert(weeklyCellFn.includes('selectSubjectFilter'), 'createGridCell MUST attach click handler to filter subjects in weekly view');
+
+console.log('✓ Filtro da clic su card verificato: esclusivo per la vista settimanale (disattivato in vista giornaliera)');
 console.log('Tutti i test del filtro materia sono passati con successo!');
