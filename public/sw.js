@@ -1,4 +1,4 @@
-const CACHE_NAME = 'smart-timetable-v57';
+const CACHE_NAME = 'smart-timetable-v58';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
@@ -101,7 +101,25 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // 4. Asset statici (JS, CSS, Immagini, Icone): Stale-While-Revalidate per avvio istantaneo a 120Hz
+  // 4. Script applicativi (/js/): Network-First con fallback su Cache per aggiornamenti immediati
+  if (url.pathname.startsWith('/js/')) {
+    event.respondWith(
+      fetch(event.request)
+        .then((response) => {
+          if (response && response.status === 200) {
+            const clone = response.clone();
+            caches.open(CACHE_NAME).then((cache) => {
+              cache.put(event.request, clone).catch(() => {});
+            }).catch(() => {});
+          }
+          return response;
+        })
+        .catch(() => caches.match(event.request, { ignoreSearch: true }))
+    );
+    return;
+  }
+
+  // 5. Asset statici (CSS, Immagini, Icone): Stale-While-Revalidate per avvio istantaneo a 120Hz
   event.respondWith(
     caches.match(event.request, { ignoreSearch: true }).then((cachedResponse) => {
       const fetchPromise = fetch(event.request)
