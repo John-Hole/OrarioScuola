@@ -21,13 +21,17 @@ assert(swCacheMatch, 'sw.js must define CACHE_NAME as smart-timetable-vXX');
 console.log(`✓ sw.js has CACHE_NAME smart-timetable-v${swCacheMatch[1]}`);
 assert.strictEqual(swCacheMatch[1], jsMatch[1], `sw.js CACHE_NAME version (${swCacheMatch[1]}) must match index.html app.js version (${jsMatch[1]})!`);
 
-// 3. Check sw.js network-first for both /js/ and /css/
+// 3. Check sw.js network-first for both /js/ and /css/ and robust async offline fallbacks
 assert(
   swJs.includes("url.pathname.startsWith('/js/') || url.pathname.startsWith('/css/')") ||
   (swJs.includes("url.pathname.startsWith('/js/')") && swJs.includes("url.pathname.startsWith('/css/')")),
   'sw.js must apply Network-First caching strategy to both /js/ and /css/ to avoid serving stale assets'
 );
-console.log('✓ sw.js applies Network-First caching to /js/ and /css/');
+assert(!swJs.includes('(caches.match(') && !swJs.includes('caches.match(\'/index.html\') || caches.match(\'/\')'),
+  'sw.js must NOT evaluate caches.match() synchronously with logical OR (causes Promise truthiness bug breaking offline fallback)');
+assert(swJs.includes('await caches.match'),
+  'sw.js must properly await caches.match in catch handlers for offline fallback');
+console.log('✓ sw.js applies Network-First caching and robust async offline fallbacks');
 
 // 4. Check app.js cache references
 const appJs = fs.readFileSync(path.resolve('public/js/app.js'), 'utf-8');

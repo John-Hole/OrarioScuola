@@ -83,7 +83,13 @@ assert(!dailySlotFn.includes('selectSubjectFilter'), 'createDailyLessonSlot must
 const weeklyCellFn = appJs.slice(appJs.indexOf('function createGridCell'), appJs.indexOf('function normalizeSubjectKey'));
 assert(weeklyCellFn.includes('selectSubjectFilter'), 'createGridCell MUST attach click handler to filter subjects in weekly view');
 
+// Verifica che applySubjectHighlightClasses sincronizzi l'indicatore pill solo quando la vista è settimanale
+const highlightFn = appJs.slice(appJs.indexOf('function applySubjectHighlightClasses'), appJs.indexOf('function initHeaderScrollCollapse'));
+assert(highlightFn.includes("state.currentView === 'weekly'"), 'applySubjectHighlightClasses must check state.currentView === weekly');
+assert(highlightFn.includes('activeFilterIndicator.classList.add(\'hidden\')'), 'applySubjectHighlightClasses must hide indicator when not in weekly view or no filter');
+
 console.log('✓ Filtro da clic su card verificato: esclusivo per la vista settimanale (disattivato in vista giornaliera)');
+console.log('✓ Indicatore pill galleggiante verificato: visibile solo in vista settimanale');
 
 // 3. Strict ES module syntax check using node --input-type=module --check
 import { execFileSync } from 'node:child_process';

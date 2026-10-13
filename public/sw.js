@@ -1,4 +1,4 @@
-const CACHE_NAME = 'smart-timetable-v61';
+const CACHE_NAME = 'smart-timetable-v62';
 const STATIC_ASSETS = [
   '/',
   '/css/style.css',
@@ -76,7 +76,10 @@ self.addEventListener('fetch', (event) => {
           }
           return response;
         })
-        .catch(() => caches.match(event.request, { ignoreSearch: true }).then((cached) => cached || caches.match('/data/timetable.json')))
+        .catch(async () => {
+          const cached = await caches.match(event.request, { ignoreSearch: true });
+          return cached || (await caches.match('/data/timetable.json'));
+        })
     );
     return;
   }
@@ -94,7 +97,14 @@ self.addEventListener('fetch', (event) => {
           }
           return response;
         })
-        .catch(() => caches.match(event.request, { ignoreSearch: true }).then((cached) => cached || (url.pathname.includes('/orario-originale/') ? (caches.match('/orario-originale/index.html') || caches.match('/orario-originale/')) : (caches.match('/index.html') || caches.match('/')))))
+        .catch(async () => {
+          const cached = await caches.match(event.request, { ignoreSearch: true });
+          if (cached) return cached;
+          if (url.pathname.includes('/orario-originale/')) {
+            return (await caches.match('/orario-originale/')) || (await caches.match('/orario-originale/index.html'));
+          }
+          return (await caches.match('/')) || (await caches.match('/index.html'));
+        })
     );
     return;
   }

@@ -1825,31 +1825,32 @@ function selectSubjectFilter(subjectName) {
     elements.drawerFilterSubTag.textContent = state.selectedSubjectFilter || 'Tutte';
   }
 
-  // 2. Mostra/nascondi indicatore pill flottante
+  // 2. Applica stili visivi alle card ed aggiorna indicatore pill flottante
+  applySubjectHighlightClasses();
+
+  // 3. Aggiorna stato selezionato nella lista dell'accordion nel drawer
+  renderSubjectFilterDropdown();
+}
+
+function applySubjectHighlightClasses() {
+  const filter = state.selectedSubjectFilter;
+  const isWeekly = state.currentView === 'weekly';
+
+  // Aggiorna indicatore pill flottante (visibile solo ed esclusivamente in vista settimanale con filtro attivo)
   if (elements.activeFilterIndicator) {
-    if (state.selectedSubjectFilter) {
+    if (filter && isWeekly) {
       elements.activeFilterIndicator.classList.remove('hidden');
       if (elements.activeFilterText) {
-        elements.activeFilterText.textContent = `Evidenziata: ${state.selectedSubjectFilter}`;
+        elements.activeFilterText.textContent = `Evidenziata: ${filter}`;
       }
       if (elements.activeFilterDot) {
-        const col = getSubjectColor(state.selectedSubjectFilter);
+        const col = getSubjectColor(filter);
         elements.activeFilterDot.style.backgroundColor = col?.bg || 'var(--live-line-color)';
       }
     } else {
       elements.activeFilterIndicator.classList.add('hidden');
     }
   }
-
-  // 3. Applica stili visivi alle card (evidenziazione e attenuazione attive SOLO in vista settimanale)
-  applySubjectHighlightClasses();
-
-  // 4. Aggiorna stato selezionato nella lista dell'accordion nel drawer
-  renderSubjectFilterDropdown();
-}
-
-function applySubjectHighlightClasses() {
-  const filter = state.selectedSubjectFilter;
 
   // Vista Settimanale: evidenzia la materia selezionata e oscura le altre
   const gridCells = document.querySelectorAll('.grid-cell-lesson');
@@ -3249,7 +3250,7 @@ async function triggerSync() {
 
           // Aggiorna anche Cache Storage PWA per rendere il nuovo orario offline-ready
           if ('caches' in window) {
-            caches.open('smart-timetable-v61').then(cache => {
+            caches.open('smart-timetable-v62').then(cache => {
               const resp = new Response(JSON.stringify(state.timetable), {
                 headers: { 'Content-Type': 'application/json' }
               });
@@ -3299,7 +3300,7 @@ async function triggerSync() {
               saveOrUpdateTimetable(item, true);
 
               if ('caches' in window) {
-                caches.open('smart-timetable-v61').then(cache => {
+                caches.open('smart-timetable-v62').then(cache => {
                   const resp = new Response(JSON.stringify(state.timetable), {
                     headers: { 'Content-Type': 'application/json' }
                   });
