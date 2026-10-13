@@ -84,4 +84,31 @@ const weeklyCellFn = appJs.slice(appJs.indexOf('function createGridCell'), appJs
 assert(weeklyCellFn.includes('selectSubjectFilter'), 'createGridCell MUST attach click handler to filter subjects in weekly view');
 
 console.log('✓ Filtro da clic su card verificato: esclusivo per la vista settimanale (disattivato in vista giornaliera)');
-console.log('Tutti i test del filtro materia sono passati con successo!');
+
+// 3. Strict ES module syntax check using node --input-type=module --check
+import { execFileSync } from 'node:child_process';
+
+const jsModulesToCheck = [
+  'public/js/app.js',
+  'public/js/timeline.js',
+  'public/js/timetable_store.js',
+  'public/js/widget_helper.js',
+  'public/js/subject_normalizer.js'
+];
+
+for (const relPath of jsModulesToCheck) {
+  const filePath = path.resolve(relPath);
+  const code = fs.readFileSync(filePath);
+  try {
+    execFileSync(process.execPath, ['--input-type=module', '--check'], {
+      input: code,
+      stdio: ['pipe', 'pipe', 'pipe']
+    });
+    console.log(`✓ Sintassi ES module verificata con successo per ${relPath}`);
+  } catch (err) {
+    const errOutput = err.stderr ? err.stderr.toString() : err.message;
+    assert.fail(`Fatal SyntaxError in ${relPath}:\n${errOutput}`);
+  }
+}
+
+console.log('Tutti i test del filtro materia e sintassi ES module sono passati con successo!');

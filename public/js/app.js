@@ -1277,6 +1277,7 @@ function createDailyLessonSlot(lesson, start, end, slotClass) {
         <span class="time-left-text">Calcolo...</span>
       </div>
     </article>
+  `;
   return slot;
 }
 
@@ -3248,7 +3249,7 @@ async function triggerSync() {
 
           // Aggiorna anche Cache Storage PWA per rendere il nuovo orario offline-ready
           if ('caches' in window) {
-            caches.open('smart-timetable-v60').then(cache => {
+            caches.open('smart-timetable-v61').then(cache => {
               const resp = new Response(JSON.stringify(state.timetable), {
                 headers: { 'Content-Type': 'application/json' }
               });
@@ -3298,7 +3299,7 @@ async function triggerSync() {
               saveOrUpdateTimetable(item, true);
 
               if ('caches' in window) {
-                caches.open('smart-timetable-v60').then(cache => {
+                caches.open('smart-timetable-v61').then(cache => {
                   const resp = new Response(JSON.stringify(state.timetable), {
                     headers: { 'Content-Type': 'application/json' }
                   });
