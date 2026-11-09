@@ -1,4 +1,4 @@
-const CACHE_NAME = 'smart-timetable-v62';
+const CACHE_NAME = 'smart-timetable-v63';
 const STATIC_ASSETS = [
   '/',
   '/css/style.css',
@@ -63,22 +63,26 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // 2. Dati dinamici orario (/data/): Network-First con fallback su Cache offline
+  // 2. Dati dinamici orario (/data/): Network-First con chiave canonica senza query string
   if (url.pathname.includes('/data/')) {
+    const canonicalKey = url.pathname;
     event.respondWith(
       fetch(event.request)
         .then((response) => {
           if (response && response.status === 200) {
             const clone = response.clone();
             caches.open(CACHE_NAME).then((cache) => {
-              cache.put(event.request, clone).catch(() => {});
+              cache.put(canonicalKey, clone).catch(() => {});
             }).catch(() => {});
           }
           return response;
         })
         .catch(async () => {
-          const cached = await caches.match(event.request, { ignoreSearch: true });
-          return cached || (await caches.match('/data/timetable.json'));
+          return (
+            (await caches.match(canonicalKey)) ||
+            (await caches.match(event.request, { ignoreSearch: true })) ||
+            (await caches.match('/data/timetable.json'))
+          );
         })
     );
     return;

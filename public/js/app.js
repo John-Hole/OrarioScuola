@@ -37,6 +37,9 @@ import {
   fetchVoltaClassesList,
   loadVoltaClassTimetable,
   normalizeTimetableMultiHourSlots,
+  parseTimetableDecorrenzaTime,
+  isServerTimetableNewer,
+  computeTimetableContentSignature,
   VOLTA_PRESET_ID
 } from './timetable_store.js';
 
@@ -513,7 +516,7 @@ const TIMETABLE_URL = \`\${BASE_URL}/data/timetable.json\`;
     } catch (e2) {
       console.error('[CRITICAL FALLBACK ERROR]', e2);
       try {
-        const resp = await fetch('data/timetable.json?t=' + Date.now());
+        const resp = await fetch('data/timetable.json?t=' + Date.now(), { cache: 'no-store' });
         if (resp.ok) {
           state.timetable = await resp.json();
           state.currentClass = state.timetable.classe || '4 BINF';
@@ -557,44 +560,6 @@ function registerServiceWorker() {
 }
 
 /**
- * Helper anti-regressione per confronto versioni orario tra server e locale
- */
-function parseTimetableDecorrenzaTime(data) {
-  if (!data) return 0;
-  const str = `${data.data_decorrenza || ''} ${data.data_aggiornamento || ''}`;
-  const months = {
-    gennaio: 1, febbraio: 2, marzo: 3, aprile: 4, maggio: 5, giugno: 6,
-    luglio: 7, agosto: 8, settembre: 9, ottobre: 10, novembre: 11, dicembre: 12
-  };
-  const m = str.toLowerCase().match(/(\d{1,2})\s+([a-z]+)\s+(\d{4})/);
-  if (m) {
-    const d = parseInt(m[1], 10);
-    const mo = months[m[2]] || 1;
-    const y = parseInt(m[3], 10);
-    return new Date(y, mo - 1, d).getTime();
-  }
-  const iso = data.verification?.verified_at;
-  if (iso) {
-    const t = new Date(iso).getTime();
-    if (!isNaN(t)) return t;
-  }
-  return 0;
-}
-
-function isServerTimetableNewer(serverData, localData) {
-  if (!localData || !localData.giorni || localData.giorni.length === 0) return true;
-  if (!serverData || !serverData.giorni || serverData.giorni.length === 0) return false;
-
-  const serverTime = parseTimetableDecorrenzaTime(serverData);
-  const localTime = parseTimetableDecorrenzaTime(localData);
-
-  if (serverTime > 0 && localTime > 0) {
-    return serverTime > localTime;
-  }
-  return true;
-}
-
-/**
  * Caricamento orario attivo per ID (preset Volta o orario custom)
  */
 async function loadTimetableById(id) {
@@ -611,14 +576,18 @@ async function loadTimetableById(id) {
 
   if (item && item.type === 'preset') {
     try {
-      const response = await fetch('data/timetable.json?t=' + Date.now());
+      const response = await fetch('data/timetable.json?t=' + Date.now(), { cache: 'no-store' });
       if (response.ok) {
         const fetchedData = await response.json();
         // Anti-regressione: aggiorna solo se il file del server è più recente dei dati locali già sincronizzati
         if (!item.data || isServerTimetableNewer(fetchedData, item.data)) {
           state.timetable = normalizeTimetableMultiHourSlots(fetchedData);
           item.data = state.timetable;
+          item.lastUpdated = fetchedData.data_decorrenza || fetchedData.data_aggiornamento || item.lastUpdated;
           saveOrUpdateTimetable(item, false);
+          try {
+            localStorage.setItem('cached_timetable', JSON.stringify(state.timetable));
+          } catch (_) {}
         } else {
           state.timetable = normalizeTimetableMultiHourSlots(item.data);
         }
@@ -643,7 +612,7 @@ async function loadTimetableById(id) {
 
   if (!state.timetable) {
     try {
-      const resp = await fetch('data/timetable.json?t=' + Date.now());
+      const resp = await fetch('data/timetable.json?t=' + Date.now(), { cache: 'no-store' });
       if (resp.ok) {
         state.timetable = await resp.json();
         setActiveTimetableId(VOLTA_PRESET_ID);
@@ -1918,6 +1887,12 @@ let lastAutoCheckTime = Date.now();
 
 async function checkForTimetableUpdates(silent = true) {
   if (isCheckingUpdate || isSyncing) return;
+
+  const activeId = getActiveTimetableId() || VOLTA_PRESET_ID;
+  const activeItem = getTimetableById(activeId);
+  const isPresetActive = activeId === VOLTA_PRESET_ID || activeItem?.type === 'preset';
+  if (!isPresetActive) return;
+
   isCheckingUpdate = true;
 
   try {
@@ -1925,37 +1900,43 @@ async function checkForTimetableUpdates(silent = true) {
     if (res.ok) {
       const freshData = await res.json();
       if (freshData && Array.isArray(freshData.giorni) && freshData.giorni.length > 0) {
-        const currentDecorrenza = state.timetable?.data_decorrenza || '';
-        const freshDecorrenza = freshData.data_decorrenza || '';
-        const currentUpdated = state.timetable?.data_aggiornamento || '';
-        const freshUpdated = freshData.data_aggiornamento || '';
-        const currentHash = state.timetable?.verification?.hash || '';
-        const freshHash = freshData.verification?.hash || '';
+        const sameClass = !state.timetable?.classe || !freshData.classe ||
+          state.timetable.classe.trim().toLowerCase() === freshData.classe.trim().toLowerCase();
 
-        const isNewer = (freshDecorrenza && freshDecorrenza !== currentDecorrenza) ||
-                        (freshHash && currentHash && freshHash !== currentHash) ||
-                        (freshUpdated && freshUpdated !== currentUpdated);
+        if (sameClass && isServerTimetableNewer(freshData, state.timetable)) {
+          const freshDecorrenza = freshData.data_decorrenza || '';
+          const freshUpdated = freshData.data_aggiornamento || '';
+          const contentChanged = !state.timetable ||
+            computeTimetableContentSignature(freshData) !== computeTimetableContentSignature(state.timetable);
 
-        if (isNewer) {
           console.log(`[AUTO-SYNC] Rilevato nuovo orario (${freshDecorrenza || freshUpdated})! Aggiornamento automatico in corso...`);
           state.timetable = normalizeTimetableMultiHourSlots(freshData);
           localStorage.setItem('cached_timetable', JSON.stringify(state.timetable));
+          localStorage.setItem('orario_scuola_last_sync_timestamp', new Date().toISOString());
 
-          const activeId = getActiveTimetableId() || VOLTA_PRESET_ID;
-          let item = getTimetableById(activeId);
-          if (item) {
-            item.data = state.timetable;
-            item.lastUpdated = freshDecorrenza || freshUpdated || new Date().toLocaleDateString('it-IT');
-            saveOrUpdateTimetable(item, true);
+          if (activeItem) {
+            activeItem.data = state.timetable;
+            activeItem.lastUpdated = freshDecorrenza || freshUpdated || new Date().toLocaleDateString('it-IT');
+            saveOrUpdateTimetable(activeItem, true);
+          }
+
+          if ('caches' in window) {
+            caches.open('smart-timetable-v63').then(cache => {
+              const resp = new Response(JSON.stringify(state.timetable), {
+                headers: { 'Content-Type': 'application/json' }
+              });
+              cache.put('/data/timetable.json', resp).catch(() => {});
+            }).catch(() => {});
           }
 
           render();
           renderSubjectFilterDropdown();
           updateDrawerSyncStatus();
 
-          // Feedback visivo immediato elegante
-          showSyncBanner('success', 'Orario aggiornato automaticamente!', freshDecorrenza ? `In vigore ${freshDecorrenza}` : 'Versione recente');
-          setTimeout(() => hideSyncBanner(), 3200);
+          if (contentChanged) {
+            // Feedback visivo immediato elegante (showSyncBanner gestisce la chiusura automatica)
+            showSyncBanner('success', 'Orario aggiornato automaticamente!', freshDecorrenza ? `In vigore ${freshDecorrenza}` : 'Versione recente');
+          }
         }
       }
     }
@@ -3209,8 +3190,14 @@ async function triggerSync() {
   const minSpinTimer = new Promise(resolve => setTimeout(resolve, 650));
 
   let success = false;
+  let apiExplicitError = false;
   let successMessage = '';
   let errorMsg = 'Impossibile aggiornare l\'orario';
+
+  const activeId = getActiveTimetableId() || VOLTA_PRESET_ID;
+  const activeItem = getTimetableById(activeId);
+  const isPresetActive = activeId === VOLTA_PRESET_ID || activeItem?.type === 'preset';
+  const requestedClass = state.currentClass || (state.timetable && state.timetable.classe) || '4 BINF';
 
   try {
     // 1. Chiamata API serverless di sync diretta su Spaggiari live
@@ -3219,60 +3206,70 @@ async function triggerSync() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          class_name: state.currentClass || '4 BINF',
+          class_name: requestedClass,
           mode: 'single',
-          force: true
+          force: false
         })
       });
 
-      if (response.ok) {
-        const data = await response.json();
-        if (data && data.timetable && data.timetable.giorni && data.timetable.giorni.length > 0) {
-          state.timetable = normalizeTimetableMultiHourSlots(data.timetable);
-          localStorage.setItem('cached_timetable', JSON.stringify(state.timetable));
-          
-          const activeId = getActiveTimetableId() || VOLTA_PRESET_ID;
-          let item = getTimetableById(activeId);
-          if (!item) {
-            item = {
-              id: activeId,
-              name: state.currentClass || '4 BINF',
-              school: 'Istituto Tecnico A. Volta',
-              type: 'preset',
-              isFavorite: true,
-              data: state.timetable
-            };
-          } else {
-            item.data = state.timetable;
-            item.lastUpdated = state.timetable.data_aggiornamento || new Date().toLocaleDateString('it-IT');
-          }
-          saveOrUpdateTimetable(item, true);
+      const data = await response.json().catch(() => null);
+      if (response.ok && data && data.status !== 'error') {
+        const hasValidTimetable = data.timetable && Array.isArray(data.timetable.giorni) && data.timetable.giorni.length > 0;
+        const returnedSameClass = !data.timetable?.classe ||
+          data.timetable.classe.trim().toLowerCase() === requestedClass.trim().toLowerCase();
 
-          // Aggiorna anche Cache Storage PWA per rendere il nuovo orario offline-ready
-          if ('caches' in window) {
-            caches.open('smart-timetable-v62').then(cache => {
-              const resp = new Response(JSON.stringify(state.timetable), {
-                headers: { 'Content-Type': 'application/json' }
-              });
-              cache.put('/data/timetable.json', resp).catch(() => {});
-            }).catch(() => {});
+        if (hasValidTimetable && returnedSameClass) {
+          const shouldApply = Boolean(data.updated) || !state.timetable || isServerTimetableNewer(data.timetable, state.timetable);
+          if (shouldApply) {
+            state.timetable = normalizeTimetableMultiHourSlots(data.timetable);
+            localStorage.setItem('cached_timetable', JSON.stringify(state.timetable));
+
+            let item = activeItem;
+            if (!item) {
+              item = {
+                id: activeId,
+                name: requestedClass,
+                school: 'Istituto Tecnico A. Volta',
+                type: isPresetActive ? 'preset' : 'volta_class',
+                isFavorite: isPresetActive,
+                data: state.timetable
+              };
+            } else {
+              item.data = state.timetable;
+              item.lastUpdated = state.timetable.data_decorrenza || state.timetable.data_aggiornamento || new Date().toLocaleDateString('it-IT');
+            }
+            saveOrUpdateTimetable(item, true);
+
+            // Aggiorna anche Cache Storage PWA solo per il preset ufficiale
+            if (isPresetActive && 'caches' in window) {
+              caches.open('smart-timetable-v63').then(cache => {
+                const resp = new Response(JSON.stringify(state.timetable), {
+                  headers: { 'Content-Type': 'application/json' }
+                });
+                cache.put('/data/timetable.json', resp).catch(() => {});
+              }).catch(() => {});
+            }
+
+            render();
+            renderSubjectFilterDropdown();
           }
 
-          render();
-          renderSubjectFilterDropdown();
           success = true;
-          successMessage = data.message || (data.updated ? 'Nuovo orario scaricato ed estratto da Spaggiari!' : 'Orario all\'ultima versione pubblicata');
+          successMessage = data.message || (data.updated ? 'Nuovo orario scaricato ed estratto da Spaggiari!' : 'Orario già all\'ultima versione pubblicata da Spaggiari');
+        } else if (!data.updated && state.timetable) {
+          success = true;
+          successMessage = data.message || 'Orario già aggiornato all\'ultima versione pubblicata da Spaggiari';
         }
       } else {
-        const errJson = await response.json().catch(() => null);
-        errorMsg = errJson?.message || `Errore server (${response.status})`;
+        apiExplicitError = true;
+        errorMsg = data?.message || `Errore server (${response.status})`;
       }
     } catch (apiErr) {
       console.warn('[SYNC] API /api/sync non raggiungibile, provo fallback:', apiErr.message);
     }
 
-    // 2. Fetch diretto anti-cache su data/timetable.json come fallback se /api/sync non ha risposto
-    if (!success) {
+    // 2. Fetch diretto anti-cache su data/timetable.json come fallback solo per il preset 4 BINF
+    if (!success && isPresetActive) {
       try {
         const directResp = await fetch(`data/timetable.json?_t=${Date.now()}`, { cache: 'no-store' });
         if (directResp.ok) {
@@ -3281,13 +3278,12 @@ async function triggerSync() {
             if (!state.timetable || isServerTimetableNewer(freshData, state.timetable)) {
               state.timetable = normalizeTimetableMultiHourSlots(freshData);
               localStorage.setItem('cached_timetable', JSON.stringify(state.timetable));
-              
-              const activeId = getActiveTimetableId() || VOLTA_PRESET_ID;
-              let item = getTimetableById(activeId);
+
+              let item = activeItem;
               if (!item) {
                 item = {
                   id: activeId,
-                  name: state.currentClass || '4 BINF',
+                  name: requestedClass,
                   school: 'Istituto Tecnico A. Volta',
                   type: 'preset',
                   isFavorite: true,
@@ -3295,12 +3291,12 @@ async function triggerSync() {
                 };
               } else {
                 item.data = state.timetable;
-                item.lastUpdated = freshData.data_aggiornamento || new Date().toLocaleDateString('it-IT');
+                item.lastUpdated = freshData.data_decorrenza || freshData.data_aggiornamento || new Date().toLocaleDateString('it-IT');
               }
               saveOrUpdateTimetable(item, true);
 
               if ('caches' in window) {
-                caches.open('smart-timetable-v62').then(cache => {
+                caches.open('smart-timetable-v63').then(cache => {
                   const resp = new Response(JSON.stringify(state.timetable), {
                     headers: { 'Content-Type': 'application/json' }
                   });
@@ -3311,9 +3307,9 @@ async function triggerSync() {
               render();
               renderSubjectFilterDropdown();
               success = true;
-              successMessage = 'Orario sincronizzato con successo!';
-            } else {
-              // I dati locali sono già aggiornati
+              successMessage = 'Orario sincronizzato dal server!';
+            } else if (!apiExplicitError) {
+              // Solo se /api/sync non ha restituito un errore esplicito consideriamo valido il dato locale
               success = true;
               successMessage = 'Orario locale già all\'ultima versione pubblicata!';
             }

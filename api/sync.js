@@ -23,6 +23,14 @@ const CLASS_SPAGGIARI_MAP = {
   '4 BINF': 'https://cspace.spaggiari.eu/pub/PGIT0005/orario/classi/edc0000119p00001s3fffffffffffffff_4_binf_ac.png'
 };
 
+function hasLessons(timetable) {
+  return Boolean(
+    timetable &&
+    Array.isArray(timetable.giorni) &&
+    timetable.giorni.some(d => Array.isArray(d?.lezioni) && d.lezioni.length > 0)
+  );
+}
+
 const DEFAULT_SCHOOL_HOURS = [
   { ora: 1, start: '08:00', end: '08:54', startMin: 480, endMin: 534 },
   { ora: 2, start: '08:58', end: '09:48', startMin: 538, endMin: 588 },
@@ -135,19 +143,30 @@ export default async function handler(req, res) {
   }
 
   try {
-    let className = '4 BINF';
-    let force = false;
-
+    let parsedBody = {};
     if (req.body) {
-      const body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
-      if (body) {
-        if (body.class_name) className = body.class_name;
-        if (body.force) force = true;
+      try {
+        parsedBody = (typeof req.body === 'string' ? JSON.parse(req.body) : req.body) || {};
+      } catch (_) {
+        parsedBody = {};
       }
-    } else if (req.query) {
-      if (req.query.class) className = req.query.class;
-      if (req.query.force === 'true' || req.query.force === '1') force = true;
     }
+
+    const query = req.query || {};
+    const className = String(
+      parsedBody.class_name ||
+      parsedBody.class ||
+      query.class ||
+      query.class_name ||
+      '4 BINF'
+    ).trim();
+    const force = Boolean(
+      parsedBody.force === true ||
+      parsedBody.force === 'true' ||
+      parsedBody.force === '1' ||
+      query.force === 'true' ||
+      query.force === '1'
+    );
 
     const timetablePath = path.join(process.cwd(), 'public', 'data', 'timetable.json');
     let localTimetable = null;
@@ -155,190 +174,237 @@ export default async function handler(req, res) {
     if (fs.existsSync(timetablePath)) {
       try {
         const raw = fs.readFileSync(timetablePath, 'utf-8');
-        localTimetable = JSON.parse(raw);
-        if (localTimetable && localTimetable.giorni) {
-          localTimetable.giorni.forEach(day => {
+        const parsedLocal = JSON.parse(raw);
+        if (parsedLocal && Array.isArray(parsedLocal.giorni)) {
+          parsedLocal.giorni.forEach(day => {
             (day.lezioni || []).forEach(l => {
               if (l.aula) l.aula = cleanRoom(l.aula);
             });
           });
         }
+        const localClass = (parsedLocal?.classe || '').trim().toLowerCase();
+        if (hasLessons(parsedLocal) && (!localClass || localClass === className.toLowerCase())) {
+          localTimetable = parsedLocal;
+        }
       } catch (_) {}
     }
 
-    let spaggiariUrl = CLASS_SPAGGIARI_MAP[className];
+    let spaggiariUrl = Object.entries(CLASS_SPAGGIARI_MAP).find(
+      ([k]) => k.toLowerCase() === className.toLowerCase()
+    )?.[1];
     if (!spaggiariUrl) {
       try {
         const voltaPath = path.join(process.cwd(), 'public', 'data', 'volta_classes.json');
         if (fs.existsSync(voltaPath)) {
           const vClasses = JSON.parse(fs.readFileSync(voltaPath, 'utf-8'));
-          const found = vClasses.find(c => c.name.toLowerCase().trim() === className.toLowerCase().trim());
+          const found = vClasses.find(c => c.name.toLowerCase().trim() === className.toLowerCase());
           if (found && found.url) spaggiariUrl = found.url;
         }
       } catch (_) {}
     }
-    const apiKey = process.env.GEMINI_API_KEY;
 
-    if (spaggiariUrl && apiKey) {
-      try {
-        // 1. Scarica l'immagine live da Spaggiari con cache-buster esplicito
-        const freshUrl = spaggiariUrl + (spaggiariUrl.includes('?') ? '&' : '?') + '_t=' + Date.now();
-        const imgRes = await fetch(freshUrl, {
-          headers: {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
-            'Cache-Control': 'no-cache, no-store, must-revalidate',
-            'Pragma': 'no-cache'
-          },
-          cache: 'no-store'
-        });
-
-        if (imgRes.ok) {
-          const arrayBuffer = await imgRes.arrayBuffer();
-          const buffer = Buffer.from(arrayBuffer);
-          const liveHash = crypto.createHash('md5').update(buffer).digest('hex');
-
-          // Verifica se l'immagine è cambiata rispetto alla cache salvata (su file o nei metadati del JSON)
-          let cachedHash = localTimetable?.verification?.hash || null;
-          const hashFilePath = path.join(process.cwd(), 'scripts', '.cache', `hash_${className.replace(/\s+/g, '_')}.txt`);
-          if (fs.existsSync(hashFilePath)) {
-            try {
-              cachedHash = fs.readFileSync(hashFilePath, 'utf-8').trim() || cachedHash;
-            } catch (_) {}
-          }
-
-          const hasChanged = !cachedHash || liveHash !== cachedHash;
-
-          if (hasChanged || force) {
-            console.log(`[SYNC] Immagine aggiornata o sync forzato (Hash live: ${liveHash}, cache: ${cachedHash}). Chiamo Gemini Vision...`);
-
-            const requestBody = {
-              contents: [
-                {
-                  role: "user",
-                  parts: [
-                    { text: PROMPT_INSTRUCTIONS },
-                    {
-                      inlineData: {
-                        mimeType: 'image/png',
-                        data: buffer.toString('base64')
-                      }
-                    }
-                  ]
-                }
-              ],
-              generationConfig: {
-                temperature: 0.1,
-                responseMimeType: "application/json",
-                responseSchema: TIMETABLE_SCHEMA
-              }
-            };
-
-            const modelsToTry = [
-              process.env.GEMINI_MAIN_MODEL || 'gemini-3.5-flash-lite',
-              process.env.GEMINI_FALLBACK_MODEL || 'gemini-3.8-flash'
-            ];
-
-            let extractedData = null;
-            let lastModelError = null;
-
-            for (const model of modelsToTry) {
-              // Fino a 2 tentativi per modello in caso di piccolo glitch di rete
-              for (let attempt = 1; attempt <= 2; attempt++) {
-                try {
-                  const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
-                  const geminiRes = await fetch(geminiUrl, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(requestBody),
-                    signal: AbortSignal.timeout(35000)
-                  });
-
-                  if (geminiRes.ok) {
-                    const gJson = await geminiRes.json();
-                    let rawText = gJson?.candidates?.[0]?.content?.parts?.[0]?.text;
-                    if (rawText) {
-                      let cleanText = rawText.trim();
-                      if (cleanText.startsWith('```')) {
-                        cleanText = cleanText.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '').trim();
-                      }
-                      extractedData = JSON.parse(cleanText);
-                      console.log(`[SYNC] Successo con modello: ${model} (tentativo ${attempt})`);
-                      break;
-                    }
-                  } else {
-                    const errText = await geminiRes.text();
-                    lastModelError = `HTTP ${geminiRes.status}: ${errText.slice(0, 100)}`;
-                    console.warn(`[SYNC] Modello ${model} risposta non OK (tentativo ${attempt}): ${geminiRes.status}`);
-                  }
-                } catch (e) {
-                  lastModelError = e.message;
-                  console.warn(`[SYNC] Modello ${model} fallito (tentativo ${attempt}):`, e.message);
-                }
-                if (extractedData) break;
-              }
-              if (extractedData) break;
-            }
-
-            if (extractedData && extractedData.giorni && extractedData.giorni.length > 0) {
-              const cleanData = normalizeTimetableMultiHourSlots(extractedData);
-              cleanData.verification = {
-                verified: true,
-                status: 'LIVE_SPAGGIARI_SYNC',
-                hash: liveHash,
-                verified_at: new Date().toISOString()
-              };
-
-              // Aggiorna file cache se scrivibile
-              try {
-                if (fs.existsSync(timetablePath)) {
-                  fs.writeFileSync(timetablePath, JSON.stringify(cleanData, null, 2), 'utf-8');
-                }
-                if (fs.existsSync(hashFilePath)) {
-                  fs.writeFileSync(hashFilePath, liveHash, 'utf-8');
-                }
-              } catch (_) {}
-
-              return res.status(200).json({
-                status: 'success',
-                updated: true,
-                class_name: className,
-                message: 'Nuovo orario Spaggiari sincronizzato ed estratto con successo!',
-                timetable: cleanData
-              });
-            } else {
-              // L'immagine è nuova ma l'estrazione non è andata a buon fine
-              console.error('[SYNC ERROR] Immagine nuova rilevata ma estrazione fallita su tutti i modelli.');
-              return res.status(503).json({
-                status: 'error',
-                updated: false,
-                class_name: className,
-                message: 'Nuovo orario rilevato su Spaggiari, ma i server di analisi visiva sono momentaneamente occupati. Riprova tra un istante.',
-                error_detail: lastModelError,
-                timetable: localTimetable
-              });
-            }
-          } else {
-            console.log(`[SYNC] Immagine Spaggiari immutata (${liveHash.slice(0, 8)}). Restituisco orario esistente.`);
-            return res.status(200).json({
-              status: 'success',
-              updated: false,
-              class_name: className,
-              message: 'Orario già aggiornato all\'ultima versione pubblicata da Spaggiari',
-              timetable: localTimetable
-            });
-          }
-        }
-      } catch (syncErr) {
-        console.warn('[SYNC FETCH ERROR]', syncErr.message);
-      }
+    if (!spaggiariUrl) {
+      return res.status(400).json({
+        status: 'error',
+        updated: false,
+        class_name: className,
+        message: `Nessun URL Spaggiari trovato per la classe '${className}'.`,
+        timetable: null
+      });
     }
 
-    return res.status(200).json({
-      status: 'success',
+    const apiKey = process.env.GEMINI_API_KEY;
+
+    // 1. Scarica l'immagine live da Spaggiari con cache-buster esplicito
+    let buffer;
+    try {
+      const freshUrl = spaggiariUrl + (spaggiariUrl.includes('?') ? '&' : '?') + '_t=' + Date.now();
+      const imgRes = await fetch(freshUrl, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache'
+        },
+        cache: 'no-store',
+        signal: AbortSignal.timeout(15000)
+      });
+
+      if (!imgRes.ok) {
+        return res.status(502).json({
+          status: 'error',
+          updated: false,
+          class_name: className,
+          message: `Spaggiari ha restituito HTTP ${imgRes.status} durante il controllo live.`,
+          timetable: null
+        });
+      }
+
+      const arrayBuffer = await imgRes.arrayBuffer();
+      buffer = Buffer.from(arrayBuffer);
+    } catch (syncErr) {
+      console.warn('[SYNC FETCH ERROR]', syncErr.message);
+      return res.status(502).json({
+        status: 'error',
+        updated: false,
+        class_name: className,
+        message: `Impossibile raggiungere Spaggiari per il controllo live: ${syncErr.message}`,
+        timetable: null
+      });
+    }
+
+    const liveHash = crypto.createHash('md5').update(buffer).digest('hex');
+
+    // Verifica se l'immagine è cambiata rispetto alla cache salvata (nel JSON della stessa classe o su file)
+    let cachedHash = localTimetable?.verification?.hash || null;
+    const hashFilePath = path.join(process.cwd(), 'scripts', '.cache', `hash_${className.replace(/\s+/g, '_')}.txt`);
+    if (fs.existsSync(hashFilePath)) {
+      try {
+        cachedHash = fs.readFileSync(hashFilePath, 'utf-8').trim() || cachedHash;
+      } catch (_) {}
+    }
+
+    const hasChanged = !cachedHash || liveHash !== cachedHash;
+
+    if (!hasChanged && !force && localTimetable) {
+      console.log(`[SYNC] Immagine Spaggiari immutata (${liveHash.slice(0, 8)}). Restituisco orario esistente.`);
+      return res.status(200).json({
+        status: 'success',
+        updated: false,
+        live_verified: true,
+        live_hash: liveHash,
+        class_name: className,
+        message: 'Orario già aggiornato all\'ultima versione pubblicata da Spaggiari',
+        timetable: localTimetable
+      });
+    }
+
+    if (!apiKey) {
+      return res.status(503).json({
+        status: 'error',
+        updated: false,
+        live_hash: liveHash,
+        class_name: className,
+        message: 'Nuovo orario rilevato su Spaggiari (o aggiornamento richiesto), ma GEMINI_API_KEY non è configurata sul server.',
+        timetable: null
+      });
+    }
+
+    console.log(`[SYNC] Immagine aggiornata o sync forzato (Hash live: ${liveHash}, cache: ${cachedHash}). Chiamo Gemini Vision...`);
+
+    const requestBody = {
+      contents: [
+        {
+          role: "user",
+          parts: [
+            { text: `${PROMPT_INSTRUCTIONS}\n\nCLASSE TARGET: "${className}".` },
+            {
+              inlineData: {
+                mimeType: 'image/png',
+                data: buffer.toString('base64')
+              }
+            }
+          ]
+        }
+      ],
+      generationConfig: {
+        temperature: 0.1,
+        responseMimeType: "application/json",
+        responseSchema: TIMETABLE_SCHEMA
+      }
+    };
+
+    const modelsToTry = [
+      process.env.GEMINI_MAIN_MODEL || 'gemini-3.5-flash-lite',
+      process.env.GEMINI_FALLBACK_MODEL || 'gemini-3.8-flash'
+    ];
+
+    let extractedData = null;
+    let lastModelError = null;
+
+    for (const model of modelsToTry) {
+      // Fino a 2 tentativi per modello in caso di piccolo glitch di rete
+      for (let attempt = 1; attempt <= 2; attempt++) {
+        try {
+          const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
+          const geminiRes = await fetch(geminiUrl, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'x-goog-api-key': apiKey
+            },
+            body: JSON.stringify(requestBody),
+            signal: AbortSignal.timeout(35000)
+          });
+
+          if (geminiRes.ok) {
+            const gJson = await geminiRes.json();
+            const rawText = gJson?.candidates?.[0]?.content?.parts?.[0]?.text;
+            if (rawText) {
+              let cleanText = rawText.trim();
+              if (cleanText.startsWith('```')) {
+                cleanText = cleanText.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '').trim();
+              }
+              const parsed = JSON.parse(cleanText);
+              if (hasLessons(parsed)) {
+                extractedData = parsed;
+                console.log(`[SYNC] Successo con modello: ${model} (tentativo ${attempt})`);
+                break;
+              }
+              lastModelError = `Modello ${model} ha restituito zero lezioni`;
+            }
+          } else {
+            const errText = await geminiRes.text();
+            lastModelError = `HTTP ${geminiRes.status}: ${errText.slice(0, 140)}`;
+            console.warn(`[SYNC] Modello ${model} risposta non OK (tentativo ${attempt}): ${geminiRes.status}`);
+          }
+        } catch (e) {
+          lastModelError = e.message;
+          console.warn(`[SYNC] Modello ${model} fallito (tentativo ${attempt}):`, e.message);
+        }
+        if (extractedData) break;
+      }
+      if (extractedData) break;
+    }
+
+    if (hasLessons(extractedData)) {
+      const cleanData = normalizeTimetableMultiHourSlots(extractedData);
+      cleanData.classe = cleanData.classe || className;
+      cleanData.verification = {
+        verified: true,
+        status: 'LIVE_SPAGGIARI_SYNC',
+        hash: liveHash,
+        verified_at: new Date().toISOString()
+      };
+
+      // Aggiorna file cache solo se scrivibile e coerente con la classe richiesta
+      try {
+        if (className.toLowerCase() === '4 binf' && fs.existsSync(timetablePath)) {
+          fs.writeFileSync(timetablePath, JSON.stringify(cleanData, null, 2), 'utf-8');
+        }
+        fs.mkdirSync(path.dirname(hashFilePath), { recursive: true });
+        fs.writeFileSync(hashFilePath, liveHash, 'utf-8');
+      } catch (_) {}
+
+      return res.status(200).json({
+        status: 'success',
+        updated: true,
+        live_verified: true,
+        live_hash: liveHash,
+        class_name: className,
+        message: 'Nuovo orario Spaggiari sincronizzato ed estratto con successo!',
+        timetable: cleanData
+      });
+    }
+
+    console.error('[SYNC ERROR] Immagine nuova rilevata ma estrazione fallita su tutti i modelli.');
+    return res.status(503).json({
+      status: 'error',
       updated: false,
+      live_hash: liveHash,
       class_name: className,
-      message: 'Sincronizzazione completata',
-      timetable: localTimetable
+      message: 'Nuovo orario rilevato su Spaggiari, ma l\'estrazione automatica con Gemini non è riuscita al momento.',
+      error_detail: lastModelError,
+      timetable: null
     });
   } catch (err) {
     console.error('[API SYNC ERROR]', err);

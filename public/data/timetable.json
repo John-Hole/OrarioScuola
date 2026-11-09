@@ -1,7 +1,7 @@
 {
   "classe": "4 BINF",
   "stato_orario": "Orario provvisorio",
-  "data_decorrenza": "dal 12 ottobre 2026",
+  "data_decorrenza": "dal 9 novembre 2026",
   "data_aggiornamento": "Index Education 2026",
   "classi_disponibili": null,
   "giorni": [
@@ -42,6 +42,7 @@
           "fine": "10:48",
           "materia": "ITALIANO",
           "docenti": [
+            "LONZINI",
             "TOMASSONI"
           ],
           "aula": "B 055",
@@ -54,6 +55,7 @@
           "fine": "11:42",
           "materia": "ITALIANO",
           "docenti": [
+            "LONZINI",
             "TOMASSONI"
           ],
           "aula": "B 055",
@@ -67,7 +69,7 @@
           "materia": "INFORMATICA LAB.",
           "docenti": [
             "BATOCCHI",
-            "GIAPICHINI"
+            "GIAPPICHINI"
           ],
           "aula": "C 170",
           "is_lab": true,
@@ -79,9 +81,10 @@
           "fine": "13:36",
           "materia": "INGLESE",
           "docenti": [
-            "GUERCINI"
+            "GUERCINI",
+            "LONZINI"
           ],
-          "aula": "B 030",
+          "aula": "B 105",
           "is_lab": false,
           "note": null
         }
@@ -146,7 +149,6 @@
           "fine": "12:42",
           "materia": "ITALIANO",
           "docenti": [
-            "LONZINI",
             "TOMASSONI"
           ],
           "aula": "B 040",
@@ -228,8 +230,7 @@
           "fine": "10:48",
           "materia": "STORIA",
           "docenti": [
-            "CAVALLUCCI",
-            "LONZINI"
+            "CAVALLUCCI"
           ],
           "aula": "B 061",
           "is_lab": false,
@@ -284,7 +285,7 @@
           "docenti": [
             "BATOCCHI",
             "DI GRAZIA",
-            "GIAPICHINI"
+            "GIAPPICHINI"
           ],
           "aula": "C 170",
           "is_lab": true,
@@ -298,7 +299,7 @@
           "docenti": [
             "BATOCCHI",
             "DI GRAZIA",
-            "GIAPICHINI"
+            "GIAPPICHINI"
           ],
           "aula": "C 170",
           "is_lab": true,
@@ -310,8 +311,7 @@
           "fine": "10:48",
           "materia": "STORIA",
           "docenti": [
-            "CAVALLUCCI",
-            "LONZINI"
+            "CAVALLUCCI"
           ],
           "aula": "B 115",
           "is_lab": false,
@@ -441,10 +441,10 @@
   ],
   "verification": {
     "verified": true,
-    "scan_mode": "single",
+    "scan_mode": "manual",
     "consensus": 1.0,
-    "status": "SINGLE_PASS",
-    "model": "gemini-3.5-flash-lite",
-    "verified_at": "2026-10-10 13:20:33"
+    "status": "VERIFIED_LIVE_SPAGGIARI",
+    "hash": "e1ac0c0792417ebbd7ff972981ed7eb4",
+    "verified_at": "2026-11-09T16:13:11+01:00"
   }
 }

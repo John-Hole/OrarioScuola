@@ -99,6 +99,25 @@ class TimetableRequestHandler(SimpleHTTPRequestHandler):
             if result.stderr:
                 print(f"[SERVER STDERR] {result.stderr}")
 
+            if result.returncode != 0:
+                combined = "\n".join(filter(None, [result.stderr, result.stdout])).strip()
+                last_lines = [line.strip() for line in combined.splitlines() if line.strip()]
+                err_hint = last_lines[-1] if last_lines else f"Exit code {result.returncode}"
+                response_payload = {
+                    "status": "error",
+                    "updated": False,
+                    "scan_mode": scan_mode,
+                    "class_name": class_name,
+                    "message": f"Sincronizzazione fallita: {err_hint}",
+                    "timetable": None
+                }
+                self.send_response(503)
+                self.send_header("Content-Type", "application/json; charset=utf-8")
+                self.send_header("Access-Control-Allow-Origin", "*")
+                self.end_headers()
+                self.wfile.write(json.dumps(response_payload, ensure_ascii=False).encode("utf-8"))
+                return
+
             # Ricarica il file timetable.json aggiornato
             timetable_file = PUBLIC_DIR / "data" / "timetable.json"
             timetable_data = None
@@ -107,10 +126,11 @@ class TimetableRequestHandler(SimpleHTTPRequestHandler):
                     timetable_data = json.load(f)
 
             response_payload = {
-                "status": "success" if result.returncode == 0 else "warning",
+                "status": "success",
+                "updated": "[OUTPUT] Orario salvato in:" in (result.stdout or ""),
                 "scan_mode": scan_mode,
                 "class_name": class_name,
-                "message": "Sincronizzazione completata con successo" if result.returncode == 0 else "Sincronizzazione eseguita con avvisi",
+                "message": "Sincronizzazione completata con successo",
                 "timetable": timetable_data
             }
 
@@ -137,7 +157,7 @@ class TimetableRequestHandler(SimpleHTTPRequestHandler):
         import urllib.request
         try:
             sys.path.insert(0, str(SCRIPTS_DIR))
-            from sync_timetable import load_env, extract_timetable_with_gemini, get_sample_mock_data, normalize_timetable_multihour_slots, discover_classes_from_document
+            from sync_timetable import load_env, extract_timetable_with_gemini, get_sample_mock_data, normalize_timetable_multihour_slots, discover_classes_from_document, get_rome_now
             load_env()
 
             content_length = int(self.headers.get("Content-Length", 0))
@@ -223,7 +243,7 @@ class TimetableRequestHandler(SimpleHTTPRequestHandler):
                     "scan_mode": "mock",
                     "consensus": 1.0,
                     "status": "LOCAL_MOCK_FALLBACK",
-                    "verified_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S") if "datetime" in globals() else ""
+                    "verified_at": get_rome_now().isoformat(timespec="seconds")
                 }
 
             if extracted_data:

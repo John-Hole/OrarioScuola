@@ -132,6 +132,132 @@ export function normalizeTimetableMultiHourSlots(timetable) {
 }
 
 /**
+ * Rileva se un payload orario è mock/fallback dimostrativo.
+ */
+export function isMockOrFallbackTimetable(data) {
+  if (!data) return false;
+  const status = String(data.verification?.status || '').toUpperCase();
+  const decorrenza = String(data.data_decorrenza || '');
+  return (
+    status.includes('MOCK') ||
+    status.includes('FALLBACK') ||
+    status.includes('DEMO') ||
+    decorrenza.includes('14 Settembre 2026')
+  );
+}
+
+/**
+ * Estrae il timestamp UTC dalla data di verifica dell'orario.
+ */
+export function parseVerifiedTimestamp(data) {
+  const raw = data?.verification?.verified_at;
+  if (!raw) return 0;
+  let norm = String(raw).trim();
+  if (/^\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}(:\d{2})?$/.test(norm)) {
+    norm = norm.replace(' ', 'T');
+  }
+  const t = Date.parse(norm);
+  return Number.isNaN(t) ? 0 : t;
+}
+
+/**
+ * Estrae la data di decorrenza (es. "dal 9 novembre 2026") come timestamp UTC per confronto versioni.
+ */
+export function parseTimetableDecorrenzaTime(data) {
+  if (!data) return 0;
+  const str = `${data.data_decorrenza || ''} ${data.data_aggiornamento || ''}`;
+  const months = {
+    gennaio: 1, febbraio: 2, marzo: 3, aprile: 4, maggio: 5, giugno: 6,
+    luglio: 7, agosto: 8, settembre: 9, ottobre: 10, novembre: 11, dicembre: 12
+  };
+  const m = str.toLowerCase().match(/(\d{1,2})\s+([a-z]+)\s+(\d{4})/);
+  if (m && months[m[2]]) {
+    const d = parseInt(m[1], 10);
+    const mo = months[m[2]];
+    const y = parseInt(m[3], 10);
+    return Date.UTC(y, mo - 1, d);
+  }
+  return parseVerifiedTimestamp(data);
+}
+
+/**
+ * Calcola una firma canonica dei contenuti didattici (escludendo i soli metadati di verifica).
+ */
+export function computeTimetableContentSignature(data) {
+  if (!data || !Array.isArray(data.giorni)) return '';
+  return JSON.stringify({
+    classe: (data.classe || '').trim().toUpperCase(),
+    stato_orario: data.stato_orario || '',
+    data_decorrenza: data.data_decorrenza || '',
+    giorni: data.giorni.map(d => ({
+      giorno: d.giorno || '',
+      lezioni: (d.lezioni || []).map(l => ({
+        ora: l.ora || 0,
+        inizio: l.inizio || '',
+        fine: l.fine || '',
+        materia: (l.materia || '').trim(),
+        docenti: Array.isArray(l.docenti) ? l.docenti : [],
+        aula: (l.aula || '').trim()
+      }))
+    }))
+  });
+}
+
+/**
+ * Helper anti-regressione per determinare se l'orario ricevuto dal server/file
+ * è più recente o aggiornato rispetto a quello locale.
+ */
+export function isServerTimetableNewer(serverData, localData) {
+  if (!serverData || !Array.isArray(serverData.giorni) || serverData.giorni.length === 0) {
+    return false;
+  }
+  if (!localData || !Array.isArray(localData.giorni) || localData.giorni.length === 0) {
+    return true;
+  }
+
+  const serverMock = isMockOrFallbackTimetable(serverData);
+  const localMock = isMockOrFallbackTimetable(localData);
+  if (serverMock && !localMock) return false;
+  if (!serverMock && localMock) return true;
+
+  const serverDec = parseTimetableDecorrenzaTime(serverData);
+  const localDec = parseTimetableDecorrenzaTime(localData);
+  if (serverDec > 0 && localDec > 0 && serverDec !== localDec) {
+    return serverDec > localDec;
+  }
+
+  const serverHash = String(serverData.verification?.hash || '').trim();
+  const localHash = String(localData.verification?.hash || '').trim();
+  const serverVerTime = parseVerifiedTimestamp(serverData);
+  const localVerTime = parseVerifiedTimestamp(localData);
+  const serverSig = computeTimetableContentSignature(serverData);
+  const localSig = computeTimetableContentSignature(localData);
+
+  if (serverHash && localHash && serverHash !== localHash) {
+    if (serverVerTime > 0 && localVerTime > 0) {
+      return serverVerTime >= localVerTime;
+    }
+    return true;
+  }
+
+  if (serverSig && localSig && serverSig !== localSig) {
+    if (serverVerTime > 0 && localVerTime > 0) {
+      return serverVerTime >= localVerTime;
+    }
+    if (!localHash && serverHash) {
+      return true;
+    }
+    return serverVerTime > 0 || localVerTime === 0;
+  }
+
+  if (serverHash && !localHash && serverDec >= localDec) {
+    return true;
+  }
+
+  return false;
+}
+
+/**
  * Struttura di default per l'orario 4 BINF dell'Istituto Volta
  */
 export const VOLTA_4_BINF_PRESET = {
@@ -299,7 +425,7 @@ export function toggleFavoriteTimetable(id) {
  */
 export async function loadPresetVolta4Binf() {
   try {
-    const res = await fetch('data/timetable.json?t=' + Date.now());
+    const res = await fetch('data/timetable.json?t=' + Date.now(), { cache: 'no-store' });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
 

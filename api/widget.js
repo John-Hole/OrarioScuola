@@ -13,6 +13,38 @@ function timeToMinutes(str) {
   return h * 60 + m;
 }
 
+const ROME_WEEKDAY_MAP = {
+  Sun: 0,
+  Mon: 1,
+  Tue: 2,
+  Wed: 3,
+  Thu: 4,
+  Fri: 5,
+  Sat: 6
+};
+
+export function getRomeClock(date = new Date()) {
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'Europe/Rome',
+    weekday: 'short',
+    hour: '2-digit',
+    minute: '2-digit',
+    hourCycle: 'h23'
+  }).formatToParts(date);
+
+  const byType = Object.fromEntries(parts.map(p => [p.type, p.value]));
+  const dayIdx = ROME_WEEKDAY_MAP[byType.weekday] ?? date.getUTCDay();
+  const hours = parseInt(byType.hour || '0', 10) % 24;
+  const minutes = parseInt(byType.minute || '0', 10);
+  return {
+    dayIdx,
+    hours,
+    minutes,
+    currentMinutes: hours * 60 + minutes,
+    timeStr: `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`
+  };
+}
+
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
@@ -31,14 +63,9 @@ export default async function handler(req, res) {
       timetable = JSON.parse(fs.readFileSync(timetablePath, 'utf-8'));
     }
 
-    const now = new Date();
-    const romeTimeStr = now.toLocaleString('en-US', { timeZone: 'Europe/Rome' });
-    const romeDate = new Date(romeTimeStr);
+    const { dayIdx, currentMinutes, timeStr } = getRomeClock(new Date());
 
     const itDays = ['Domenica', 'Lunedì', 'Martedì', 'Mercoledì', 'Giovedì', 'Venerdì', 'Sabato'];
-    const dayIdx = romeDate.getDay();
-    const currentMinutes = romeDate.getHours() * 60 + romeDate.getMinutes();
-    const timeStr = `${String(romeDate.getHours()).padStart(2, '0')}:${String(romeDate.getMinutes()).padStart(2, '0')}`;
 
     const emptyFlight = {
       flight_visible: 0,

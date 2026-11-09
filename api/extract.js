@@ -331,10 +331,13 @@ Estrai l'orario completo di tutti i giorni della settimana SOLO per la classe "$
 
     for (const model of modelsToTry) {
       try {
-        const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+        const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
         const geminiRes = await fetch(geminiUrl, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            'x-goog-api-key': apiKey
+          },
           body: JSON.stringify(requestBody),
           signal: AbortSignal.timeout(35000)
         });

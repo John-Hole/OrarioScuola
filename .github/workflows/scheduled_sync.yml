@@ -2,8 +2,10 @@ name: Synchronize School Timetable (Gemini Vision)
 
 on:
   schedule:
-    # Esecuzione mirata nel fine settimana (Sabato e Domenica mattina: ore 07:00 e 11:00 orario italiano - 06:00 e 10:00 UTC)
-    - cron: '0 6,10 * * 0,6'
+    # Sabato e Domenica (~07:17, 12:17, 19:17 ora italiana CET - slot :17 anti-congestione)
+    - cron: '17 6,11,18 * * 0,6'
+    # Lunedì mattina pre-scuola (~06:17 e 07:17 ora italiana CET)
+    - cron: '17 5,6 * * 1'
   workflow_dispatch:
     inputs:
       force_refresh:
@@ -25,6 +27,10 @@ on:
           - single
           - double
 
+concurrency:
+  group: timetable-sync-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   sync:
     runs-on: ubuntu-latest
@@ -37,8 +43,8 @@ jobs:
       - name: Verifica Scadenza Automatismo (Fino al 31 Gennaio)
         id: check-date
         run: |
-          # Controlla se siamo oltre il 31 Gennaio 2027
-          CURRENT_DATE=$(date +%Y%m%d)
+          # Controlla la data corrente nel fuso italiano (fino al 31 Gennaio 2027)
+          CURRENT_DATE=$(TZ='Europe/Rome' date +%Y%m%d)
           EXPIRY_DATE=20270131
           IS_MANUAL="${{ github.event_name == 'workflow_dispatch' }}"
           
@@ -60,6 +66,16 @@ jobs:
         if: steps.check-date.outputs.should_run == 'true'
         run: |
           pip install -r scripts/requirements.txt
+
+      - name: Verifica Configurazione Segreti (GEMINI_API_KEY)
+        if: steps.check-date.outputs.should_run == 'true'
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: |
+          if [ -z "$GEMINI_API_KEY" ]; then
+            echo "::error ::Secret GEMINI_API_KEY non configurato in GitHub Actions (Settings -> Secrets and variables -> Actions -> GEMINI_API_KEY)."
+            exit 1
+          fi
 
       - name: Esegui Sincronizzazione Orario (Gemini 3.5 Flash Lite / 3.8 Flash Fallback)
         if: steps.check-date.outputs.should_run == 'true'
@@ -97,10 +113,11 @@ jobs:
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git add public/data/
+          git add public/orario-originale/classi/edc0000119p00001s3fffffffffffffff_4_binf_ac.png 2>/dev/null || true
           git add -f scripts/.cache/hash_*.txt 2>/dev/null || true
           if git diff --staged --quiet; then
             echo "Nessuna variazione nell'orario scolastico. Commit non necessario."
           else
-            git commit -m "chore(timetable): orario aggiornato automaticamente da Spaggiari EDT [skip ci]"
+            git commit -m "chore(timetable): orario aggiornato automaticamente da Spaggiari EDT"
             git push
           fi

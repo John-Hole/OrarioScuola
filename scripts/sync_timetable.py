@@ -13,10 +13,30 @@ import sys
 import json
 import hashlib
 import argparse
-from datetime import datetime, time
+from datetime import datetime, time, timezone, timedelta
 from typing import List, Optional, Dict, Any
 from pathlib import Path
 import re
+
+try:
+    from zoneinfo import ZoneInfo
+    ROME_TZ = ZoneInfo("Europe/Rome")
+except Exception:
+    ROME_TZ = timezone(timedelta(hours=1))
+
+
+def get_rome_now() -> datetime:
+    """Restituisce data e ora correnti nel fuso orario Europe/Rome."""
+    return datetime.now(ROME_TZ)
+
+
+def to_rome_datetime(dt: Optional[datetime] = None) -> datetime:
+    """Converte un datetime in Europe/Rome (se naive assume già ora locale italiana)."""
+    if dt is None:
+        return get_rome_now()
+    if dt.tzinfo is None:
+        return dt.replace(tzinfo=ROME_TZ)
+    return dt.astimezone(ROME_TZ)
 
 try:
     import requests
@@ -100,7 +120,7 @@ def get_sample_mock_data(classe: str = "4 BINF") -> Dict[str, Any]:
         "classe": classe,
         "stato_orario": "Orario Provvisorio",
         "data_decorrenza": "In vigore dal 14 Settembre 2026",
-        "data_aggiornamento": datetime.now().strftime("%Y-%m-%d %H:%M"),
+        "data_aggiornamento": get_rome_now().strftime("%Y-%m-%d %H:%M"),
         "classi_disponibili": [
             "4 BINF", "4 AINF", "3 BINF", "5 BINF", "4 AELT", "4 AMEC"
         ],
@@ -436,7 +456,9 @@ def compute_flight_payload(timetable: Dict[str, Any], ref_dt: Optional[datetime]
     - Fino a 1h da uscita: Scuola [Terminata] ── Uscita ✈ ──> Casa [Rientro]
     """
     if ref_dt is None:
-        ref_dt = datetime.now()
+        ref_dt = get_rome_now()
+    else:
+        ref_dt = to_rome_datetime(ref_dt)
 
     empty_flight = {
         "flight_visible": 0,
@@ -608,7 +630,9 @@ def compute_widget_payload(timetable: Dict[str, Any], ref_dt: Optional[datetime]
     - Include campi 'flight_*' per il layout scalo aereo con visibilità programmata
     """
     if ref_dt is None:
-        ref_dt = datetime.now()
+        ref_dt = get_rome_now()
+    else:
+        ref_dt = to_rome_datetime(ref_dt)
 
     flight = compute_flight_payload(timetable, ref_dt)
 
@@ -946,13 +970,16 @@ def extract_with_fallback(
     prompt: str,
     main_model: str,
     fallback_model: str,
-    api_key: str
+    api_key: str,
+    max_attempts_per_model: int = 2,
+    retry_delay_seconds: float = 2.5
 ) -> tuple[Dict[str, Any], str]:
     """
-    Tenta l'estrazione con il modello principale (es. gemini-3.8-flash).
-    In caso di errore (503 alta richiesta, 429 rate limit o eccezioni API),
-    passa automaticamente al modello di fallback (es. gemini-3.5-flash-lite).
+    Tenta l'estrazione con il modello principale (es. gemini-3.5-flash-lite).
+    Ritenta brevemente in caso di picchi temporanei (503 / 429) prima di passare
+    al modello di fallback (es. gemini-3.8-flash).
     """
+    import time as _time
     from google import genai
 
     client = genai.Client(api_key=api_key)
@@ -962,15 +989,22 @@ def extract_with_fallback(
 
     last_err = None
     for model in models_to_try:
-        try:
-            print(f"[GEMINI] Tentativo di estrazione con modello: '{model}'...")
-            data = call_gemini_vision_single(client, image_bytes, mime_type, prompt, model)
-            print(f"[GEMINI] Successo con il modello: '{model}'")
-            return data, model
-        except Exception as err:
-            last_err = err
-            print(f"[WARN] Errore con modello '{model}': {err}")
-            print(f"[FALLBACK] Passaggio automatico al modello successivo...")
+        for attempt in range(1, max_attempts_per_model + 1):
+            try:
+                print(f"[GEMINI] Tentativo di estrazione con modello: '{model}' (tentativo {attempt}/{max_attempts_per_model})...")
+                data = call_gemini_vision_single(client, image_bytes, mime_type, prompt, model)
+                print(f"[GEMINI] Successo con il modello: '{model}'")
+                return data, model
+            except Exception as err:
+                last_err = err
+                err_str = str(err).upper()
+                is_transient = any(code in err_str for code in ("503", "429", "UNAVAILABLE", "RESOURCE_EXHAUSTED", "TIMEOUT"))
+                print(f"[WARN] Errore con modello '{model}' (tentativo {attempt}): {err}")
+                if is_transient and attempt < max_attempts_per_model:
+                    _time.sleep(retry_delay_seconds * attempt)
+                    continue
+                break
+        print(f"[FALLBACK] Passaggio automatico al modello successivo...")
 
     raise RuntimeError(f"Tutti i modelli configurati ({models_to_try}) hanno fallito. Ultimo errore: {last_err}")
 
@@ -1064,7 +1098,7 @@ def reconcile_timetables(
         "total_slots_checked": total_slots,
         "matched_slots": matched_slots,
         "discrepancies_resolved": len(discrepancies),
-        "verified_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        "verified_at": get_rome_now().isoformat(timespec="seconds")
     }
 
     return reconciled
@@ -1131,10 +1165,13 @@ def extract_timetable_with_gemini(
         print("[GEMINI] Passaggio 2: Seconda estrazione di verifica incrociata...")
         pass2, model2 = extract_with_fallback(image_bytes, mime_type, prompt, main_model, fallback_model, key)
 
-        result = reconcile_timetables(pass1, pass2, model1, model2)
+        result = normalize_timetable_multihour_slots(reconcile_timetables(pass1, pass2, model1, model2))
+        total_lessons = sum(len(d.get("lezioni", [])) for d in result.get("giorni", []))
+        if total_lessons == 0:
+            raise RuntimeError("Doppia scansione completata ma nessuna lezione estratta dall'immagine")
         v = result["verification"]
         print(f"[GEMINI] Doppia scansione completata! Consenso: {v['consensus']*100:.1f}% ({v['matched_slots']}/{v['total_slots_checked']} slot concordanti) - Stato: {v['status']}")
-        return normalize_timetable_multihour_slots(result)
+        return result
     else:
         print(f"[GEMINI] === AVVIO SCANSIONE SINGOLA (MODALITÀ MANUALE DIRETTA) ===")
         data, model_used = extract_with_fallback(image_bytes, mime_type, prompt, main_model, fallback_model, key)
@@ -1144,9 +1181,13 @@ def extract_timetable_with_gemini(
             "consensus": 1.0,
             "status": "SINGLE_PASS",
             "model": model_used,
-            "verified_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            "verified_at": get_rome_now().isoformat(timespec="seconds")
         }
-        return normalize_timetable_multihour_slots(data)
+        result = normalize_timetable_multihour_slots(data)
+        total_lessons = sum(len(d.get("lezioni", [])) for d in result.get("giorni", []))
+        if total_lessons == 0:
+            raise RuntimeError("Scansione completata ma nessuna lezione estratta dall'immagine")
+        return result
 
 
 def discover_classes_from_document(file_path: str, api_key: str) -> Dict[str, Any]:
@@ -1196,57 +1237,105 @@ def compute_file_hash(filepath: str) -> str:
     return hasher.hexdigest()
 
 
-def check_and_download_image(url: str, dest_path: str) -> bool:
-    """Scarica l'immagine solo se modificata. Ritorna True se nuova, False se invariata."""
+def download_image_with_status(url: str, dest_path: str) -> str:
+    """
+    Scarica l'immagine solo se modificata.
+    Ritorna 'updated' (HTTP 200), 'unchanged' (HTTP 304 con file valido), oppure 'error'.
+    """
     if not requests:
         print("[WARN] Libreria 'requests' non presente, salto il download remoto.")
-        return False
+        return "error"
 
-    os.makedirs(os.path.dirname(dest_path), exist_ok=True)
-    
+    dest_parent = os.path.dirname(os.path.abspath(dest_path))
+    if dest_parent:
+        os.makedirs(dest_parent, exist_ok=True)
+
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
         "Cache-Control": "no-cache, no-store, must-revalidate",
         "Pragma": "no-cache"
     }
     cache_meta_file = dest_path + ".meta"
-    if os.path.exists(cache_meta_file):
+    if os.path.exists(dest_path) and os.path.exists(cache_meta_file):
         try:
-            with open(cache_meta_file, "r") as f:
+            with open(cache_meta_file, "r", encoding="utf-8") as f:
                 meta = json.load(f)
-                if "etag" in meta:
+                if meta.get("etag"):
                     headers["If-None-Match"] = meta["etag"]
-                if "last_modified" in meta:
+                if meta.get("last_modified"):
                     headers["If-Modified-Since"] = meta["last_modified"]
         except Exception:
             pass
 
-    response = requests.get(url, headers=headers, stream=True, timeout=15)
-    if response.status_code == 304:
-        print(f"[CACHE] L'immagine remota non è cambiata (HTTP 304 Not Modified).")
-        return False
+    try:
+        response = requests.get(url, headers=headers, stream=True, timeout=15)
+    except requests.RequestException as err:
+        print(f"[ERROR] Errore di rete durante il download da Spaggiari: {err}")
+        return "error"
+
+    if response.status_code == 304 and os.path.exists(dest_path):
+        print("[CACHE] L'immagine remota non è cambiata (HTTP 304 Not Modified).")
+        return "unchanged"
 
     if response.status_code == 200:
-        with open(dest_path, "wb") as f:
+        tmp_path = dest_path + ".tmp"
+        with open(tmp_path, "wb") as f:
             for chunk in response.iter_content(chunk_size=8192):
-                f.write(chunk)
+                if chunk:
+                    f.write(chunk)
+        os.replace(tmp_path, dest_path)
 
         meta = {
             "etag": response.headers.get("ETag"),
             "last_modified": response.headers.get("Last-Modified"),
-            "downloaded_at": datetime.now().isoformat()
+            "downloaded_at": get_rome_now().isoformat(timespec="seconds")
         }
-        with open(cache_meta_file, "w") as f:
+        with open(cache_meta_file, "w", encoding="utf-8") as f:
             json.dump(meta, f)
         print(f"[DOWNLOAD] Nuova immagine scaricata con successo in {dest_path}")
-        return True
+        return "updated"
 
     print(f"[ERROR] Impossibile scaricare l'immagine. HTTP Status: {response.status_code}")
-    return False
+    return "error"
+
+
+def check_and_download_image(url: str, dest_path: str) -> bool:
+    """Wrapper retrocompatibile: ritorna True se una nuova immagine è stata scaricata."""
+    return download_image_with_status(url, dest_path) == "updated"
+
+
+def get_existing_real_timetable(output_path: str, class_name: str = "") -> Optional[Dict[str, Any]]:
+    """Carica il file JSON esistente solo se contiene dati reali e coerenti con la classe."""
+    if not output_path or not os.path.exists(output_path):
+        return None
+    try:
+        with open(output_path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        if not isinstance(data, dict):
+            return None
+        status = str(data.get("verification", {}).get("status", "")).upper()
+        decorrenza = str(data.get("data_decorrenza", ""))
+        if any(tag in status for tag in ("MOCK", "FALLBACK", "DEMO")) or "14 Settembre 2026" in decorrenza:
+            return None
+        if class_name:
+            prev_cls = str(data.get("classe", "")).strip().upper()
+            if prev_cls and prev_cls != class_name.strip().upper():
+                return None
+        lessons = sum(len(d.get("lezioni", [])) for d in data.get("giorni", []) if isinstance(d, dict))
+        return data if lessons > 0 else None
+    except Exception:
+        return None
 
 
 # --- MAIN ENTRY POINT ---
 def main():
+    if sys.platform == "win32":
+        try:
+            sys.stdout.reconfigure(encoding="utf-8")
+            sys.stderr.reconfigure(encoding="utf-8")
+        except Exception:
+            pass
+
     load_env()
 
     parser = argparse.ArgumentParser(description="Smart School Timetable Extractor & Sync")
@@ -1255,13 +1344,14 @@ def main():
     parser.add_argument("--class-name", type=str, default="4 BINF", help="Classe di default (default: '4 BINF')")
     parser.add_argument("--output", type=str, default="public/data/timetable.json", help="File di output orario completo")
     parser.add_argument("--widget-output", type=str, default="public/data/widget_data.json", help="File di output feed widget S24")
+    parser.add_argument("--cache-dir", type=str, default="scripts/.cache", help="Cartella cache per immagini e hash")
     parser.add_argument("--mock", action="store_true", help="Usa dati realistici di simulazione senza chiamare Gemini API")
     parser.add_argument("--force", action="store_true", help="Forza la rielaborazione anche se l'hash dell'immagine non è cambiato")
     parser.add_argument("--scan-mode", choices=["single", "double"], default=None, help="Modalità scansione: 'single' (manuale) o 'double' (automatica mattutina)")
     parser.add_argument("--main-model", type=str, default=None, help="Modello Gemini principale (default: gemini-3.5-flash-lite o da .env)")
     parser.add_argument("--fallback-model", type=str, default=None, help="Modello Gemini di fallback (default: gemini-3.8-flash o da .env)")
     parser.add_argument("--api-key", type=str, default=None, help="Chiave API Gemini (default da .env o GEMINI_API_KEY)")
-    
+
     args = parser.parse_args()
 
     # Risoluzione parametri da env/default
@@ -1269,10 +1359,13 @@ def main():
     fallback_model = args.fallback_model or os.environ.get("GEMINI_FALLBACK_MODEL", "gemini-3.8-flash")
     scan_mode = args.scan_mode or os.environ.get("SCAN_MODE", "single")
     api_key = args.api_key or os.environ.get("GEMINI_API_KEY")
-    remote_url = args.url or os.environ.get("TIMETABLE_URL") or os.environ.get("TIMETABLE_IMAGE_URL")
+    if args.image and not args.url:
+        remote_url = None
+    else:
+        remote_url = args.url or os.environ.get("TIMETABLE_URL") or os.environ.get("TIMETABLE_IMAGE_URL")
 
-    # Risoluzione automatica URL della classe da volta_classes.json se non fornito
-    if not remote_url:
+    # Risoluzione automatica URL dalla tabella ufficiale solo se non è stato fornito --image locale
+    if not remote_url and not args.image:
         volta_file = Path("public/data/volta_classes.json")
         if volta_file.exists():
             try:
@@ -1286,17 +1379,24 @@ def main():
             except Exception as e:
                 print(f"[WARN] Impossibile leggere volta_classes.json: {e}")
 
-    if not remote_url and args.class_name.strip().upper() == "4 BINF":
+    if not remote_url and not args.image and args.class_name.strip().upper() == "4 BINF":
         remote_url = "https://cspace.spaggiari.eu/pub/PGIT0005/orario/classi/edc0000119p00001s3fffffffffffffff_4_binf_ac.png"
 
-    os.makedirs(os.path.dirname(args.output), exist_ok=True)
-    os.makedirs(os.path.dirname(args.widget_output), exist_ok=True)
+    output_dir = os.path.dirname(os.path.abspath(args.output))
+    widget_dir = os.path.dirname(os.path.abspath(args.widget_output))
+    if output_dir:
+        os.makedirs(output_dir, exist_ok=True)
+    if widget_dir:
+        os.makedirs(widget_dir, exist_ok=True)
 
-    cache_dir = Path("scripts/.cache")
+    cache_dir = Path(args.cache_dir)
     cache_dir.mkdir(parents=True, exist_ok=True)
     cache_hash_file = cache_dir / f"hash_{args.class_name.replace(' ', '_')}.txt"
 
+    existing_real = get_existing_real_timetable(args.output, args.class_name)
     timetable_data = None
+    reused_existing = False
+    downloaded_live_path = None
 
     if args.mock:
         print(f"[MOCK] Generazione dati orario mock per la classe {args.class_name}...")
@@ -1306,89 +1406,66 @@ def main():
             "scan_mode": scan_mode,
             "consensus": 1.0,
             "status": "MOCK_VERIFIED",
-            "verified_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            "verified_at": get_rome_now().isoformat(timespec="seconds")
         }
     else:
-        # Verifica sorgente immagine
         target_image = args.image
         if remote_url:
             downloaded_img = str(cache_dir / f"latest_{args.class_name.replace(' ', '_')}.png")
-            is_new = check_and_download_image(remote_url, downloaded_img)
+            download_status = download_image_with_status(remote_url, downloaded_img)
+            if download_status == "error":
+                print(f"::error ::Download orario fallito da {remote_url}. Mantengo eventuali dati esistenti senza committare errori.")
+                sys.exit(1)
             target_image = downloaded_img
-            if not is_new and not args.force and os.path.exists(args.output):
-                print("[CACHE] Orario già aggiornato. Nessuna elaborazione necessaria.")
-                sys.exit(0)
+            downloaded_live_path = downloaded_img
 
         if not target_image or not os.path.exists(target_image):
-            if os.path.exists(args.output):
-                print(f"[SAFETY] Nessuna immagine valida scaricata. Mantengo l'orario reale esistente in {args.output}.")
-                with open(args.output, "r", encoding="utf-8") as f:
-                    timetable_data = json.load(f)
-            else:
-                print("[INFO] Nessuna immagine valida fornita o trovata. Ricorro ai dati dimostrativi mock.")
-                timetable_data = get_sample_mock_data(args.class_name)
-                timetable_data["verification"] = {
-                    "verified": True,
-                    "scan_mode": scan_mode,
-                    "consensus": 1.0,
-                    "status": "DEMO_FALLBACK",
-                    "verified_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                }
-        else:
-            # Controllo hash per evitare chiamate ripetute a Gemini se l'immagine è identica
-            curr_hash = compute_file_hash(target_image)
-            if not args.force and cache_hash_file.exists():
-                prev_hash = cache_hash_file.read_text().strip()
-                if curr_hash == prev_hash and os.path.exists(args.output):
-                    print(f"[CACHE] L'hash dell'immagine ({curr_hash[:8]}) corrisponde all'ultimo analizzato. Salto Gemini API.")
-                    with open(args.output, "r", encoding="utf-8") as f:
-                        timetable_data = json.load(f)
+            print(f"::error ::Nessuna immagine orario valida trovata o scaricata per '{args.class_name}'.")
+            sys.exit(1)
 
-            if timetable_data is None:
-                if not api_key:
-                    print("[WARN] Chiave GEMINI_API_KEY non trovata.")
-                    if os.path.exists(args.output):
-                        print(f"[SAFETY] Mantengo l'orario reale già presente in {args.output}.")
-                        with open(args.output, "r", encoding="utf-8") as f:
-                            timetable_data = json.load(f)
-                    else:
-                        timetable_data = get_sample_mock_data(args.class_name)
-                else:
-                    print(f"[GEMINI] Analisi visiva immagine: {target_image} (Modalità: {scan_mode.upper()})...")
-                    try:
-                        timetable_data = extract_timetable_with_gemini(
-                            image_path=target_image,
-                            class_name=args.class_name,
-                            api_key=api_key,
-                            main_model=main_model,
-                            fallback_model=fallback_model,
-                            scan_mode=scan_mode
-                        )
-                        cache_hash_file.write_text(curr_hash)
-                        print("[GEMINI] Estrazione completata con successo!")
-                    except Exception as e:
-                        print(f"[ERROR] Errore durante l'estrazione con Gemini API: {e}")
-                        if os.path.exists(args.output):
-                            print(f"[SAFETY] Mantengo l'orario reale precedentemente salvato in {args.output}.")
-                            with open(args.output, "r", encoding="utf-8") as f:
-                                timetable_data = json.load(f)
-                        else:
-                            print("[FALLBACK] Utilizzo dati mock.")
-                            timetable_data = get_sample_mock_data(args.class_name)
+        curr_hash = compute_file_hash(target_image)
+        prev_hash = cache_hash_file.read_text(encoding="utf-8").strip() if cache_hash_file.exists() else ""
+        existing_hash = str((existing_real or {}).get("verification", {}).get("hash", "")).strip()
+        expected_hash = existing_hash or prev_hash
+
+        if not args.force and existing_real is not None and expected_hash and curr_hash == expected_hash:
+            print(f"[CACHE] L'hash dell'immagine ({curr_hash[:8]}) corrisponde all'orario già estratto. Salto Gemini API.")
+            cache_hash_file.write_text(curr_hash, encoding="utf-8")
+            timetable_data = existing_real
+            reused_existing = True
+        else:
+            if not api_key:
+                print("::error ::GEMINI_API_KEY non trovata! Impossibile estrarre un orario nuovo o non ancora verificato.")
+                sys.exit(1)
+
+            print(f"[GEMINI] Analisi visiva immagine: {target_image} (Hash: {curr_hash[:8]}, Modalità: {scan_mode.upper()})...")
+            try:
+                timetable_data = extract_timetable_with_gemini(
+                    image_path=target_image,
+                    class_name=args.class_name,
+                    api_key=api_key,
+                    main_model=main_model,
+                    fallback_model=fallback_model,
+                    scan_mode=scan_mode
+                )
+                timetable_data.setdefault("verification", {})["hash"] = curr_hash
+                cache_hash_file.write_text(curr_hash, encoding="utf-8")
+                print("[GEMINI] Estrazione completata con successo!")
+            except Exception as e:
+                print(f"::error ::Errore durante l'estrazione con Gemini API: {e}")
+                sys.exit(1)
 
     # Controllo di sicurezza finale: non sovrascrivere MAI dati reali con mock senza flag esplicito --mock
-    if not args.mock and os.path.exists(args.output):
-        status = timetable_data.get("verification", {}).get("status", "")
-        if "MOCK" in status or "FALLBACK" in status:
-            try:
-                with open(args.output, "r", encoding="utf-8") as f:
-                    prev = json.load(f)
-                prev_status = prev.get("verification", {}).get("status", "")
-                if "MOCK" not in prev_status and "FALLBACK" not in prev_status:
-                    print(f"[SAFETY GUARD] Bloccata sovrascrittura di {args.output} con dati mock/fallback! Mantengo orario reale.")
-                    timetable_data = prev
-            except Exception:
-                pass
+    if not args.mock and existing_real is not None:
+        status = str(timetable_data.get("verification", {}).get("status", "")).upper()
+        if "MOCK" in status or "FALLBACK" in status or "DEMO" in status:
+            print(f"[SAFETY GUARD] Bloccata sovrascrittura di {args.output} con dati mock/fallback! Mantengo orario reale.")
+            timetable_data = existing_real
+            reused_existing = True
+
+    if reused_existing and not args.force and os.path.exists(args.widget_output):
+        print(f"[CACHE] Nessuna modifica all'orario e widget esistente in {args.widget_output}. Uscita pulita senza riscritture.")
+        return
 
     # Pulizia garantita di tutti i nomi aula prima del salvataggio
     for day in timetable_data.get("giorni", []):
@@ -1400,6 +1477,24 @@ def main():
     with open(args.output, "w", encoding="utf-8") as f:
         json.dump(timetable_data, f, ensure_ascii=False, indent=2)
     print(f"[OUTPUT] Orario salvato in: {args.output}")
+
+    # Aggiorna copia locale per la vista "Orario Originale" della 4 BINF se applicabile
+    if (
+        not args.mock
+        and not reused_existing
+        and downloaded_live_path
+        and args.class_name.strip().upper() == "4 BINF"
+        and os.path.normpath(args.output) == os.path.normpath("public/data/timetable.json")
+    ):
+        orig_png = Path("public/orario-originale/classi/edc0000119p00001s3fffffffffffffff_4_binf_ac.png")
+        if orig_png.parent.exists():
+            try:
+                live_bytes = Path(downloaded_live_path).read_bytes()
+                if not orig_png.exists() or orig_png.read_bytes() != live_bytes:
+                    orig_png.write_bytes(live_bytes)
+                    print(f"[OUTPUT] Aggiornata immagine originale offline in: {orig_png}")
+            except Exception as copy_err:
+                print(f"[WARN] Impossibile aggiornare immagine originale offline: {copy_err}")
 
     # Calcolo e scrittura feed widget per Galaxy S24
     widget_data = compute_widget_payload(timetable_data)

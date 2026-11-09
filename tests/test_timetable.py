@@ -212,5 +212,121 @@ class TestTimetableEngine(unittest.TestCase):
         self.assertIn("TELECOMUNICAZIONI", res_b3["subtitle"])
         self.assertIn("15 min", res_b3["subtitle"])
 
+    def test_rome_timezone_dst_handling(self):
+        """Verifica la conversione da UTC a Europe/Rome sia in ora legale (CEST +2) che solare (CET +1)"""
+        from datetime import timezone
+        from sync_timetable import to_rome_datetime
+
+        # Estate (CEST = UTC+2): Lunedì 2026-09-14 06:30 UTC -> 08:30 Rome (SISTEMI E RETI LAB)
+        utc_summer = datetime(2026, 9, 14, 6, 30, tzinfo=timezone.utc)
+        res_summer = compute_widget_payload(self.mock_data, utc_summer)
+        self.assertEqual(res_summer["status"], "IN_CLASS")
+        self.assertEqual(res_summer["updated_at"], "08:30")
+        self.assertIn("SISTEMI E RETI", res_summer["title"])
+
+        # Inverno (CET = UTC+1): Lunedì 2026-11-09 07:30 UTC -> 08:30 Rome (SISTEMI E RETI LAB)
+        utc_winter = datetime(2026, 11, 9, 7, 30, tzinfo=timezone.utc)
+        res_winter = compute_widget_payload(self.mock_data, utc_winter)
+        self.assertEqual(res_winter["status"], "IN_CLASS")
+        self.assertEqual(res_winter["updated_at"], "08:30")
+
+        # Cambio giorno a mezzanotte UTC->Rome: Domenica 2026-11-08 23:30 UTC -> Lunedì 00:30 CET (< 07:00)
+        utc_midnight_rollover = datetime(2026, 11, 8, 23, 30, tzinfo=timezone.utc)
+        rome_dt = to_rome_datetime(utc_midnight_rollover)
+        self.assertEqual(rome_dt.weekday(), 0)
+        self.assertEqual(rome_dt.hour, 0)
+        res_rollover = compute_widget_payload(self.mock_data, utc_midnight_rollover)
+        self.assertEqual(res_rollover["status"], "BEFORE_SCHOOL")
+        self.assertEqual(res_rollover["flight_visible"], 0)
+
+    def test_main_fails_loudly_without_api_key_and_preserves_existing(self):
+        """Se l'immagine cambia ma GEMINI_API_KEY manca, sync_timetable.main() deve fallire senza sovrascrivere timetable.json reale"""
+        import json
+        import os
+        import tempfile
+        from unittest.mock import patch
+        import sync_timetable
+
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            img_path = tmp_path / "changed.png"
+            img_path.write_bytes(b"fake-changed-png-bytes")
+
+            out_json = tmp_path / "timetable.json"
+            widget_json = tmp_path / "widget_data.json"
+            real_payload = {
+                "classe": "4 BINF",
+                "data_decorrenza": "dal 9 novembre 2026",
+                "giorni": [{"giorno": "Lunedì", "lezioni": [{"ora": 1, "inizio": "08:00", "fine": "08:54", "materia": "ITALIANO", "aula": "B 055"}]}],
+                "verification": {"verified": True, "status": "VERIFIED_LIVE_SPAGGIARI", "hash": "00000000000000000000000000000000"}
+            }
+            out_json.write_text(json.dumps(real_payload), encoding="utf-8")
+            widget_json.write_text(json.dumps({"status": "UNCHANGED"}), encoding="utf-8")
+
+            argv = [
+                "sync_timetable.py",
+                "--image", str(img_path),
+                "--class-name", "4 BINF",
+                "--output", str(out_json),
+                "--widget-output", str(widget_json),
+                "--cache-dir", str(tmp_path / "cache")
+            ]
+            clean_env = {
+                k: v for k, v in os.environ.items()
+                if k not in ("GEMINI_API_KEY", "TIMETABLE_URL", "TIMETABLE_IMAGE_URL")
+            }
+            with patch.object(sync_timetable, "load_env"), patch.dict(os.environ, clean_env, clear=True), patch.object(sys, "argv", argv):
+                with self.assertRaises(SystemExit) as ctx:
+                    sync_timetable.main()
+                self.assertNotEqual(ctx.exception.code, 0)
+
+            self.assertEqual(json.loads(out_json.read_text(encoding="utf-8")), real_payload)
+            self.assertEqual(json.loads(widget_json.read_text(encoding="utf-8")), {"status": "UNCHANGED"})
+
+    def test_main_skips_gemini_when_json_hash_matches(self):
+        """Anche senza cache locale su runner CI pulito, verification.hash in timetable.json evita chiamate Gemini ridondanti"""
+        import hashlib
+        import json
+        import os
+        import tempfile
+        from unittest.mock import patch
+        import sync_timetable
+
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            png_bytes = b"identical-timetable-image-bytes"
+            img_hash = hashlib.md5(png_bytes).hexdigest()
+            img_path = tmp_path / "same.png"
+            img_path.write_bytes(png_bytes)
+
+            out_json = tmp_path / "timetable.json"
+            widget_json = tmp_path / "widget_data.json"
+            real_payload = {
+                "classe": "4 BINF",
+                "data_decorrenza": "dal 9 novembre 2026",
+                "giorni": [{"giorno": "Lunedì", "lezioni": [{"ora": 1, "inizio": "08:00", "fine": "08:54", "materia": "ITALIANO", "aula": "B 055"}]}],
+                "verification": {"verified": True, "status": "VERIFIED_LIVE_SPAGGIARI", "hash": img_hash}
+            }
+            out_json.write_text(json.dumps(real_payload), encoding="utf-8")
+            widget_json.write_text(json.dumps({"status": "EXISTING_WIDGET"}), encoding="utf-8")
+
+            argv = [
+                "sync_timetable.py",
+                "--image", str(img_path),
+                "--class-name", "4 BINF",
+                "--output", str(out_json),
+                "--widget-output", str(widget_json),
+                "--cache-dir", str(tmp_path / "empty_ci_cache")
+            ]
+            clean_env = {
+                k: v for k, v in os.environ.items()
+                if k not in ("GEMINI_API_KEY", "TIMETABLE_URL", "TIMETABLE_IMAGE_URL")
+            }
+            with patch.object(sync_timetable, "load_env"), patch.dict(os.environ, clean_env, clear=True), patch.object(sys, "argv", argv):
+                sync_timetable.main()
+
+            self.assertEqual(json.loads(widget_json.read_text(encoding="utf-8")), {"status": "EXISTING_WIDGET"})
+            self.assertEqual((tmp_path / "empty_ci_cache" / "hash_4_BINF.txt").read_text(encoding="utf-8").strip(), img_hash)
+
 if __name__ == "__main__":
     unittest.main()
