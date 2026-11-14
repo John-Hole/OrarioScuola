@@ -1,12 +1,12 @@
 {
   "classe": "4 BINF",
   "stato_orario": "Orario provvisorio",
-  "data_decorrenza": "dal 9 novembre 2026",
+  "data_decorrenza": "dal 16 novembre 2026",
   "data_aggiornamento": "Index Education 2026",
   "classi_disponibili": null,
   "giorni": [
     {
-      "giorno": "Lunedì",
+      "giorno": "lunedì",
       "lezioni": [
         {
           "ora": 1,
@@ -14,7 +14,6 @@
           "fine": "08:54",
           "materia": "SISTEMI E RETI LAB.",
           "docenti": [
-            "DI GRAZIA",
             "MANCINO",
             "RIGHI"
           ],
@@ -28,7 +27,6 @@
           "fine": "09:48",
           "materia": "SISTEMI E RETI LAB.",
           "docenti": [
-            "DI GRAZIA",
             "MANCINO",
             "RIGHI"
           ],
@@ -91,7 +89,7 @@
       ]
     },
     {
-      "giorno": "Martedì",
+      "giorno": "martedì",
       "lezioni": [
         {
           "ora": 1,
@@ -173,8 +171,8 @@
           "fine": "14:50",
           "materia": "TELECOMUNICAZIONI LAB.",
           "docenti": [
-            "GAGLIARDI",
-            "PERICOLINI"
+            "GAGLIARDI M.",
+            "PERICOLINI A."
           ],
           "aula": "L 030",
           "is_lab": true,
@@ -186,8 +184,8 @@
           "fine": "15:40",
           "materia": "TELECOMUNICAZIONI LAB.",
           "docenti": [
-            "GAGLIARDI",
-            "PERICOLINI"
+            "GAGLIARDI M.",
+            "PERICOLINI A."
           ],
           "aula": "L 030",
           "is_lab": true,
@@ -196,7 +194,7 @@
       ]
     },
     {
-      "giorno": "Mercoledì",
+      "giorno": "mercoledì",
       "lezioni": [
         {
           "ora": 1,
@@ -252,7 +250,7 @@
           "ora": 5,
           "inizio": "11:52",
           "fine": "12:42",
-          "materia": "SISTEMI E RETI",
+          "materia": "SISTEMI e RETI",
           "docenti": [
             "MANCINO"
           ],
@@ -275,7 +273,7 @@
       ]
     },
     {
-      "giorno": "Giovedì",
+      "giorno": "giovedì",
       "lezioni": [
         {
           "ora": 1,
@@ -346,7 +344,7 @@
           "ora": 6,
           "inizio": "12:46",
           "fine": "13:36",
-          "materia": "SISTEMI E RETI",
+          "materia": "SISTEMI e RETI",
           "docenti": [
             "DI GRAZIA",
             "MANCINO"
@@ -358,7 +356,7 @@
       ]
     },
     {
-      "giorno": "Venerdì",
+      "giorno": "venerdì",
       "lezioni": [
         {
           "ora": 1,
@@ -441,10 +439,15 @@
   ],
   "verification": {
     "verified": true,
-    "scan_mode": "manual",
-    "consensus": 1.0,
-    "status": "VERIFIED_LIVE_SPAGGIARI",
-    "hash": "e1ac0c0792417ebbd7ff972981ed7eb4",
-    "verified_at": "2026-11-09T16:13:11+01:00"
+    "scan_mode": "double",
+    "consensus": 0.94,
+    "status": "RECONCILED",
+    "pass1_model": "gemini-3.5-flash-lite",
+    "pass2_model": "gemini-3.5-flash-lite",
+    "total_slots_checked": 32,
+    "matched_slots": 30,
+    "discrepancies_resolved": 2,
+    "verified_at": "2026-11-14T14:34:05+01:00",
+    "hash": "ba7969ffc1a88fdc7f25bb1df5a9997c"
   }
 }
